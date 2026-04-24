@@ -1,5 +1,7 @@
 # deck.md
 
+Currently in alpha
+
 An open Markdown format for writing presentation briefs that AI agents turn into slide decks.
 
 You write the logic — narrative structure, action titles, data, sources. The agent handles composition, visual treatment, and image generation. One `deck.md` file per deck; designed to be read by humans and parsed deterministically by agents.
