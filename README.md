@@ -63,7 +63,7 @@ Use it as a starting point for your own agent. Copy `skill/` into your project a
 
 | Path | Purpose |
 |---|---|
-| [`skill/SKILL.md`](./skill/SKILL.md) | Skill definition — the agent reads this |
+| [`SKILL.md`](./SKILL.md) | Skill definition — the agent reads this |
 | [`skill/references/`](./skill/references/) | Production and workflow guides |
 | [`skill/scripts/`](./skill/scripts/) | `build_pptx.py`, `tabler_icons.py`, `split_template_deck.py` |
 
