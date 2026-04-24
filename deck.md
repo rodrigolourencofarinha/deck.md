@@ -3,7 +3,8 @@
 #
 # Fill this in; hand it to the agent. It produces the slides.
 # Meant to be read and edited by humans, and parsed by agents.
-# Minimum required: deck.title, narrative_template, at least one slide title.
+# Minimum required: deck.title (below), a ## Narrative section, and at least one slide.
+# Everything else is optional. For a stripped-down starter, see deck.minimal.md.
 
 schema_version: deck-md/v2-alpha
 
@@ -25,10 +26,12 @@ narrative_template: pyramid
 # the narrative and design tokens below. A slide can opt out with `mode: ppt-shapes`
 # when it's simple enough that generation isn't worth the cost.
 production_defaults:
-  default_slide_mode: designer-mode
+  default_slide_mode: ppt-shapes          # ppt-shapes | designer-mode
   aspect_ratio: "16:9"
   # default_visual_template: assets/visual-templates/default-slide.png
 
+# image_generation is only used for slides with mode: designer-mode.
+# Remove this block if your deck has no designer-mode slides.
 image_generation:
   primary_creator: gpt-image-2
   size:            "2560x1440"
@@ -45,8 +48,8 @@ design_tokens:
     background:  "#FFFFFF"
     line:        "#B8C7E6"
   typography:
-    title: "<font family and weight, e.g. Inter 600>"
-    body:  "<font family and weight, e.g. Inter 400>"
+    title: "Inter 600"
+    body:  "Inter 400"
   shape_language:
     corner_style: subtle        # subtle | sharp | rounded
     line_weight:  medium        # light | medium
@@ -58,20 +61,30 @@ design_tokens:
 
 ## What this deck is for
 
-<Two or three sentences. The context the audience already accepts, the objective you want by the end (a decision, an approval, an action), and the tone you want the deck to carry.>
+<!-- Human-facing framing. This section is for you and any co-authors — not parsed by the agent.
+     Cover: who the audience is, what you want from them by the end (a decision, approval, action),
+     and the tone the deck should carry. Two or three sentences is enough. -->
+
+<Audience context, objective, tone.>
 
 ## Narrative
+
+<!-- Agent-facing logic. This is the argument structure the agent uses to validate and produce slides.
+     "What this deck is for" says what you want; this section says how the argument is built.
+     They are complementary: one is framing, the other is proof. -->
 
 <The deck's logical spine. This is the `pyramid` template — a governing thought, a narrative arc, and the argument structure that supports it. For other templates (`scr`, `problem-solution`, `update`), see [`./standards/narrative-templates.md`](./standards/narrative-templates.md).>
 
 ```yaml
 question: "<the core question the deck answers — what the audience is asking, or should be asking>"
-governing_thought: "<the one-sentence answer; this is also your executive summary>"
+governing_thought: "<the logical apex — the precise, evidenced answer that the key_line arguments prove>"
 
 # Narrative arc — how the argument unfolds.
+# resolution echoes governing_thought but is written as a plain-language close for human readers.
+# If they conflict, governing_thought wins — it is what the deck proves.
 situation:    "<context the audience already accepts as true>"
 complication: "<what's wrong, what changed, what's at stake>"
-resolution:   "<what you're recommending — should line up with the governing thought>"
+resolution:   "<what you're recommending>"
 
 # Argument structure — how the resolution is proven.
 # Each argument is a MECE claim; supporting_slides are the slides that prove it.
@@ -113,6 +126,11 @@ Valid `type` values are listed in [`./standards/slide-archetypes.md`](./standard
 ---
 
 ### Slide 1 — "<action title: restates the governing thought as a takeaway>"
+
+<!-- Validation rules (agent self-checks before emitting):
+     Title: full sentence with verb, sentence case, no trailing period, ≤14 words
+     Body:  ≤5 bullets, ≤12 words per bullet, one idea per slide
+     See standards/deck-validation.md for the full checklist. -->
 
 ```yaml
 id: 1

@@ -12,7 +12,7 @@ deck:
 narrative_template: pyramid
 
 production_defaults:
-  default_slide_mode: designer-mode
+  default_slide_mode: ppt-shapes          # ppt-shapes | designer-mode
   aspect_ratio: "16:9"
   default_visual_template: assets/visual-templates/default-slide.png
 
@@ -90,6 +90,7 @@ Decisive and forward-looking. Strong accent color on recommendations, restrained
 id: 1
 type: executive_summary
 layout: three-column-scr
+mode: designer-mode
 image_decision: full-generated-visual
 ```
 
@@ -123,7 +124,7 @@ required_text:
 
 ---
 
-### Slide 3 — "Growth stalled because acquisition, not retention, broke"
+### Slide 3 — "Organic share collapsed from 42% to 19% while retention held flat — acquisition is the sole cause"
 
 ```yaml
 id: 3
@@ -134,63 +135,48 @@ image_decision: none
 ```
 
 **Body**
-- New-user signups fell 34% YoY while retention held flat
-- Paid-channel CAC rose 2.1× across Q2–Q3
-- Organic traffic share dropped from 42% to 19%
+- Organic traffic share: 42% (Q1) → 19% (Q3) — steepest drop in four years
+- New-user signups fell 34% YoY; D30 retention held at 73%
+- Content engine shutdown in Q2 directly precedes the organic collapse
 
 ```yaml
 chart:
-  type: stacked-bar
-  emphasis: "Acquisition decline, not retention"
+  type: line
+  emphasis: "Organic collapse, not retention failure"
   data_ref: ./data/signups_by_channel.csv
-  annotation: "Paid-channel CAC doubled"
+  annotation: "Organic share halved after content engine shutdown"
 ```
 
 **Sources:** Internal funnel dashboard Q3 2025; Google Analytics
-**Speaker notes:** Anchor by contrasting with the retention cohort slide that follows.
+**Speaker notes:** The retention cohort data is the key proof that this is an acquisition problem. Lead with it.
 
 ---
 
-### Slide 7 — "Three levers will recover growth in two quarters"
+### Slide 7 — "Rebalancing paid mix from Meta to search and partnerships recovers 15% of lost CAC"
 
 ```yaml
 id: 7
-type: recommendation
-layout: horizontal-three-column
-image_decision: full-generated-visual
-visual_template_reference: assets/visual-templates/default-slide.png
-visual_template_scope: preserve title placement, margins, footer
+type: analysis
+layout: chart-left-text-right
+mode: ppt-shapes
+image_decision: none
 ```
 
 **Body**
-- **Rebuild organic** — ship the content engine; target 30% channel share by Q2
-- **Rebalance paid mix** — cut Meta by 40%, reallocate to search and partnerships
-- **Reactivate dormant users** — lifecycle campaign targeting the 180-day inactive cohort
+- Meta share: 68% of paid budget → above diminishing-returns threshold since Q2
+- Search and partnerships: 3× lower CAC at current spend levels
+- Reallocation model: cut Meta 40%, reallocate to search (25%) and partnerships (15%)
 
 ```yaml
-creative_direction:
-  mood: decisive, forward-looking
-  metaphor: three distinct levers or tracks
-  composition_intent: equal-weight three-column with tabler icons anchoring each block
-  prompt_notes:
-    - keep white background
-    - line-weight medium, corner style subtle
-    - icons sit above, not beside, the labels
-  avoid:
-    - cinematic lighting
-    - photographic imagery
-    - decorative backgrounds
-
-required_text:
-  title: "Three levers will recover growth in two quarters"
-  labels:
-    - "Rebuild organic"
-    - "Rebalance paid mix"
-    - "Reactivate dormant users"
+chart:
+  type: bar
+  emphasis: "Meta over-concentration vs alternatives"
+  data_ref: ./data/cac_by_channel.csv
+  annotation: "Search CAC is 3× more efficient at current scale"
 ```
 
-**Sources:** Strategy working session, Oct 2025
-**Speaker notes:** Pace this slowly — each lever gets its own body slide after.
+**Sources:** Internal paid dashboard Q3 2025; channel CAC model, Oct 2025
+**Speaker notes:** Show the reallocation math before moving to the reactivation argument — the board needs to see the paid mix case independently.
 
 ---
 

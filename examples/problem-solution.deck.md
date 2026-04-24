@@ -11,7 +11,7 @@ deck:
 narrative_template: problem-solution
 
 production_defaults:
-  default_slide_mode: designer-mode
+  default_slide_mode: ppt-shapes          # ppt-shapes | designer-mode
   aspect_ratio: "16:9"
 
 image_generation:
@@ -75,6 +75,7 @@ Mood: confident and unflashy. Engineers distrust marketing polish, so keep it de
 ```yaml
 id: 1
 type: situation
+mode: designer-mode
 image_decision: full-generated-visual
 ```
 
@@ -118,6 +119,7 @@ type: complication
 ```yaml
 id: 3
 type: recommendation
+mode: designer-mode
 image_decision: full-generated-visual
 ```
 

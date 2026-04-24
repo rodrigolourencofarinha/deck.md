@@ -45,8 +45,8 @@ Three levels. Each is a superset of the previous. Scaling up never requires refo
 
 | Level | Use case | Adds | Example |
 |---|---|---|---|
-| **Minimal** | 3–10 slide SCR, update, pitch | Narrative template + slide titles | [`examples/scr.deck.md`](./examples/scr.deck.md) |
-| **Standard** | Most working decks | Slide bodies, sources, speaker notes | — |
+| **Minimal** | 3–10 slide SCR, update, pitch | Narrative template + slide titles | [`deck.minimal.md`](./deck.minimal.md), [`examples/scr.deck.md`](./examples/scr.deck.md) |
+| **Standard** | Most working decks | Slide bodies, sources, speaker notes | [`examples/update.deck.md`](./examples/update.deck.md) |
 | **Full** | Client-facing, image-led | `creative_direction`, `required_text`, `chart`, full `key_line` | [`examples/pyramid.deck.md`](./examples/pyramid.deck.md) |
 
 ## Authorship
@@ -106,7 +106,7 @@ Premium, consulting-style. Message-first, not decoration-first. Polished but con
 Hard limits (word counts, case, bullet counts) live in [`./standards/deck-validation.md`](./standards/deck-validation.md) and MUST be self-checked before emitting.
 
 ### Image policy
-- Default to `designer-mode`; a slide may opt into `ppt-shapes` when it's simple enough that generation adds no value.
+- Default to `ppt-shapes`. A slide opts into `designer-mode` when a generated visual adds clear value (executive summaries, recommendations, section dividers). Charts, tables, and text-heavy slides should stay as `ppt-shapes` — they render more legibly and image generation adds no value there. Each archetype in [`./standards/slide-archetypes.md`](./standards/slide-archetypes.md) declares a `preferred_mode` as a starting point.
 - One strong visual idea per slide.
 - When `image_decision: full-generated-visual`, the slide MUST declare `required_text`. The model MUST NOT render any text in the image that is not listed there.
 - Reject: poster-like output, background plates, cropped salvage jobs, decorative stock-photo energy.
@@ -145,6 +145,16 @@ visual_template_reference: "<path>"                      # overrides deck defaul
 visual_template_scope: "<string>"                        # overrides deck default
 ```
 
+**`id` and slide ordering.** Integer IDs double as ordering keys. Inserting a slide between two existing slides requires renumbering all subsequent IDs and updating every `supporting_slides` reference. For decks that will evolve significantly, use short stable string IDs (`id: s_organic_lever`) instead — both forms are valid.
+
+**`layout` and unrecognized values.** Layout values recognized by the composition hints table in `standards/image-prompts.md` receive specific composition guidance. An unrecognized value is treated as a freeform hint — the agent infers a reasonable composition from the slide's type, title, and body. No error is thrown, but no composition guarantee is made.
+
+**`image_decision` values.**
+- `none` — no image or icon; the slide is pure text.
+- `icon-only` — one or two icons placed in the composition; the rest is text.
+- `cutout` — a subject (product screenshot, person, object) isolated from its background and composited over the slide. The agent must be told what the cutout subject is via `creative_direction`.
+- `full-generated-visual` — the entire slide canvas is a generated image. MUST declare `required_text`.
+
 ### Optional per-slide fenced blocks
 
 - `chart:` — when the slide contains a chart. Fields: `type`, `emphasis`, `data_ref`, `annotation`. `emphasis` should echo the action title.
@@ -155,11 +165,25 @@ visual_template_scope: "<string>"                        # overrides deck defaul
 
 - **Body** — the content of the slide.
 - **Sources** — attribution line.
-- **Speaker notes** — what the presenter says beyond what's on the slide.
+- **Speaker notes** — what the presenter says beyond what's on the slide. When a slide is rendered as a generated image (`mode: designer-mode`, `image_decision: full-generated-visual`), speaker notes are NOT embedded in the image. The agent delivers them as PDF presenter notes or a companion notes document. They never appear in the generated image regardless of mode.
 
 ### Slide archetypes
 
 The `type` field must be a value in [`./standards/slide-archetypes.md`](./standards/slide-archetypes.md): `executive_summary`, `section_divider`, `situation`, `complication`, `key_takeaways`, `analysis`, `chart`, `framework`, `recommendation`, `roadmap`, `risk_mitigation`, `next_steps`, `appendix`.
+
+## Notes to the agent
+
+An optional `## Notes to the agent` section holds freeform context that doesn't fit elsewhere. It is always agent-facing and never appears in rendered output. No required structure. Typical contents: deadlines and reviewer names; data file locations; related decks or prior versions; output format constraints (PDF, PPTX, Google Slides); post-generation instructions (embed recording, add watermark); things to double-check.
+
+## Validation and error handling
+
+If a `deck.md` fails any rule in [`./standards/deck-validation.md`](./standards/deck-validation.md), the agent MUST report all errors and block generation until they are resolved. Warn-and-proceed is not allowed — an invalid brief produces an unpredictable deck. If the `schema_version` is unrecognized, the agent MUST warn and ask the human to confirm before proceeding.
+
+## Accessibility
+
+- Generated images MUST include an alt-text string (set in `required_text.alt` or inferred from the action title and body).
+- Palette contrast between `primary` text and `background` MUST meet WCAG AA (4.5:1 for body, 3:1 for large text). The agent SHOULD warn if declared hex values fail this check.
+- Minimum readable title size is 36pt at 2560×1440; body text 24pt. The agent SHOULD warn if `creative_direction` or layout hints would push text below this.
 
 ## Precedence
 

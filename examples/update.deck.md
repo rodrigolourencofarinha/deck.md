@@ -11,7 +11,7 @@ deck:
 narrative_template: update
 
 production_defaults:
-  default_slide_mode: designer-mode
+  default_slide_mode: ppt-shapes          # ppt-shapes | designer-mode
   aspect_ratio: "16:9"
 
 image_generation:
@@ -147,6 +147,7 @@ image_decision: icon-only
 ```yaml
 id: 5
 type: next_steps
+mode: designer-mode
 image_decision: full-generated-visual
 ```
 

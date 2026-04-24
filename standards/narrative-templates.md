@@ -13,11 +13,13 @@ See [`../SPEC.md`](../SPEC.md) for how templates fit into the overall `deck.md` 
 **When to use.** Any deck over 10 slides. Multiple parallel arguments. Decks where different readers may skim to different sections and still need to get the point.
 
 **Required fields.**
-- `governing_thought` — the one-sentence answer to the deck's question
+- `governing_thought` — the logical apex: the one-sentence answer that the key line's arguments collectively prove. This is what a reader learns from reading every argument slide.
 - `question` — the question the deck answers (recommended)
 - `key_line` — a list of MECE arguments, each with `supporting_slides` (recommended)
 - `mece_check` — a one-liner explaining why the arguments are MECE (recommended)
-- `situation`, `complication`, `resolution` — the opening narrative arc (optional)
+- `situation`, `complication`, `resolution` — the opening narrative arc (optional). `resolution` is the narrative close — the recommendation in plain language. It typically echoes `governing_thought` but is written for a human skimming the narrative block, not for logical proof.
+
+**`governing_thought` vs `resolution`.** They often say the same thing in different registers. `governing_thought` is precise and evidenced ("Three levers — organic, paid mix, reactivation — recover growth in two quarters at $4M"). `resolution` is the narrative close ("Rebuild organic, rebalance paid mix, reactivate dormant users"). If they conflict, `governing_thought` wins — it is what the deck proves. `resolution` is framing.
 
 **Canonical example.**
 

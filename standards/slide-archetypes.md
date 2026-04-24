@@ -17,6 +17,8 @@ See [`./narrative-templates.md`](./narrative-templates.md) for how slides fit in
 
 **Purpose.** Opens the deck by making the governing thought visible in one slide. Should stand alone — a busy reader consuming only this slide should still understand the deck's answer.
 
+**Preferred mode.** `designer-mode` — the opening slide benefits from a strong generated visual.
+
 **Typical layout.** `three-column-scr` (SCR columns) or `title-with-three-bullets`.
 
 **Recommended fields.** Body containing the SCR arc (situation / complication / resolution), or a 3-point decomposition of the governing thought.
@@ -40,6 +42,8 @@ layout: three-column-scr
 
 **Purpose.** Transitions between sections of a longer deck. Gives the audience a beat and signals what's coming.
 
+**Preferred mode.** `designer-mode` — a full-bleed generated visual makes a clean section break.
+
 **Typical layout.** `full-bleed-title` with section number.
 
 **Required fields.** Title only; body is typically absent or minimal.
@@ -60,6 +64,8 @@ layout: full-bleed-title
 ## `situation`
 
 **Purpose.** Establishes context the audience already accepts as true. Grounds the rest of the deck in shared reality.
+
+**Preferred mode.** `ppt-shapes` — typically a chart or hero metric; shapes render more legibly.
 
 **Typical layout.** `hero-number-with-caption` or `bullets-with-chart`.
 
@@ -82,6 +88,8 @@ layout: hero-number-with-caption
 
 **Purpose.** Introduces the problem or change that creates the deck's reason for being. The "something happened" beat.
 
+**Preferred mode.** `ppt-shapes` — data proving the complication renders more clearly as shapes.
+
 **Typical layout.** `chart-with-title` or `before-after`.
 
 **Recommended fields.** Data proving the complication; sources.
@@ -101,6 +109,8 @@ type: complication
 ## `key_takeaways`
 
 **Purpose.** Summarizes findings at the end of a section or deck. Lets the audience consolidate before moving on.
+
+**Preferred mode.** `ppt-shapes` — a numbered text list; generation adds nothing.
 
 **Typical layout.** `numbered-list` with 3–5 items.
 
@@ -125,6 +135,8 @@ layout: numbered-list
 ## `analysis`
 
 **Purpose.** Presents an argument backed by evidence. The workhorse body slide. One claim (the action title), proof in the body.
+
+**Preferred mode.** `ppt-shapes` — charts and evidence tables render best as shapes. Switch to `designer-mode` only when the visual metaphor carries the argument better than a chart.
 
 **Typical layout.** `chart-left-text-right`, `text-left-chart-right`, or `chart-with-annotations`.
 
@@ -157,6 +169,8 @@ chart:
 
 **Purpose.** A slide where the chart IS the message. The chart carries the argument; text is annotation.
 
+**Preferred mode.** `ppt-shapes` — always. Generated images cannot render data-accurate charts.
+
 **Typical layout.** `chart-full-bleed-with-callout`.
 
 **Required fields.** A `chart:` block with `emphasis` echoing the action title and an `annotation` highlighting the key insight.
@@ -184,6 +198,8 @@ chart:
 
 **Purpose.** Presents a conceptual model, matrix, or diagram. The deck pauses to give the audience a mental map.
 
+**Preferred mode.** `designer-mode` — conceptual diagrams (2×2s, funnels, pyramids) benefit from generated visuals when the structure is simple and label-only.
+
 **Typical layout.** `2x2-matrix`, `quadrant-grid`, `layered-pyramid`, `funnel`.
 
 **Recommended fields.** Body as labels and short explanations per quadrant/layer.
@@ -204,6 +220,8 @@ layout: 2x2-matrix
 ## `recommendation`
 
 **Purpose.** States what to do. Often a major beat in the deck — the governing thought restated with specificity.
+
+**Preferred mode.** `designer-mode` — this is a visually high-leverage slide; a generated visual reinforces the recommendation's weight.
 
 **Typical layout.** `horizontal-three-column` (three levers, options, pillars).
 
@@ -230,6 +248,8 @@ image_decision: full-generated-visual
 
 **Purpose.** Shows a plan over time. Sequences actions, phases, or milestones.
 
+**Preferred mode.** `ppt-shapes` — timelines with dates, phases, and owners are more legible as shapes.
+
 **Typical layout.** `horizontal-timeline`, `gantt-simple`, `phase-bands`.
 
 **Required fields.** Body as phases or milestones with dates; one line per phase.
@@ -253,6 +273,8 @@ layout: horizontal-timeline
 ## `risk_mitigation`
 
 **Purpose.** Identifies risks and the specific mitigations. Signals that the author has thought about what could go wrong.
+
+**Preferred mode.** `ppt-shapes` — a table with four columns cannot be faithfully rendered by image generation.
 
 **Typical layout.** `risk-table` (risk, likelihood, impact, mitigation).
 
@@ -280,6 +302,8 @@ layout: risk-table
 
 **Purpose.** Lists concrete actions, with owners and dates. The "what happens Monday" slide.
 
+**Preferred mode.** `ppt-shapes` — action/owner/date tables render best as shapes. Use `designer-mode` only for a milestone-on-timeline visual.
+
 **Typical layout.** `owner-action-date-table`.
 
 **Required fields.** Body with action, owner, date per line.
@@ -303,6 +327,8 @@ layout: owner-action-date-table
 ## `appendix`
 
 **Purpose.** Supporting material that backs up claims in the main deck without interrupting the flow. Lives at the end.
+
+**Preferred mode.** Inherits from the underlying archetype it mirrors.
 
 **Typical layout.** Any — mirrors body slide archetypes (analysis, chart, etc.).
 

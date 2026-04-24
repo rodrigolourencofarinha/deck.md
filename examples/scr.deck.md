@@ -12,11 +12,13 @@ narrative_template: scr
 
 # Q3 results review
 
-## The argument
+## Narrative
 
-- **Situation:** Growth is our #1 KPI for 2026.
-- **Complication:** Q3 growth fell 34% YoY — acquisition broke, not retention.
-- **Resolution:** Three levers will recover growth in two quarters.
+```yaml
+situation:    "Growth is our #1 KPI for 2026."
+complication: "Q3 growth fell 34% YoY — acquisition broke, not retention."
+resolution:   "Three levers will recover growth in two quarters."
+```
 
 ## Slides
 
