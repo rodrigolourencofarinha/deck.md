@@ -18,6 +18,8 @@ If the human requests changes after seeing a rendered deck, the agent creates a 
 
 Default production is `designer-mode`. Use `ppt-shapes` only when a slide needs precise editability, data-accurate charts, tables, or template-driven PowerPoint structure. Designer-mode decks can declare `designer_assets` such as PowerPoint templates, logos, brand guides, screenshots, or visual references for the model to consider or place. Designer-mode decks produce final PDFs, not PPTX wrappers; add an OCR text layer to the PDF when tooling is available. Generated slides include a small standard footer by default: `CR` at lower-left and simple page numbers (`1`, `2`, `3`, ...) at lower-right, never total-count formats like `1/3`.
 
+Generated artifacts are organized by production **instances**: `001-initial`, `002-review-01`, `003-review-02`, and so on. Each instance separates raw model/render outputs, composed/manipulated images, reviewed final slide images, method metadata, and assembled outputs so the deck is easier to inspect and revise.
+
 ## Levels of use
 
 | Level | Use case | What you write |
@@ -43,6 +45,7 @@ Each level is a superset of the previous. Scaling up never requires reformatting
 - Body must prove the title. Nothing more, nothing less.
 - Reading only the slide titles should reproduce the deck's argument.
 - Every generated slide should carry the small standard `CR` mark and simple numeric page number unless the approved `deck.md` explicitly disables them.
+- Every production round should create a new instance folder; do not overwrite raw images, method metadata, or reviewed slides from earlier rounds.
 
 ## Files
 
@@ -54,6 +57,7 @@ Each level is a superset of the previous. Scaling up never requires reformatting
 | [`standards/deck-validation.md`](./standards/deck-validation.md) | Hard rules the agent self-checks before emitting |
 | [`standards/narrative-templates.md`](./standards/narrative-templates.md) | Required fields and pitfalls per template |
 | [`standards/image-prompts.md`](./standards/image-prompts.md) | Prompt templates for `gpt-image-2` |
+| [`standards/artifact-structure.md`](./standards/artifact-structure.md) | Standard folder structure for specs, instances, images, method files, and outputs |
 
 ## Examples
 
@@ -66,7 +70,7 @@ Each level is a superset of the previous. Scaling up never requires reformatting
 
 ## The skill
 
-`skill/` is a reference implementation of the deck-architect agent skill. It shows how to wire deck.md into a working agent: narrative-to-brief generation, approval gate, designer-mode PDF production with OCR when available, editable `ppt-shapes` production via python-pptx, and PDF assembly.
+`skill/` is a reference implementation of the deck-architect agent skill. It shows how to wire deck.md into a working agent: narrative-to-brief generation, approval gate, designer-mode PDF production with OCR when available, editable `ppt-shapes` production via python-pptx, standardized production instances, and PDF assembly.
 
 | Path | Purpose |
 |---|---|

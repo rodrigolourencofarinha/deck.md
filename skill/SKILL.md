@@ -36,6 +36,7 @@ Hard rules:
 - for pure designer-mode decks, produce final PDF only; do not create a PPTX wrapper
 - add OCR/searchable text to designer-mode PDFs when tooling is available, and report clearly if OCR could not be applied
 - include the standard small footer on every generated slide unless the approved deck.md disables it: `CR` lower-left and simple page numbers (`1`, `2`, `3`, ...) lower-right, never `1/3` or `1 of 3`
+- organize production artifacts into instance folders, separating raw outputs, composed/manipulated images, reviewed images, method metadata, and final outputs
 - save meaningful deck.md versions under `decks/<deck-slug>/specs/`
 
 ## Assets and tools
@@ -73,6 +74,7 @@ Read only what the task needs.
 - `standards/slide-archetypes.md` — valid slide `type` values and preferred modes
 - `standards/deck-validation.md` — hard rules the agent self-checks before emitting
 - `standards/image-prompts.md` — gpt-image-2 prompt templates and token injection
+- `standards/artifact-structure.md` — standard instance folders for raw/composed/reviewed images, method files, manifests, and outputs
 
 ### Deck logic
 - `skill/references/deck-workflow.md` — deck-level workflow, density, archetypes, and consulting-style storyline rules
@@ -244,6 +246,8 @@ Rules:
 - use `skill/references/designer-mode-gpt-image-prompt-scaffold.md` to convert the deck.md slide block into the image prompt
 - after generation, render/inspect the slide or PDF against the approved deck.md and briefing; check logo placement, asset usage, text accuracy, overlaps, clipping, safe areas, and whether the slide still lands the intended message
 - if a generated slide fails inspection, regenerate only that slide with the prior image/prompt plus the specific defect to fix
+- save untouched model outputs in the current instance's `images/raw/`; save logo/footer/crop/OCR-prep or other manipulated images in `images/composed/`; save only accepted inspected slide images in `images/reviewed/`
+- save prompts, request/response metadata, manipulation logs, render-review notes, and OCR notes under the current instance's `method/`
 
 #### `mixed`
 Use when some slides should stay editable and others benefit from designer-mode visuals.
@@ -256,28 +260,48 @@ Rules:
 
 ### 6. Save history and outputs
 
-Save deck work under a tight standard structure:
-- `decks/<deck-slug>/specs/` — versioned deck.md files
-- `decks/<deck-slug>/outputs/final/`
-- optional: `decks/<deck-slug>/outputs/review/`
-- optional: `decks/<deck-slug>/assets/source/`
-- optional: `decks/<deck-slug>/assets/generated/`
-- optional: `decks/<deck-slug>/work/` only for durable helper scripts
+Save deck work under the standard instance structure in `standards/artifact-structure.md`:
+- `decks/<deck-slug>/specs/` — approved and review deck.md versions
+- `decks/<deck-slug>/assets/source/` — human-provided logos, templates, screenshots, brand guides, and source files
+- `decks/<deck-slug>/assets/prepared/` — prepared references such as rendered template PNGs or normalized logos
+- `decks/<deck-slug>/instances/001-initial/` — first production round
+- `decks/<deck-slug>/instances/002-review-01/` — first post-render review round
+- `decks/<deck-slug>/instances/<###-round>/images/raw/` — untouched model/render outputs
+- `decks/<deck-slug>/instances/<###-round>/images/composed/` — manipulated or composited images, such as logo placement, footer fixes, padding, crop, or OCR prep
+- `decks/<deck-slug>/instances/<###-round>/images/reviewed/` — inspected slide images used for assembly
+- `decks/<deck-slug>/instances/<###-round>/method/` — prompts, model parameters, request/response metadata, manipulation logs, render-review notes, OCR notes, and blockers
+- `decks/<deck-slug>/instances/<###-round>/outputs/` — artifacts assembled from that instance
+- `decks/<deck-slug>/outputs/final/` — clean human-facing deliverables copied from the accepted instance
+- `decks/<deck-slug>/outputs/review/` — contact sheets, review PDFs, or other review-facing artifacts
 
 Preferred filenames:
 - `decks/<deck-slug>/specs/YYYY-MM-DD-v01-deck.md`
 - `decks/<deck-slug>/specs/YYYY-MM-DD-v02-deck.md`
 - `decks/<deck-slug>/specs/YYYY-MM-DD-review-01-deck.md`
 - `decks/<deck-slug>/specs/YYYY-MM-DD-review-02-deck.md`
+- `decks/<deck-slug>/instances/001-initial/deck.md`
+- `decks/<deck-slug>/instances/001-initial/manifest.yaml`
+- `decks/<deck-slug>/instances/001-initial/images/raw/slide-01.raw.png`
+- `decks/<deck-slug>/instances/001-initial/images/composed/slide-01.composed.png`
+- `decks/<deck-slug>/instances/001-initial/images/reviewed/slide-01.review.png`
+- `decks/<deck-slug>/instances/001-initial/method/slide-01.prompt.md`
+- `decks/<deck-slug>/instances/001-initial/method/slide-01.request.json`
+- `decks/<deck-slug>/instances/001-initial/method/slide-01.response.json`
+- `decks/<deck-slug>/instances/001-initial/method/render-review.md`
+- `decks/<deck-slug>/instances/001-initial/outputs/deck.pdf`
 - `decks/<deck-slug>/outputs/final/YYYY-MM-DD-v02-deck.pdf` — required final deliverable for designer-mode decks
 - `decks/<deck-slug>/outputs/final/YYYY-MM-DD-v02-deck.pptx` — only for `ppt-shapes` or explicitly requested mixed/editable decks
-- `decks/<deck-slug>/outputs/review/YYYY-MM-DD-v02-slide-01.png`
 
 Rules:
 - save meaningful revisions, not every trivial wording tweak
 - use review filenames for post-render human change requests
 - keep the latest approved deck.md easy to find
 - keep earlier major versions when structure changes materially
+- every production round must have an instance folder with `manifest.yaml`
+- never overwrite an earlier instance
+- record changed slides and reused slides in the instance manifest
+- copy or reference unchanged reviewed slides rather than regenerating them
+- keep raw generated images separate from manipulated/composed images and reviewed images
 - do not scatter duplicate export trees unless there is a clear operational reason
 - do not persist scratch crops, temporary resized variants, or throwaway assembly files
 
@@ -303,11 +327,13 @@ If anything fails:
 When the human says the rendered deck is basically okay but asks for a change:
 - start from the previous approved deck.md and the human's new change request
 - create a new review version such as `YYYY-MM-DD-review-01-deck.md`
+- create a new instance such as `002-review-01`; do not overwrite `001-initial`
 - add `## Revision Brief` with the previous deck path, review round, change request, changed slides, unchanged slides, and regeneration scope
 - patch only the affected slide specs and any deck-level fields required by the change
 - pass the old slide spec, old rendered slide image or prompt when available, updated slide spec, and exact human change request to the image model
 - ask the model to change only the requested elements and preserve everything else that still matches the approved spec
 - regenerate only changed slides, then assemble, render, and inspect the full artifact
+- record changed and reused slides in the instance `manifest.yaml`
 
 ### 9. Keep the user informed
 
@@ -326,7 +352,7 @@ Especially in designer mode, use concise progress updates such as:
 7. Produce slides in the approved mode; for pure designer-mode, assemble the final OCRed PDF only.
 8. Render and inspect the output against the deck.md, briefing, and asset rules.
 9. Repair and rerender any failed slides.
-10. Save outputs under `decks/<deck-slug>/outputs/`.
+10. Save outputs under the active `decks/<deck-slug>/instances/<###-round>/` and copy accepted deliverables to `outputs/final/`.
 11. Review against visual standards.
 
 If the build is simple, keep the workflow simple.
@@ -524,6 +550,8 @@ Before delivering, verify:
 - did the rendered output pass inspection against the approved deck.md and briefing
 - are logo placement, safe margins, and overlaps correct in the rendered output
 - does every rendered slide include the standard `CR` mark and simple numeric page number
+- is the active production round stored as an instance with raw, composed, reviewed, method, and output folders
+- does `manifest.yaml` record source spec, previous instance if any, changed slides, reused slides, status, and output paths
 - if this is a review change, is there a new `review-##` deck.md with `## Revision Brief`
 - did review generation preserve unchanged slides and regenerate only changed slides
 - can a busy reader get the point quickly

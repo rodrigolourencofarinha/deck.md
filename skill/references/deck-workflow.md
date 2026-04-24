@@ -16,6 +16,7 @@ Do not start from PowerPoint decoration.
 Do not produce slides until the human has validated and approved the current `deck.md`.
 For pure designer-mode decks, produce PDF output only and add OCR/searchable text when tooling is available.
 Every generated slide should include the standard small footer unless the approved deck.md disables it: `CR` lower-left and simple page numbers (`1`, `2`, `3`, ...) lower-right. Do not use total-count formats such as `1/3`.
+Save generated work in production instances: raw model/render outputs in `images/raw/`, manipulated/composed slide images in `images/composed/`, inspected accepted slide images in `images/reviewed/`, and prompts/metadata/review notes in `method/`.
 After production, render and inspect the output against the approved `deck.md` and briefing; repair and rerender before delivery.
 
 ## Material types and density
@@ -124,6 +125,7 @@ Before moving into production, check:
 - has the human approved the current `deck.md`, not just the initial briefing
 - if this is pure designer-mode, is the deliverable PDF-only with OCR attempted
 - after rendering, will footer/page numbers, logo placement, overlaps, safe margins, and briefing match be inspected
+- will the production round have an instance folder with raw, composed, reviewed, method, and output artifacts
 - is the density right for that mode
 - does each title communicate a conclusion
 - can the title sequence stand alone as the argument
@@ -140,8 +142,11 @@ Default to designer-mode for production unless the human asks for `ppt-shapes` o
 
 When the human asks for changes after seeing a rendered deck:
 - create a new review deck.md version, such as `YYYY-MM-DD-review-01-deck.md`
+- create a new production instance, such as `002-review-01`
 - include `## Revision Brief`
 - use the previous approved deck.md plus the new change request as inputs
 - patch only what changed
 - regenerate only changed slides
+- reuse unchanged reviewed slide images from the previous instance
+- update the instance manifest with changed slides and reused slides
 - render and inspect the full deck again before delivery

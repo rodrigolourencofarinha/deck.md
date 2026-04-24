@@ -80,6 +80,8 @@ Examples:
 - Every rendered slide MUST show the required footer mark and page number in the approved placement.
 - Required logos and assets MUST appear in the approved placement and MUST NOT overlap text or important visuals.
 - Text, labels, charts, logos, and visual blocks MUST NOT overlap or be clipped.
+- Production artifacts SHOULD follow `artifact-structure.md`: raw outputs in `images/raw/`, manipulated/composed images in `images/composed/`, inspected final slide images in `images/reviewed/`, and prompts/metadata/review notes in `method/`.
+- Every production instance SHOULD include `manifest.yaml` with source spec, previous instance when relevant, changed slides, reused slides, status, reviewed images, and final output paths.
 - If rendered output fails review, the agent MUST revise the spec or regenerate/rebuild the affected slide, then render and inspect again.
 
 ## Revision rules
@@ -87,6 +89,7 @@ Examples:
 - Human change requests after a rendered output MUST create a new review deck.md version such as `review-01` or `review-02`.
 - Review versions MUST be created from the previous approved deck.md plus the new human change request.
 - Review versions SHOULD include `## Revision Brief` with previous deck path, review round, change request, changed slides, unchanged slides, and regeneration scope.
+- Review versions SHOULD create a new production instance such as `002-review-01`; earlier instances MUST NOT be overwritten.
 - Designer-mode review changes SHOULD regenerate only changed slides and preserve unchanged slide images/specs.
 
 ---
@@ -110,6 +113,8 @@ Before emitting a deck, the agent validates:
 13. [ ] Rendered output has been inspected against the approved deck.md and briefing
 14. [ ] Logos/assets are correctly placed with no overlap or clipping
 15. [ ] Standard footer mark and simple numeric page number appear on every rendered slide
-16. [ ] Review changes use a new review deck.md version and regenerate only changed slides
+16. [ ] Raw, composed, reviewed, method, and output artifacts are stored under the standard instance structure
+17. [ ] Instance `manifest.yaml` records source spec, changed/reused slides, status, and output paths
+18. [ ] Review changes use a new review deck.md version, new production instance, and regenerate only changed slides
 
 If any check fails, the agent MUST fix before finalizing.

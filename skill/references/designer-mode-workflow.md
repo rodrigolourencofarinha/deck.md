@@ -219,7 +219,11 @@ Final deck assembly for pure designer-mode:
 - run OCR or add a searchable text layer when tooling is available
 - do not create a PPTX wrapper around generated slide images
 - verify the standard `CR` mark and simple page number appear on every slide before assembly
-- keep per-slide PNGs as review/source artifacts, not as the final deck deliverable
+- keep per-slide PNGs inside the active production instance, not scattered as loose final deliverables
+- save untouched model outputs in `images/raw/`
+- save manipulated/composited images in `images/composed/`
+- save inspected accepted slide images in `images/reviewed/`
+- save prompts, request/response metadata, manipulation logs, render-review notes, and OCR notes in `method/`
 
 Final render review:
 - inspect the PDF or rendered slide PNGs before delivery
@@ -269,24 +273,33 @@ Spec convention:
 - add `visual_template_scope: preserve white background, title typography/placement, spacious margins, and footer safe area only`
 - add `visual_template_freedom: body visuals, colors, diagrams, and metaphors may change to fit the slide`
 
-## Optional multi-file workspace
+## Standard artifact workspace
 
-Use a larger deck workspace only when there is a real operational reason, such as:
-- a larger deck needs review in parts
-- multiple people will edit different pieces
-- production assets need clearer organization
-- the deck mixes many source visuals and intermediate assets
+Use the standard instance workspace for generated deck production. One instance equals one human-visible production round, such as first generation, first review, second review, and so on.
 
 Default structure:
 - `decks/<deck-slug>/specs/`
 - `decks/<deck-slug>/assets/source/`
-- `decks/<deck-slug>/assets/generated/`
+- `decks/<deck-slug>/assets/prepared/`
+- `decks/<deck-slug>/instances/001-initial/deck.md`
+- `decks/<deck-slug>/instances/001-initial/manifest.yaml`
+- `decks/<deck-slug>/instances/001-initial/method/`
+- `decks/<deck-slug>/instances/001-initial/images/raw/`
+- `decks/<deck-slug>/instances/001-initial/images/composed/`
+- `decks/<deck-slug>/instances/001-initial/images/reviewed/`
+- `decks/<deck-slug>/instances/001-initial/outputs/`
+- `decks/<deck-slug>/instances/002-review-01/`
 - `decks/<deck-slug>/outputs/final/`
 - optional: `decks/<deck-slug>/outputs/review/`
 - optional: `decks/<deck-slug>/work/`
 
 Rules:
-- keep generated source images in one place, not split across ad hoc folders like `generated/` and `fullslides/` unless they truly mean different durable asset classes
+- do not overwrite an earlier instance
+- keep generated source images in `images/raw/`, not split across ad hoc folders like `generated/` and `fullslides/`
+- keep manipulated/composited images in `images/composed/`
+- keep only inspected accepted images in `images/reviewed/`
+- record prompts, generation parameters, request/response metadata, manipulation logs, render-review notes, and OCR notes in `method/`
+- add `manifest.yaml` with source spec, previous instance, changed slides, reused slides, reviewed images, status, and final output paths
 - keep review renders separate from final deliverables
 - do not keep `prepared-*` crops or resized rescue files as durable deck artifacts
 - use `work/` only for scripts worth preserving; otherwise keep scratch work in ephemeral `tmp/`
@@ -332,12 +345,14 @@ Use this when the human has seen the rendered output and asks for a change.
 Workflow:
 1. Keep the previous approved deck.md and rendered slide images as the baseline.
 2. Create a new spec file named like `YYYY-MM-DD-review-01-deck.md` or `YYYY-MM-DD-review-02-deck.md`.
-3. Add `## Revision Brief` with the previous deck path, review round, human change request, changed slides, unchanged slides, regeneration scope, and preserve list.
-4. Patch only the deck.md fields needed for the requested change.
-5. For each changed designer-mode slide, pass the old rendered slide image when available, the old slide spec, the updated slide spec, and the exact human change request.
-6. Prompt the image model to make only the requested change and preserve the approved composition, style, text, logo placement, and asset behavior unless those are the requested change.
-7. Reuse unchanged slide images.
-8. Reassemble the PDF, render/inspect the full artifact, and repeat only for failed changed slides.
+3. Create a new instance folder such as `002-review-01`.
+4. Add `## Revision Brief` with the previous deck path, review round, human change request, changed slides, unchanged slides, regeneration scope, and preserve list.
+5. Patch only the deck.md fields needed for the requested change.
+6. For each changed designer-mode slide, pass the old rendered slide image when available, the old slide spec, the updated slide spec, and the exact human change request.
+7. Prompt the image model to make only the requested change and preserve the approved composition, style, text, logo placement, and asset behavior unless those are the requested change.
+8. Reuse unchanged slide images by copying or referencing prior `images/reviewed/` files.
+9. Update `manifest.yaml` with changed slides, reused slides, source spec, previous instance, status, and output paths.
+10. Reassemble the PDF, render/inspect the full artifact, and repeat only for failed changed slides.
 
 Do not treat a small review change as a fresh deck generation. The point of review versions is to make the delta explicit and keep approved work stable.
 

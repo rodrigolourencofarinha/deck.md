@@ -12,6 +12,7 @@ Use this note when the user wants an editable `.pptx` deck.
 6. render the populated slide or deck to PNG
 7. inspect the rendered PNG and adjust the PPTX until the slide reads cleanly
 8. deliver only after the visual review loop passes
+9. save the production round as an instance with raw renders, composed/edited renders, reviewed renders, method notes, manifest, and outputs
 
 deck.md is the planning artifact. Do not invent a second planning schema.
 
@@ -78,10 +79,15 @@ When using the coded render layer:
 ## Output hygiene
 
 When saving deck artifacts, prefer:
-- `decks/<deck-slug>/outputs/final/` for final PPTX/PDF
-- `decks/<deck-slug>/outputs/review/` for rendered review PNGs
+- `decks/<deck-slug>/instances/<###-round>/images/raw/` for direct PowerPoint or render outputs before edits
+- `decks/<deck-slug>/instances/<###-round>/images/composed/` for edited or composited slide images
+- `decks/<deck-slug>/instances/<###-round>/images/reviewed/` for accepted render PNGs
+- `decks/<deck-slug>/instances/<###-round>/method/` for template choices, render notes, manipulation logs, and review notes
+- `decks/<deck-slug>/instances/<###-round>/outputs/` for the PPTX/PDF assembled from that instance
+- `decks/<deck-slug>/outputs/final/` for final human-facing PPTX/PDF
+- `decks/<deck-slug>/outputs/review/` for review contact sheets or PDFs
 - `decks/<deck-slug>/assets/source/` for source material
-- `decks/<deck-slug>/assets/generated/` for durable generated assets
+- `decks/<deck-slug>/assets/prepared/` for prepared reference assets
 
 Avoid leaving behind:
 - duplicate export trees with unclear status

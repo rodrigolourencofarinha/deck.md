@@ -19,6 +19,7 @@ Use `deck.md` when you want:
 - Reproducible, reviewable deck specifications.
 - A format that covers PowerPoint-shape output and image-generated slides without rewriting.
 - Coordination between multiple models or human reviewers on the same deck.
+- A standardized artifact trail for raw generated images, composed/manipulated images, reviewed images, prompts, metadata, and final outputs.
 
 ## Agent workflow
 
@@ -34,7 +35,7 @@ Use `deck.md` when you want:
 
 **Phase 3 — Render review and repair.** The agent renders the final artifact, inspects the rendered pages/slides against the approved deck.md and original briefing, and repairs any mismatch before delivery. This includes title and body text, asset use, logo placement, overlaps, clipping, safe margins, aspect ratio, reading order, and whether the output still answers the briefing.
 
-**Phase 4 — Human review changes.** If the human asks for changes after seeing a rendered output, the agent creates a new review version of `deck.md` from the previous approved version plus the human's change request. It records the change in `## Revision Brief`, saves the new spec as a review version, and regenerates only the slides whose approved spec changed.
+**Phase 4 — Human review changes.** If the human asks for changes after seeing a rendered output, the agent creates a new review version of `deck.md` from the previous approved version plus the human's change request. It records the change in `## Revision Brief`, saves the new spec as a review version, creates a new production instance, and regenerates only the slides whose approved spec changed.
 
 The planning and production phases are intentionally separate. Phase 1 produces a readable, editable document — not an irreversible side effect. If the brief doesn't match what the human wanted, they edit it before anything is generated.
 
@@ -252,6 +253,8 @@ preserve:
 
 When regenerating designer-mode slides in a review round, the prompt MUST include the prior slide image or prior prompt when available, the old slide spec, the updated slide spec, and the exact change request. It should ask the image model to change only the requested elements and preserve everything else that still matches the deck.md.
 
+The production artifacts for a review round MUST be saved as a new instance under `decks/<deck-slug>/instances/`, such as `002-review-01`. Earlier instances must not be overwritten.
+
 ### Optional per-slide fenced blocks
 
 - `chart:` — when the slide contains a chart. Fields: `type`, `emphasis`, `data_ref`, `annotation`. `emphasis` should echo the action title.
@@ -303,15 +306,61 @@ An optional `## Notes to the agent` section holds freeform context that doesn't 
 
 ## Output
 
+### Artifact structure
+
+All generated deck work SHOULD use the standardized instance structure in [`./standards/artifact-structure.md`](./standards/artifact-structure.md).
+
+Core layout:
+
+```text
+decks/<deck-slug>/
+  specs/
+  assets/
+    source/
+    prepared/
+  instances/
+    001-initial/
+      deck.md
+      manifest.yaml
+      method/
+      images/
+        raw/
+        composed/
+        reviewed/
+      outputs/
+    002-review-01/
+      deck.md
+      revision-brief.md
+      manifest.yaml
+      method/
+      images/
+        raw/
+        composed/
+        reviewed/
+      outputs/
+  outputs/
+    final/
+    review/
+```
+
+Every production round gets an instance folder. `images/raw/` stores untouched model or render outputs. `images/composed/` stores manipulated images, such as logo placement, footer fixes, crop/padding, or OCR preparation. `images/reviewed/` stores the exact images that passed inspection and were assembled. `method/` stores prompts, request/response metadata, generation settings, manipulation logs, render-review notes, and OCR notes. `manifest.yaml` records changed slides, reused slides, source spec, previous instance, and final outputs.
+
 ### Slide files
 
 Every slide produces one PNG regardless of mode:
 - `designer-mode` slides are generated via gpt-image-2 per the prompt templates in [`./standards/image-prompts.md`](./standards/image-prompts.md).
 - `ppt-shapes` slides are rendered as layout images by the agent from the deck's `design_tokens` — no image generation call is made, but the output is still a PNG sized to `image_generation.size`.
 
-File naming convention: `slides/slide-01.png`, `slides/slide-02.png`, etc. (zero-padded to two digits; three digits for decks over 99 slides). Assembly order follows `id` values ascending. For string IDs, document order applies.
+Simple exports may use `slides/slide-01.png`, `slides/slide-02.png`, etc. Inside the standard instance structure, use `images/raw/slide-01.raw.png`, `images/composed/slide-01.composed.png`, and `images/reviewed/slide-01.review.png`. Slide numbers are zero-padded to two digits; use three digits for decks over 99 slides. Assembly order follows `id` values ascending. For string IDs, document order applies.
 
 Every slide output MUST include the deck footer standard: `CR` at lower-left and numeric page number at lower-right by default. Page numbers are simple slide-order numbers (`1`, `2`, `3`, ...), not zero-padded file IDs and not total-count formats such as `1/3`. The footer is part of the slide visual, so it must appear in both designer-mode image prompts and `ppt-shapes` output.
+
+Within an instance, slide files SHOULD use:
+- `images/raw/slide-01.raw.png`
+- `images/composed/slide-01.composed.png`
+- `images/reviewed/slide-01.review.png`
+
+If no manipulation is needed, copy the raw output to `images/reviewed/` and record that no composition step was needed in the manifest or manipulation log.
 
 ### PDF assembly
 
@@ -323,6 +372,8 @@ When OCR tooling is available, add a searchable text layer to the final designer
 
 Speaker notes, if present, are embedded as PDF presenter notes. They can also be exported as a companion Markdown file (`{slug}-notes.md`) — request this in `## Notes to the agent`.
 
+The accepted instance output should be copied or exported to root `outputs/final/` as the clean human-facing deliverable. Root `outputs/review/` is reserved for contact sheets, review PDFs, or other review-facing artifacts.
+
 ### Render review
 
 Before delivery, the agent MUST inspect the rendered artifact and compare it with the approved deck.md and briefing.
@@ -332,6 +383,8 @@ Render review checklist:
 - every slide has the required small footer mark and simple numeric page number
 - title, required text, labels, and body text match the approved spec
 - logo and required asset placement matches `designer_assets`, `asset_refs`, and `placement`
+- raw, composed, and reviewed images are stored in the standard instance folders where relevant
+- method artifacts and manifest explain how the instance was produced
 - no text, logos, charts, labels, or visual blocks overlap
 - nothing important is clipped, cropped, too small, or outside the safe area
 - visual hierarchy and reading path match the slide intent
@@ -369,6 +422,7 @@ On conflict, the closer-in rule wins. Human-set fields beat model improvisation.
 - [`./standards/slide-archetypes.md`](./standards/slide-archetypes.md) — catalog of valid `type` values with required fields and typical layouts.
 - [`./standards/deck-validation.md`](./standards/deck-validation.md) — hard rules the agent self-checks before emitting.
 - [`./standards/image-prompts.md`](./standards/image-prompts.md) — prompt templates for `gpt-image-2` calls.
+- [`./standards/artifact-structure.md`](./standards/artifact-structure.md) — standardized folder structure for specs, instances, raw/composed/reviewed images, methods, and outputs.
 
 ## Examples
 

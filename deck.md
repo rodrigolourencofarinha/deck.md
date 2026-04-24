@@ -266,6 +266,14 @@ required_text:
 
 <Freeform context the agent should know but that doesn't fit above: deadlines, reviewers, data file locations, related decks, things to double-check, constraints on output.>
 
+## Artifact organization
+
+<!-- Generated work should follow standards/artifact-structure.md:
+     specs/ for approved deck.md versions, assets/source/ for supplied assets,
+     assets/prepared/ for rendered or normalized references, and one instance folder
+     per production round (001-initial, 002-review-01, ...). Each instance separates
+     images/raw, images/composed, images/reviewed, method files, manifest.yaml, and outputs. -->
+
 ## Render review
 
 <!-- Agent-facing checklist to complete after rendering and before delivery.
@@ -273,6 +281,7 @@ required_text:
 
 - <Slide/page count and order match this deck.md>
 - <Text, labels, logo placement, and assets match the approved spec>
+- <Raw, composed, reviewed, method, manifest, and output artifacts are stored in the current instance folder>
 - <No overlap, clipping, unsafe margins, or unreadable text>
 - <Rendered output still matches the original briefing and any Revision Brief>
 
@@ -285,6 +294,7 @@ required_text:
 - [`./standards/slide-archetypes.md`](./standards/slide-archetypes.md) — slide type catalog
 - [`./standards/deck-validation.md`](./standards/deck-validation.md) — hard rules the agent self-checks
 - [`./standards/image-prompts.md`](./standards/image-prompts.md) — gpt-image-2 prompt templates
+- [`./standards/artifact-structure.md`](./standards/artifact-structure.md) — standard production instance folders and artifact naming
 - [`./examples/scr.deck.md`](./examples/scr.deck.md) — minimal filled SCR example
 - [`./examples/pyramid.deck.md`](./examples/pyramid.deck.md) — full pyramid example
 - [`./examples/problem-solution.deck.md`](./examples/problem-solution.deck.md) — pitch deck example

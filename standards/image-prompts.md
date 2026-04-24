@@ -142,6 +142,15 @@ Defaults for `image_generation.quality`:
 
 Use `low` during iteration; switch to `high` for final.
 
+## Prompt and metadata storage
+
+For every generated slide, store the prompt and generation metadata in the active instance's `method/` folder:
+- `slide-01.prompt.md` — final prompt sent to the image model
+- `slide-01.request.json` — model, size, quality, seed or variant count if available, asset input labels, and other request parameters
+- `slide-01.response.json` — response metadata, output filenames, model identifiers, warnings, and provider ids when available
+
+Do not rely on chat history as the only record of how a slide was generated.
+
 ---
 
 ## Visual template reference
