@@ -20,6 +20,20 @@ Use `deck.md` when you want:
 - A format that covers PowerPoint-shape output and image-generated slides without rewriting.
 - Coordination between multiple models or human reviewers on the same deck.
 
+## Agent workflow
+
+`deck.md` supports two authorship modes and a two-phase generation pipeline.
+
+**Authorship modes:**
+- **Human-authored brief:** A human writes (or finishes) the `deck.md` and hands it to the agent. The agent validates and goes straight to phase 2.
+- **Agent-generated brief:** A human provides a broad idea, raw content, or partial notes. The agent writes the `deck.md` (phase 1), the human validates it, then the agent generates slides (phase 2).
+
+**Phase 1 — Brief generation.** The agent receives raw input and produces a complete `deck.md` with `status: draft`. It populates `## Brief` with a summary of what it received and how it interpreted it. The human reviews, edits if needed, and sets `status: approved` to release generation. The agent MUST NOT proceed to phase 2 while `status: draft`.
+
+**Phase 2 — Slide generation.** The agent reads an `approved` deck.md, validates it against `standards/deck-validation.md`, and produces one rendered image per slide (see `## Output`). `designer-mode` slides are generated via gpt-image-2. `ppt-shapes` slides are rendered as layout images from the design tokens. All slides are assembled into a PDF in slide order.
+
+The two phases are intentionally separate. Phase 1 produces a readable, editable document — not an irreversible side effect. If the brief doesn't match what the human wanted, they edit it before anything is generated.
+
 ## File format
 
 A valid `deck.md` is:
@@ -67,10 +81,12 @@ deck:
   author:    "<string, optional>"
   version:   "<string, optional>"
 
+status: "<draft|approved>"                                    # default: draft; set to approved to release generation
+
 narrative_template: "<scr|pyramid|problem-solution|update>"   # required
 
 production_defaults:
-  default_slide_mode: "<designer-mode|ppt-shapes>"            # default: designer-mode
+  default_slide_mode: "<ppt-shapes|designer-mode>"            # default: ppt-shapes
   aspect_ratio: "16:9"
   default_visual_template: "<path, optional>"
   default_visual_template_scope: "<string, optional>"
@@ -171,9 +187,56 @@ visual_template_scope: "<string>"                        # overrides deck defaul
 
 The `type` field must be a value in [`./standards/slide-archetypes.md`](./standards/slide-archetypes.md): `executive_summary`, `section_divider`, `situation`, `complication`, `key_takeaways`, `analysis`, `chart`, `framework`, `recommendation`, `roadmap`, `risk_mitigation`, `next_steps`, `appendix`.
 
+## Brief
+
+An optional `## Brief` section appears in agent-generated `deck.md` files. It is absent from human-authored briefs. It documents what the agent received as input and how it interpreted that input — giving the human a clear audit trail to review before setting `status: approved`.
+
+The agent MUST populate `## Brief` when generating a `deck.md` from raw input (idea, content, or partial brief). It MUST NOT add it when refining a human-written `deck.md`.
+
+Contents are a fenced `yaml` block with four fields:
+
+```yaml
+input_type: "<idea|content|partial_brief>"
+input_summary: "<one or two sentences on what was provided>"
+interpretation: "<what the agent inferred: audience, objective, template choice, narrative structure>"
+open_questions:
+  - "<anything that couldn't be determined and was left as a placeholder>"
+```
+
+**Example:**
+
+```yaml
+input_type: idea
+input_summary: "Founder asked for a Series A pitch deck for a B2B SaaS onboarding product targeting mid-market."
+interpretation: "Chose problem-solution template. Audience: VC investors. Objective: secure a first meeting. Tone: confident and evidence-backed."
+open_questions:
+  - "Traction data — placeholder on Slide 4; replace with real numbers before approving"
+  - "Preferred typeface — defaulted to Inter; override typography in design_tokens if needed"
+```
+
 ## Notes to the agent
 
 An optional `## Notes to the agent` section holds freeform context that doesn't fit elsewhere. It is always agent-facing and never appears in rendered output. No required structure. Typical contents: deadlines and reviewer names; data file locations; related decks or prior versions; output format constraints (PDF, PPTX, Google Slides); post-generation instructions (embed recording, add watermark); things to double-check.
+
+## Output
+
+### Slide files
+
+Every slide produces one PNG regardless of mode:
+- `designer-mode` slides are generated via gpt-image-2 per the prompt templates in [`./standards/image-prompts.md`](./standards/image-prompts.md).
+- `ppt-shapes` slides are rendered as layout images by the agent from the deck's `design_tokens` — no image generation call is made, but the output is still a PNG sized to `image_generation.size`.
+
+File naming convention: `slides/slide-01.png`, `slides/slide-02.png`, etc. (zero-padded to two digits; three digits for decks over 99 slides). Assembly order follows `id` values ascending. For string IDs, document order applies.
+
+### PDF assembly
+
+The final PDF is assembled from all slide PNGs in order. Default filename: the deck title slugified (e.g., `2026-growth-recovery-plan.pdf`). Override with an explicit filename in `## Notes to the agent`.
+
+Speaker notes, if present, are embedded as PDF presenter notes. They can also be exported as a companion Markdown file (`{slug}-notes.md`) — request this in `## Notes to the agent`.
+
+### Quality
+
+Use `image_generation.quality: low` during brief iteration — fast and inexpensive. Switch to `high` for the approved final pass. Agents MAY auto-downgrade to `low` while `status: draft` and upgrade to `high` when `status: approved`.
 
 ## Validation and error handling
 

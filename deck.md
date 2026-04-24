@@ -8,6 +8,10 @@
 
 schema_version: deck-md/v2-alpha
 
+# Workflow status. Set to 'approved' to release slide generation.
+# If this deck.md was agent-generated, review ## Brief below before approving.
+status: draft                             # draft | approved
+
 deck:
   title:     "<your deck title>"
   objective: "<what you want this deck to achieve — a decision, action, alignment>"
@@ -58,6 +62,20 @@ design_tokens:
 ---
 
 # <Your deck title>
+
+## Brief
+
+<!-- This section is only present in agent-generated deck.md files.
+     If you wrote this brief yourself, delete this section entirely.
+     If the agent wrote it, read this before setting status: approved. -->
+
+```yaml
+input_type: "<idea|content|partial_brief>"
+input_summary: "<what was provided to the agent>"
+interpretation: "<what the agent inferred: audience, objective, template, narrative>"
+open_questions:
+  - "<placeholder or gap the human needs to fill before approving>"
+```
 
 ## What this deck is for
 
@@ -119,7 +137,7 @@ Each slide is one `### Slide N — "action title"` heading, followed by a small 
 
 **Horizontal logic.** Reading only the action titles of all your slides should reproduce the deck's argument. If it doesn't, either the titles or the argument structure above needs work.
 
-**Output mode.** Default is `designer-mode` — each slide becomes a generated image. The agent infers a reasonable composition from the action title, body, and design tokens. For finer control on a specific slide, add a `creative_direction` and `required_text` block (see Slide 4). For simple text-only slides that don't need generation, opt out with `mode: ppt-shapes`.
+**Output mode.** Default is `ppt-shapes` — the agent renders the slide as a layout image from the design tokens. Opt into `mode: designer-mode` on individual slides where a generated visual adds clear value (executive summaries, recommendations, section dividers). For finer control on a designer-mode slide, add a `creative_direction` and `required_text` block (see Slide 4).
 
 Valid `type` values are listed in [`./standards/slide-archetypes.md`](./standards/slide-archetypes.md).
 
