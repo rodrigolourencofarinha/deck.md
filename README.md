@@ -41,19 +41,19 @@ Each level is a superset of the previous. Scaling up never requires reformatting
 |---|---|
 | [`deck.md`](./deck.md) | Starter template — copy and fill in |
 | [`SPEC.md`](./SPEC.md) | Authoritative format specification |
-| [`slide-archetypes.md`](./slide-archetypes.md) | Valid `type` values for slides |
-| [`deck-validation.md`](./deck-validation.md) | Hard rules the agent self-checks before emitting |
-| [`narrative-templates.md`](./narrative-templates.md) | Required fields and pitfalls per template |
-| [`image-prompts.md`](./image-prompts.md) | Prompt templates for `gpt-image-2` |
+| [`standards/slide-archetypes.md`](./standards/slide-archetypes.md) | Valid `type` values for slides |
+| [`standards/deck-validation.md`](./standards/deck-validation.md) | Hard rules the agent self-checks before emitting |
+| [`standards/narrative-templates.md`](./standards/narrative-templates.md) | Required fields and pitfalls per template |
+| [`standards/image-prompts.md`](./standards/image-prompts.md) | Prompt templates for `gpt-image-2` |
 
 ## Examples
 
 | File | Template | Description |
 |---|---|---|
-| [`scr.deck.md`](./scr.deck.md) | `scr` | Minimal 5-slide Q3 results review |
-| [`pyramid.deck.md`](./pyramid.deck.md) | `pyramid` | Full deck with analysis and recommendation |
-| [`problem-solution.deck.md`](./problem-solution.deck.md) | `problem-solution` | Startup pitch deck |
-| [`update.deck.md`](./update.deck.md) | `update` | Quarterly engineering status report |
+| [`examples/scr.deck.md`](./examples/scr.deck.md) | `scr` | Minimal 5-slide Q3 results review |
+| [`examples/pyramid.deck.md`](./examples/pyramid.deck.md) | `pyramid` | Full deck with analysis and recommendation |
+| [`examples/problem-solution.deck.md`](./examples/problem-solution.deck.md) | `problem-solution` | Startup pitch deck |
+| [`examples/update.deck.md`](./examples/update.deck.md) | `update` | Quarterly engineering status report |
 
 ## License
 
