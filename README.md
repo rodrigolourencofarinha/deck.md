@@ -55,6 +55,49 @@ Each level is a superset of the previous. Scaling up never requires reformatting
 | [`examples/problem-solution.deck.md`](./examples/problem-solution.deck.md) | `problem-solution` | Startup pitch deck |
 | [`examples/update.deck.md`](./examples/update.deck.md) | `update` | Quarterly engineering status report |
 
+## The skill
+
+`skill/` is a reference implementation of the deck-architect agent skill. It shows how to wire deck.md into a working agent: narrative-to-brief generation, approval gate, slide production via GPT Image 2 or python-pptx, and PDF assembly.
+
+| Path | Purpose |
+|---|---|
+| [`skill/SKILL.md`](./skill/SKILL.md) | Skill entry point — the agent reads this first |
+| [`skill/references/`](./skill/references/) | Production and workflow guides |
+| [`skill/scripts/`](./skill/scripts/) | `build_pptx.py`, `tabler_icons.py`, `split_template_deck.py` |
+
+## Deploying to your own agent
+
+When you copy this skill into your own project, the format files (spec, standards, examples) need to be accessible to the agent alongside the skill. The recommended layout is to bring them into `skill/references/` so the whole skill is self-contained:
+
+```
+your-project/
+└── skill/
+    ├── SKILL.md
+    ├── references/
+    │   ├── SPEC.md                     ← from repo root
+    │   ├── deck.md                     ← from repo root
+    │   ├── deck.minimal.md             ← from repo root
+    │   ├── standards/                  ← from repo root
+    │   ├── examples/                   ← from repo root
+    │   ├── deck-workflow.md
+    │   ├── consulting-slide-standards.md
+    │   ├── single-slide-workflow.md
+    │   ├── pptx-production.md
+    │   ├── template-catalog.md
+    │   ├── designer-mode-workflow.md
+    │   ├── designer-mode-gpt-image-prompt-scaffold.md
+    │   ├── designer-mode-direct-api-pattern.md
+    │   └── tabler-icon-selection.md
+    └── scripts/
+        ├── build_pptx.py
+        ├── split_template_deck.py
+        └── tabler_icons.py
+```
+
+Then update the paths in `SKILL.md` to reflect the new locations — for example, `SPEC.md` becomes `references/SPEC.md`, `standards/slide-archetypes.md` becomes `references/standards/slide-archetypes.md`, and so on.
+
+If you just want the simplest path: clone this repo and point your agent at the root. `skill/SKILL.md` references `SPEC.md`, `standards/`, and `examples/` as root-relative paths — no reorganization needed as long as your agent runs from the repo root.
+
 ## License
 
 [MIT](./LICENSE)
