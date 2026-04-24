@@ -14,6 +14,12 @@ narrative_template: pyramid
 production_defaults:
   default_slide_mode: designer-mode       # designer-mode | ppt-shapes
   aspect_ratio: "16:9"
+  footer:
+    page_numbers: true
+    page_number_format: "{page}"
+    cr_mark: true
+    cr_text: "CR"
+    placement: bottom-left-cr-bottom-right-page
   default_visual_template: assets/visual-templates/default-slide.png
 
 image_generation:

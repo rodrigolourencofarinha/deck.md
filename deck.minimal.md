@@ -13,6 +13,12 @@ narrative_template: scr    # scr | pyramid | problem-solution | update
 production_defaults:
   default_slide_mode: designer-mode
   aspect_ratio: "16:9"
+  footer:
+    page_numbers: true
+    page_number_format: "{page}"
+    cr_mark: true
+    cr_text: "CR"
+    placement: bottom-left-cr-bottom-right-page
 ---
 
 # <Your deck title>

@@ -33,6 +33,12 @@ narrative_template: pyramid
 production_defaults:
   default_slide_mode: designer-mode       # designer-mode | ppt-shapes
   aspect_ratio: "16:9"
+  footer:
+    page_numbers: true                    # simple 1, 2, 3, ... in the lower-right
+    page_number_format: "{page}"
+    cr_mark: true                         # small CR mark in the lower-left
+    cr_text: "CR"
+    placement: bottom-left-cr-bottom-right-page
   # default_visual_template: assets/visual-templates/default-slide.png
 
 # image_generation is only used for slides with mode: designer-mode.

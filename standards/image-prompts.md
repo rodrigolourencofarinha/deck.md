@@ -8,13 +8,14 @@ Applies when a slide has `mode: designer-mode` AND `image_decision: full-generat
 
 ## Base prompt structure
 
-Every generated slide prompt is assembled from five parts, in order:
+Every generated slide prompt is assembled from six parts, in order:
 
 1. **Format directive** — aspect ratio, size, output constraints
 2. **Design context** — from `design_tokens` and deck-level `## Design` rules
 3. **Asset references** — from deck-level `designer_assets` and slide-level `asset_refs`
 4. **Slide content** — title, body, type, layout
 5. **Slide-specific direction** — from `creative_direction` and `required_text`
+6. **Computed footer** — from `production_defaults.footer` and slide order
 
 ### Template
 
@@ -47,6 +48,7 @@ SLIDE CONTENT:
 - Layout: {slide.layout}
 - Action title: "{slide.title}"
 - Body: {slide.body, rendered as short labels/bullets}
+- Footer: lower-left "{footer.cr_text}" when enabled; lower-right "{footer.page_number}" when enabled
 
 CREATIVE DIRECTION:
 - Mood: {creative_direction.mood}
@@ -59,6 +61,7 @@ The ONLY text that may appear in the image is:
 - Title: "{required_text.title}"
 - Subtitle: "{required_text.subtitle}" (if present)
 - Labels: {required_text.labels}
+- Footer: "{footer.cr_text}" and "{footer.page_number}" (if enabled)
 
 Do NOT render any other text, numbers, watermarks, or signatures.
 ```
@@ -91,8 +94,9 @@ This is the single most important rule: **the model MUST NOT invent text in the 
 Enforcement:
 1. The prompt explicitly lists the allowed text under `TEXT LOCK`.
 2. The prompt explicitly instructs "Do NOT render any other text".
-3. After generation, a vision check (OCR or visual inspection) verifies no extra text appears.
-4. If extra text is detected, regenerate with a stronger TEXT LOCK ("Render ONLY the following labels; reject all other text").
+3. Footer text computed from `production_defaults.footer` is appended to the allowed text list.
+4. After generation, a vision check (OCR or visual inspection) verifies no extra text appears.
+5. If extra text is detected, regenerate with a stronger TEXT LOCK ("Render ONLY the following labels and footer tokens; reject all other text").
 
 If `image_decision: full-generated-visual` and `required_text` is absent, generation MUST be blocked — this is a validation error.
 
@@ -149,6 +153,17 @@ When `visual_template_reference` is set, the agent passes the referenced image a
 - `"preserve palette and typography"` — aesthetic only
 
 Default scope: title typography, outer margins, footer safe area. Body composition is free.
+
+## Footer prompt rules
+
+Every designer-mode slide prompt should include the computed footer unless the approved deck.md disables it:
+- Place the small `CR` mark in the lower-left corner.
+- Place the simple page number (`1`, `2`, `3`, ...) in the lower-right corner.
+- Do not include the total slide count; render `1`, not `1/3` or `1 of 3`.
+- Use subtle footer styling that matches the deck typography and muted color system.
+- Keep footer elements inside the safe area and away from logos, sources, charts, and body content.
+
+The footer is the only numeric text allowed by default besides slide-approved labels. If a slide also contains chart labels or other required numbers, those must still appear in `required_text.labels`.
 
 ## Designer asset references
 

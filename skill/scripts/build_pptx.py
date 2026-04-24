@@ -21,6 +21,88 @@ PANEL_BORDER = RGBColor(210, 222, 238)
 WHITE = RGBColor(255, 255, 255)
 SKILL_DIR = Path(__file__).resolve().parent.parent
 DEFAULT_TEMPLATE = SKILL_DIR / "assets" / "RLF_PPT_Template_v1.pptx"
+EMU_PER_INCH = 914400
+FRONTMATTER_RE = re.compile(r"\A---\s*\n(.*?)\n---\s*\n", re.DOTALL)
+SLIDE_HEADING_RE = re.compile(
+    r'^### Slide\s+(.+?)\s+(?:\u2014|-)\s+"(.+?)"\s*$',
+    re.MULTILINE,
+)
+FENCED_YAML_RE = re.compile(r"```yaml\s*\n(.*?)\n```", re.DOTALL)
+HTML_COMMENT_RE = re.compile(r"<!--.*?-->", re.DOTALL)
+
+
+def bool_setting(value, default: bool) -> bool:
+    if value is None:
+        return default
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        return value.strip().lower() not in {'0', 'false', 'no', 'off'}
+    return bool(value)
+
+
+def footer_config_from_spec(spec: dict) -> dict:
+    production = spec.get('production_defaults') or {}
+    if not isinstance(production, dict):
+        production = {}
+    footer = spec.get('footer') or production.get('footer') or spec.get('Footer') or {}
+    if footer is None:
+        footer = {}
+    if not isinstance(footer, dict):
+        footer = {'cr_text': str(footer)}
+
+    return {
+        'enabled': bool_setting(footer.get('enabled'), True),
+        'page_numbers': bool_setting(footer.get('page_numbers'), True),
+        'page_number_format': str(footer.get('page_number_format') or '{page}'),
+        'cr_mark': bool_setting(footer.get('cr_mark'), True),
+        'cr_text': str(footer.get('cr_text') or footer.get('cr') or 'CR').strip(),
+    }
+
+
+def format_page_number(template: str, page_number: int | str) -> str:
+    # Deck standard is standalone slide-order numbering only: 1, 2, 3.
+    # Ignore total-count formats such as 1/3 or "1 of 3".
+    return str(page_number)
+
+
+def add_footer_text(slide, x: float, y: float, w: float, h: float, text: str, *, align=PP_ALIGN.LEFT) -> None:
+    box = slide.shapes.add_textbox(Inches(x), Inches(y), Inches(w), Inches(h))
+    tf = box.text_frame
+    tf.clear()
+    tf.margin_left = 0
+    tf.margin_right = 0
+    tf.margin_top = 0
+    tf.margin_bottom = 0
+    p = tf.paragraphs[0]
+    p.alignment = align
+    r = p.add_run()
+    r.text = text
+    r.font.name = 'Aptos'
+    r.font.size = Pt(8)
+    r.font.color.rgb = MUTED
+
+
+def add_standard_footer(
+    prs: Presentation,
+    slide,
+    *,
+    page_number: int | str | None,
+    footer_config: dict,
+) -> None:
+    if not footer_config.get('enabled', True):
+        return
+
+    slide_w = prs.slide_width / EMU_PER_INCH
+    slide_h = prs.slide_height / EMU_PER_INCH
+    footer_y = max(slide_h - 0.34, 0.0)
+
+    if footer_config.get('cr_mark', True) and footer_config.get('cr_text'):
+        add_footer_text(slide, 0.72, footer_y, 1.4, 0.18, footer_config['cr_text'])
+
+    if footer_config.get('page_numbers', True) and page_number is not None:
+        number = format_page_number(footer_config.get('page_number_format') or '{page}', page_number)
+        add_footer_text(slide, slide_w - 1.12, footer_y, 0.4, 0.18, number, align=PP_ALIGN.RIGHT)
 
 
 def add_takeaway_slide(
@@ -685,13 +767,139 @@ def add_quote_slide(
         r.font.color.rgb = TEXT
 
 
+def load_yaml_mapping(text: str, path: Path, context: str) -> dict:
+    try:
+        data = yaml.safe_load(text) or {}
+    except yaml.YAMLError as exc:
+        raise SystemExit(f'invalid YAML in {context}: {path}: {exc}') from exc
+    if not isinstance(data, dict):
+        raise SystemExit(f'{context} must be a mapping: {path}')
+    return data
+
+
+def split_markdown_frontmatter(text: str, path: Path) -> tuple[dict, str] | None:
+    match = FRONTMATTER_RE.match(text)
+    if not match:
+        return None
+    frontmatter = load_yaml_mapping(match.group(1), path, 'frontmatter')
+    return frontmatter, text[match.end():]
+
+
+def parse_markdown_items(markdown: str) -> list[dict[str, str]]:
+    body = FENCED_YAML_RE.sub('', markdown)
+    body = HTML_COMMENT_RE.sub('', body)
+
+    items: list[dict[str, str]] = []
+    paragraphs: list[str] = []
+    in_speaker_notes = False
+
+    for raw_line in body.splitlines():
+        line = raw_line.strip()
+        if not line or line == '---':
+            continue
+        lower = line.lower()
+        if lower.startswith('**sources:**') or lower.startswith('sources:'):
+            in_speaker_notes = False
+            continue
+        if lower.startswith('**speaker notes:**') or lower.startswith('speaker notes:'):
+            in_speaker_notes = True
+            continue
+        if in_speaker_notes or line.startswith('#') or line.startswith('<'):
+            continue
+
+        bullet = re.match(r'^(?:[-*]|\d+[.)])\s+(.+)$', line)
+        text = bullet.group(1).strip() if bullet else line
+        text = re.sub(r'\s+', ' ', text)
+
+        labeled = re.match(r'^\*\*(.+?)[.:]?\*\*\s*[-:]\s*(.+)$', text)
+        if labeled:
+            items.append({'lead': labeled.group(1).strip(), 'body': labeled.group(2).strip()})
+        elif bullet:
+            items.append({'lead': text, 'body': ''})
+        else:
+            paragraphs.append(text)
+
+    if not items and paragraphs:
+        joined = ' '.join(paragraphs).strip()
+        if joined:
+            items.append({'lead': joined, 'body': ''})
+    return items
+
+
+def parse_deck_markdown(path: Path, text: str) -> dict | None:
+    split = split_markdown_frontmatter(text, path)
+    if not split:
+        return None
+
+    frontmatter, body = split
+    if '## Slides' not in body or 'deck' not in frontmatter:
+        return None
+
+    slides_section = body.split('## Slides', 1)[1]
+    headings = list(SLIDE_HEADING_RE.finditer(slides_section))
+    if not headings:
+        raise SystemExit(f'No deck.md slide headings found in {path}')
+
+    slides: list[dict] = []
+    for index, heading in enumerate(headings):
+        segment_end = headings[index + 1].start() if index + 1 < len(headings) else len(slides_section)
+        segment = slides_section[heading.end():segment_end]
+
+        metadata: dict = {}
+        for block_index, block in enumerate(FENCED_YAML_RE.findall(segment)):
+            block_data = load_yaml_mapping(block, path, f'slide {index + 1} YAML block')
+            if block_index == 0 and {'id', 'type', 'layout', 'mode', 'image_decision'} & set(block_data):
+                metadata.update(block_data)
+            else:
+                for key in ('chart', 'creative_direction', 'required_text'):
+                    if key in block_data:
+                        metadata[key] = block_data[key]
+
+        slide_type = str(metadata.get('type') or '').strip()
+        body_items = parse_markdown_items(segment)
+        content: dict = {'body': body_items}
+        if slide_type == 'roadmap':
+            content['phases'] = body_items
+        if slide_type == 'framework' and body_items:
+            content['quadrants'] = body_items[:4]
+        if metadata.get('chart'):
+            content['chart'] = metadata['chart']
+
+        slide = {
+            'id': metadata.get('id') or heading.group(1).strip(),
+            'title': heading.group(2).strip(),
+            'type': slide_type,
+            'layout': metadata.get('layout'),
+            'mode': metadata.get('mode'),
+            'slide_mode': metadata.get('mode'),
+            'template': metadata.get('template'),
+            'image_decision': metadata.get('image_decision'),
+            'content': content,
+        }
+        if metadata.get('chart'):
+            slide['chart'] = metadata['chart']
+        slides.append(slide)
+
+    return {
+        'schema_version': frontmatter.get('schema_version'),
+        'deck': frontmatter.get('deck') or {},
+        'narrative_template': frontmatter.get('narrative_template'),
+        'production_defaults': frontmatter.get('production_defaults') or {},
+        'image_generation': frontmatter.get('image_generation') or {},
+        'design_tokens': frontmatter.get('design_tokens') or {},
+        'slides': slides,
+    }
+
+
 def load_structured_file(path: Path):
     text = path.read_text(encoding='utf-8')
-    if path.suffix.lower() in {'.yaml', '.yml', '.md'}:
-        data = yaml.safe_load(text)
-        if not isinstance(data, dict):
-            raise SystemExit(f'spec root must be a mapping: {path}')
-        return data
+    if path.suffix.lower() == '.md':
+        deck = parse_deck_markdown(path, text)
+        if deck is not None:
+            return deck
+        return load_yaml_mapping(text, path, 'spec root')
+    if path.suffix.lower() in {'.yaml', '.yml'}:
+        return load_yaml_mapping(text, path, 'spec root')
     return json.loads(text)
 
 
@@ -703,7 +911,7 @@ def slugify(value: str) -> str:
 
 def normalize_mode(deck_mode: str | None, slide: dict) -> str:
     deck_mode = (deck_mode or '').strip().lower()
-    slide_mode = str(slide.get('slide_mode') or '').strip().lower()
+    slide_mode = str(slide.get('slide_mode') or slide.get('mode') or '').strip().lower()
     if deck_mode == 'mixed':
         if slide_mode not in {'ppt-shapes', 'designer-mode'}:
             raise SystemExit(f"mixed decks require slide_mode per slide; missing on slide id={slide.get('id')}")
@@ -723,9 +931,13 @@ def storyline_takeaway(spec: dict, slide_id: int | str | None) -> str | None:
 
 
 def infer_archetype(slide: dict) -> str:
+    slide_type = str(slide.get('type') or '').strip().lower().replace('_', '-')
     template = str(slide.get('template') or '').strip().lower()
     layout = str(slide.get('layout') or '').strip().lower()
-    candidates = [template, layout]
+    content = slide.get('content') or {}
+    chart = slide.get('chart') or (content.get('chart') if isinstance(content, dict) else None) or {}
+    chart_type = str(chart.get('type') or '').strip().lower() if isinstance(chart, dict) else ''
+    candidates = [template, layout, slide_type]
     for value in candidates:
         if value in {'takeaway', 'takeaway + support'}:
             return 'takeaway'
@@ -741,7 +953,30 @@ def infer_archetype(slide: dict) -> str:
             return 'section-divider'
         if value in {'quote'}:
             return 'quote'
-    raise SystemExit(f"unsupported ppt-shapes layout/template for slide id={slide.get('id')}: layout={slide.get('layout')!r} template={slide.get('template')!r}")
+    if slide_type == 'section-divider':
+        return 'section-divider'
+    if slide_type == 'roadmap' or 'timeline' in layout or 'roadmap' in layout:
+        return 'process'
+    if slide_type == 'framework' and any(token in layout for token in ('2x2', 'matrix', 'quadrant')):
+        return 'matrix'
+    if slide_type == 'chart' or chart_type:
+        if any(token in chart_type for token in ('bar', 'column')):
+            return 'bar-column'
+        return 'takeaway'
+    if slide_type in {
+        'executive-summary',
+        'situation',
+        'complication',
+        'key-takeaways',
+        'analysis',
+        'framework',
+        'recommendation',
+        'risk-mitigation',
+        'next-steps',
+        'appendix',
+    }:
+        return 'takeaway'
+    raise SystemExit(f"unsupported ppt-shapes layout/template/type for slide id={slide.get('id')}: layout={slide.get('layout')!r} template={slide.get('template')!r} type={slide.get('type')!r}")
 
 
 def ensure_list(value) -> list:
@@ -750,6 +985,16 @@ def ensure_list(value) -> list:
     if isinstance(value, list):
         return value
     return [value]
+
+
+def append_bullet(bullets: list[dict[str, str]], item) -> None:
+    if isinstance(item, dict):
+        bullets.append({
+            'lead': str(item.get('lead') or item.get('title') or item.get('label') or ''),
+            'body': str(item.get('body') or item.get('caption') or item.get('description') or ''),
+        })
+    else:
+        bullets.append({'lead': str(item), 'body': ''})
 
 
 def compile_slide_payload(spec: dict, slide: dict) -> dict:
@@ -768,28 +1013,22 @@ def compile_slide_payload(spec: dict, slide: dict) -> dict:
     if archetype == 'takeaway':
         bullets = []
         for lead in ensure_list(content.get('lead')):
-            if isinstance(lead, dict):
-                bullets.append({'lead': str(lead.get('lead') or lead.get('title') or ''), 'body': str(lead.get('body') or '')})
-            else:
-                bullets.append({'lead': str(lead), 'body': ''})
+            append_bullet(bullets, lead)
         for item in ensure_list(content.get('support')):
-            if isinstance(item, dict):
-                bullets.append({'lead': str(item.get('lead') or item.get('title') or ''), 'body': str(item.get('body') or '')})
-            else:
-                bullets.append({'lead': str(item), 'body': ''})
+            append_bullet(bullets, item)
         if not bullets and content.get('body'):
             for item in ensure_list(content.get('body')):
-                bullets.append({'lead': str(item), 'body': ''})
+                append_bullet(bullets, item)
         payload['bullets'] = bullets
     elif archetype == 'agenda':
         payload['sections'] = ensure_list(content.get('sections') or content.get('items'))
     elif archetype == 'process':
-        payload['phases'] = ensure_list(content.get('steps') or content.get('phases'))
+        payload['phases'] = ensure_list(content.get('steps') or content.get('phases') or content.get('body'))
     elif archetype == 'matrix':
         axes = content.get('axes') or {}
         payload['x_axis'] = content.get('x_axis') or axes.get('x')
         payload['y_axis'] = content.get('y_axis') or axes.get('y')
-        payload['quadrants'] = ensure_list(content.get('quadrants'))
+        payload['quadrants'] = ensure_list(content.get('quadrants') or content.get('body'))
     elif archetype == 'bar-column':
         payload['bars'] = ensure_list(content.get('bars'))
     elif archetype == 'section-divider':
@@ -812,8 +1051,15 @@ def clear_existing_slides(prs: Presentation) -> None:
         prs.slides._sldIdLst.remove(slide_id)
 
 
-def render_payload(prs: Presentation, payload: dict) -> None:
+def render_payload(
+    prs: Presentation,
+    payload: dict,
+    *,
+    page_number: int | str | None = None,
+    footer_config: dict | None = None,
+) -> None:
     archetype = payload['archetype']
+    before_count = len(prs.slides)
     if archetype == 'takeaway':
         add_takeaway_slide(prs, title=payload['title'], subtitle=payload.get('subtitle'), bullets=payload.get('bullets', []), closing=payload.get('closing'))
     elif archetype == 'agenda':
@@ -831,16 +1077,30 @@ def render_payload(prs: Presentation, payload: dict) -> None:
     else:
         raise SystemExit(f'unsupported archetype: {archetype}')
 
+    if footer_config is not None and len(prs.slides) > before_count:
+        add_standard_footer(
+            prs,
+            prs.slides[len(prs.slides) - 1],
+            page_number=page_number,
+            footer_config=footer_config,
+        )
+
 
 def build_from_spec(prs: Presentation, spec: dict) -> None:
-    deck_mode = spec.get('deliverable_mode') or spec.get('Deliverable mode')
+    production_defaults = spec.get('production_defaults') or {}
+    deck_mode = (
+        production_defaults.get('default_slide_mode')
+        or spec.get('deliverable_mode')
+        or spec.get('Deliverable mode')
+    )
     slides = spec.get('Slides') or spec.get('slides') or []
     if not isinstance(slides, list):
-        raise SystemExit('Slides must be a list in the unified spec sheet')
+        raise SystemExit('Slides must be a list in the deck spec')
+    footer_config = footer_config_from_spec(spec)
 
     rendered = 0
     skipped = 0
-    for slide in slides:
+    for page_number, slide in enumerate(slides, start=1):
         if not isinstance(slide, dict):
             continue
         mode = normalize_mode(deck_mode, slide)
@@ -848,11 +1108,11 @@ def build_from_spec(prs: Presentation, spec: dict) -> None:
             skipped += 1
             continue
         payload = compile_slide_payload(spec, slide)
-        render_payload(prs, payload)
+        render_payload(prs, payload, page_number=page_number, footer_config=footer_config)
         rendered += 1
 
     if rendered == 0:
-        raise SystemExit('No ppt-shapes slides found to render from the unified spec sheet')
+        raise SystemExit('No ppt-shapes slides found to render from the deck spec')
     if skipped:
         print(f'skipped {skipped} non-ppt-shapes slide(s)', file=sys.stderr)
 
@@ -864,7 +1124,7 @@ def default_template_for_spec() -> Path | None:
 def main() -> int:
     if len(sys.argv) < 2:
         print(
-            'usage: build_pptx.py OUTPUT_PPTX [SPEC_YAML_OR_JSON] [TEMPLATE_PPTX]',
+            'usage: build_pptx.py OUTPUT_PPTX [DECK_MD_OR_SPEC_YAML_OR_JSON] [TEMPLATE_PPTX]',
             file=sys.stderr,
         )
         return 2
@@ -889,7 +1149,7 @@ def main() -> int:
         if 'Slides' in structured or 'slides' in structured:
             build_from_spec(prs, structured)
         elif 'archetype' in structured:
-            render_payload(prs, structured)
+            render_payload(prs, structured, page_number=1, footer_config=footer_config_from_spec(structured))
         else:
             raise SystemExit(f'unrecognized spec structure: {spec_path}')
     elif len(prs.slides) == 0:

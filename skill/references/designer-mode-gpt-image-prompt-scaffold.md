@@ -33,7 +33,7 @@ The image prompt should express:
 
 ## Prompt inputs
 
-Build the prompt from three layers.
+Build the prompt from five layers.
 
 ### 1. Slide meaning
 
@@ -98,11 +98,13 @@ Use:
 - slide `title`
 - subtitle or key-message line
 - labels, callouts, section names, and axis/category text that must appear
+- computed footer text from `production_defaults.footer`, normally `CR` plus the simple slide-order page number, with no total slide count
 - `preserve` or `text_rules` fields when present
 
 Ask:
 - which text must render exactly
 - which text should be omitted from the visual and handled elsewhere
+- which footer tokens must be allowed by the text lock and where they should sit
 - what must not change across iterations: layout, palette, title zone, arrows, labels, framing, or reference-image geometry
 
 ## Prompt-writing style
@@ -157,12 +159,13 @@ Required text to render exactly:
 - Title: "<exact title>"
 - Support line: "<exact support line if used>"
 - Labels: "<exact label 1>", "<exact label 2>", "<exact label 3>"
+- Footer: "CR" at lower-left; "<page number>" at lower-right
 
 Text rules:
 - render only the listed text
 - keep all text large enough for presentation use
 - preserve quoted spelling, capitalization, and punctuation
-- no extra headings, captions, watermarks, logos, or invented labels
+- no extra headings, captions, watermarks, logos, numbers, or invented labels
 
 Visual direction:
 - <metaphor or concept>
@@ -208,11 +211,14 @@ Use these prepared asset references:
 Required text to render exactly:
 {{required_text_block}}
 
+Footer text to render exactly:
+{{footer_text_block}}
+
 Text rules:
 - render only the listed text
 - keep text large enough for presentation use
 - preserve spelling, capitalization, punctuation, and line hierarchy
-- do not invent extra headings, labels, watermarks, logos, or captions
+- do not invent extra headings, labels, watermarks, logos, numbers, or captions
 
 The visual should support this slide role:
 {{image_role}}
@@ -228,6 +234,7 @@ Composition intent:
 
 Slide-format requirements:
 - preserve a clear title-safe zone in {{title_zone}}
+- place the footer in the approved safe area: {{footer_placement}}
 - keep the eye moving in this pattern: {{reading_path}}
 - make the main visual body support the title and message rather than fight them
 - the result should feel like a finished business slide, not an artwork waiting for later assembly
@@ -243,6 +250,7 @@ When filling the scaffold:
 - compress the slide text into visual meaning
 - keep only the support points that matter to the image
 - put exact title, support line, and labels in quoted form in the required-text block
+- put computed footer tokens in quoted form in the footer-text block; default is `CR` and the slide number (`1`, `2`, `3`, ...)
 - translate bullets into concepts, relationships, tensions, or systems
 - preserve the deck style language without repeating unnecessary metadata
 - include every relevant `designer_assets` / `asset_refs` item by id and usage
@@ -254,6 +262,7 @@ When filling the scaffold:
 For slides with in-image text:
 - use `quality="high"` for final generation
 - quote exact strings instead of paraphrasing
+- include computed footer text in the allowed text list
 - keep the required text list short
 - specify placement, hierarchy, and approximate size when legibility matters
 - avoid asking for dense paragraphs, many small labels, or long tables inside a generated image
@@ -300,6 +309,20 @@ The body of the slide is intentionally open.
 Create new body visuals, diagrams, metaphors, icons, and accent colors that fit this slide's message.
 Keep the new body content inside the open white area below the title and above the footer so the generated slide works naturally inside the same deck template.
 The result should feel compatible with Image 1's font scale and overall clean look, while the visual concept and colors can be invented for this specific slide.
+```
+
+## Standard footer block
+
+Include this block in designer-mode prompts unless the approved deck.md disables the footer:
+
+```text
+Footer:
+- Place a small "CR" mark in the lower-left corner.
+- Place the simple slide number "{{page_number}}" in the lower-right corner.
+- Do not include the total slide count; render "{{page_number}}", not "{{page_number}}/{{total_pages}}".
+- Use the deck's muted footer style; keep both elements subtle and consistent.
+- Keep the footer inside the safe area and away from logos, sources, charts, labels, and body content.
+- These are the only extra text tokens allowed beyond the required text list.
 ```
 
 ## Iteration protocol

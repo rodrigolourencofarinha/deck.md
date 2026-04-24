@@ -15,6 +15,7 @@ Clarify:
 Do not start from PowerPoint decoration.
 Do not produce slides until the human has validated and approved the current `deck.md`.
 For pure designer-mode decks, produce PDF output only and add OCR/searchable text when tooling is available.
+Every generated slide should include the standard small footer unless the approved deck.md disables it: `CR` lower-left and simple page numbers (`1`, `2`, `3`, ...) lower-right. Do not use total-count formats such as `1/3`.
 After production, render and inspect the output against the approved `deck.md` and briefing; repair and rerender before delivery.
 
 ## Material types and density
@@ -122,7 +123,7 @@ Before moving into production, check:
 - is this deck read alone or presented live
 - has the human approved the current `deck.md`, not just the initial briefing
 - if this is pure designer-mode, is the deliverable PDF-only with OCR attempted
-- after rendering, will logo placement, overlaps, safe margins, and briefing match be inspected
+- after rendering, will footer/page numbers, logo placement, overlaps, safe margins, and briefing match be inspected
 - is the density right for that mode
 - does each title communicate a conclusion
 - can the title sequence stand alone as the argument

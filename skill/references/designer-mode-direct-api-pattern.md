@@ -10,6 +10,7 @@ Default rule:
 - use `quality="high"` for final designer-mode slides, text-heavy slides, detailed diagrams, and exportable PDF/PPT assets
 - use `quality="medium"` for layout or mood previews, and `quality="low"` only for fast exploration where visual precision is not yet important
 - use `output_format="png"` and `n=1` for final slides; request multiple variants only during exploration
+- include the computed footer in the prompt unless disabled in deck.md: small `CR` lower-left and simple page number lower-right, never `1/3`
 - do not treat cropping/reframing as the normal rescue path
 - if the result is weak, improve the prompt and regenerate
 
@@ -56,5 +57,6 @@ The prompt must say that the template is only a reference for the white backgrou
 Interpretation notes:
 - the prompt should already describe a real presentation slide, not just an illustration
 - preserve slide grammar: title zone, support/key-message zone, and main visual body
+- include footer grammar: `CR` mark and simple page number in a subtle lower safe area
 - keep the composition presentation-grade and legible at slide scale
 - if the output does not land, regenerate with a better prompt rather than salvaging it through destructive cropping

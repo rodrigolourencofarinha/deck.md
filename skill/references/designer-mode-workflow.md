@@ -14,6 +14,7 @@ Default behavior for Rodrigo's designer-mode requests:
 - use per-slide `asset_refs` when an asset applies only to specific slides
 - deliver pure designer-mode decks as final PDFs only; do not make PPTX wrappers because the slides are not editable
 - add OCR/searchable text to the final PDF when tooling is available, and say clearly if OCR could not be applied
+- include the standard small footer on every slide unless disabled in the approved deck.md: `CR` lower-left and simple page numbers (`1`, `2`, `3`, ...) lower-right, never total-count formats such as `1/3`
 - after generation, render and inspect the slide/PDF against the approved deck.md and briefing before delivery
 - if the human asks for post-render changes, create a new review deck.md and regenerate only changed slides
 - treat the generated output as a real 16:9 presentation slide, not just a background image or poster
@@ -31,7 +32,7 @@ Sequence:
 6. generate the visual if one is actually needed
 7. if hybrid mode was explicitly chosen, place the visual into the intended composition; otherwise expect the generated slide to already respect the slide composition
 8. assemble the approved designer-mode slides into a final PDF, adding OCR/searchable text when available
-9. inspect the rendered result against the approved deck.md, assets, and briefing
+9. inspect the rendered result against the approved deck.md, assets, footer/page numbers, and briefing
 10. regenerate affected slides only until the render review passes
 
 If the output fails the slide contract, regenerate.
@@ -164,6 +165,7 @@ The prompt should explicitly state:
 - the exact quoted text to render, including title, support line, and required labels
 - that no extra text, watermarks, logos, or invented captions should appear
 - how each referenced asset should be used, including whether a logo must appear and where
+- the computed footer text and placement for this slide
 - how the eye should move horizontally or in a Z pattern across the slide
 
 Use `skill/references/designer-mode-gpt-image-prompt-scaffold.md` to turn that brief into the actual GPT Image 2 prompt.
@@ -216,12 +218,14 @@ Final deck assembly for pure designer-mode:
 - create one final PDF from the approved slide PNGs
 - run OCR or add a searchable text layer when tooling is available
 - do not create a PPTX wrapper around generated slide images
+- verify the standard `CR` mark and simple page number appear on every slide before assembly
 - keep per-slide PNGs as review/source artifacts, not as the final deck deliverable
 
 Final render review:
 - inspect the PDF or rendered slide PNGs before delivery
 - compare against the approved deck.md, original briefing, and any `## Revision Brief`
 - verify text accuracy, title hierarchy, slide count/order, and required labels
+- verify the `CR` footer mark and simple numeric page numbers are present, small, consistent, and not overlapping other content
 - verify logos and designer assets are in the intended placement and do not overlap text or visuals
 - reject clipped content, unsafe margins, unreadable text, accidental extra labels, and weak reading flow
 - regenerate only failed slides, then reassemble and inspect again
@@ -254,7 +258,7 @@ Behavior:
 - pass the template PNG as `Image 1` in the image edit/reference call
 - treat the template as a placement and typography reference, not a full visual style lock
 - preserve the white background, large title typography, title placement, spacious margins, and footer/page-number safe area
-- replace all placeholder text with the real slide title, subtitle, footer, and slide number if those are requested
+- replace all placeholder text with the real slide title, subtitle, standard `CR` footer mark, and simple slide number unless the approved deck.md disables the footer
 - ignore the template's placeholder body emptiness, dashed footer box, and any placeholder wording
 - allow the model to freely create body visuals, diagrams, metaphors, icons, accent colors, and visual composition that fit the slide message
 - keep the generated body content inside the open white area so it can be copied or placed back into a deck using the same look and feel

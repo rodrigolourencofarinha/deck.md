@@ -94,6 +94,12 @@ production_defaults:
   aspect_ratio: "16:9"
   default_visual_template: "<path, optional>"
   default_visual_template_scope: "<string, optional>"
+  footer:
+    page_numbers: true                                        # default: true
+    page_number_format: "{page}"                              # must render standalone 1, 2, 3, ... only
+    cr_mark: true                                             # default: true
+    cr_text: "CR"                                             # small confidentiality/copyright-rights mark
+    placement: "bottom-left-cr-bottom-right-page"
 
 image_generation:                                             # only used when mode is designer-mode
   primary_creator: "gpt-image-2"
@@ -144,6 +150,14 @@ Hard limits (word counts, case, bullet counts) live in [`./standards/deck-valida
 
 ### Consistency
 Stable title treatment, slide-type patterns, palette and emphasis behavior across the deck. No slide drifts into a different visual language.
+
+### Footer standard
+Every generated slide includes a small, unobtrusive footer by default:
+- a `CR` mark in the lower-left corner, unless `production_defaults.footer.cr_mark: false`
+- a simple numeric page number in the lower-right corner, using `1`, `2`, `3`, ... with no zero padding, unless `production_defaults.footer.page_numbers: false`
+- page numbers must not include the total slide count or slash formats; render `1`, not `1/3` or `1 of 3`
+
+The footer must follow the deck's typography and color system, stay inside the safe area, and never overlap sources, logos, charts, or body content. If a user supplies a different copyright, confidentiality, or status label, store it in `production_defaults.footer.cr_text` rather than hard-coding it in prompts.
 
 ## Narrative
 
@@ -244,6 +258,8 @@ When regenerating designer-mode slides in a review round, the prompt MUST includ
 - `creative_direction:` — when `mode: designer-mode`. Fields: `mood`, `metaphor`, `composition_intent`, `prompt_notes[]`, `avoid[]`. This is the model's creative surface.
 - `required_text:` — when `image_decision: full-generated-visual`. Fields: `title`, `subtitle`, `labels[]`. The model MUST NOT render text outside this list.
 
+For generated slides, footer text is computed from `production_defaults.footer` and the slide order. Agents append the computed footer items (`CR` and page number by default) to the allowed text for the image prompt; humans do not need to repeat page numbers in every slide's `required_text`.
+
 ### Prose fields (markdown, not YAML)
 
 - **Body** — the content of the slide.
@@ -295,6 +311,8 @@ Every slide produces one PNG regardless of mode:
 
 File naming convention: `slides/slide-01.png`, `slides/slide-02.png`, etc. (zero-padded to two digits; three digits for decks over 99 slides). Assembly order follows `id` values ascending. For string IDs, document order applies.
 
+Every slide output MUST include the deck footer standard: `CR` at lower-left and numeric page number at lower-right by default. Page numbers are simple slide-order numbers (`1`, `2`, `3`, ...), not zero-padded file IDs and not total-count formats such as `1/3`. The footer is part of the slide visual, so it must appear in both designer-mode image prompts and `ppt-shapes` output.
+
 ### PDF assembly
 
 The final PDF is assembled from all slide PNGs in order. Default filename: the deck title slugified (e.g., `2026-growth-recovery-plan.pdf`). Override with an explicit filename in `## Notes to the agent`.
@@ -311,6 +329,7 @@ Before delivery, the agent MUST inspect the rendered artifact and compare it wit
 
 Render review checklist:
 - slide/page count and ordering match the approved deck.md
+- every slide has the required small footer mark and simple numeric page number
 - title, required text, labels, and body text match the approved spec
 - logo and required asset placement matches `designer_assets`, `asset_refs`, and `placement`
 - no text, logos, charts, labels, or visual blocks overlap

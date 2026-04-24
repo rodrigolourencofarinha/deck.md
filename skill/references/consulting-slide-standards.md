@@ -156,8 +156,15 @@ Every data slide needs a footer with:
 - source
 - notes or footnotes for caveats
 - page number
+- small `CR` mark or the approved copyright/confidentiality label
 - date when useful
 - status sticker when needed
+
+Deck-wide default:
+- use a small `CR` mark in the lower-left corner
+- use simple numeric page numbers (`1`, `2`, `3`, ...) in the lower-right corner
+- do not use total-count formats such as `1/3` or `1 of 3`
+- keep both in the same muted footer style across the deck
 
 Never leave data unsourced.
 Never leave a number without a unit.

@@ -16,7 +16,7 @@ Consulting rule:
 - one slide, one insight
 - title states the insight
 - body proves the title
-- footer shows the receipt when data, dates, or caveats matter
+- footer shows the receipt when data, dates, or caveats matter, with the standard small `CR` mark and simple page number unless disabled
 
 ## Inputs
 
@@ -59,7 +59,7 @@ Typical shape:
 - subheading states what, unit, scope, and period
 - chart as primary proof, using the simplest chart type that carries the insight
 - short takeaway bullets or callouts beside or below it
-- source and notes in the footer
+- source and notes in the footer, kept separate from the standard `CR` mark and page number
 
 ### Summary or conclusion page
 Use for executive summaries, section summaries, and recap slides.
@@ -97,7 +97,7 @@ Cleanup sequence:
 
 ### Layout and reading flow
 - keep title position stable
-- keep margins and footer behavior stable
+- keep margins and footer behavior stable, including `CR` lower-left and the simple page number lower-right
 - build an obvious reading path
 - use arrows, connectors, or grouping only when they help
 

@@ -35,6 +35,7 @@ Hard rules:
 - when the user requests post-render changes, create a new review deck.md version and regenerate only changed slides
 - for pure designer-mode decks, produce final PDF only; do not create a PPTX wrapper
 - add OCR/searchable text to designer-mode PDFs when tooling is available, and report clearly if OCR could not be applied
+- include the standard small footer on every generated slide unless the approved deck.md disables it: `CR` lower-left and simple page numbers (`1`, `2`, `3`, ...) lower-right, never `1/3` or `1 of 3`
 - save meaningful deck.md versions under `decks/<deck-slug>/specs/`
 
 ## Assets and tools
@@ -159,6 +160,7 @@ In all three cases:
 
 The deck.md should carry:
 - deck metadata and design tokens (frontmatter)
+- footer defaults for the standard `CR` mark and simple numeric page numbers
 - designer-mode asset references (`designer_assets`) for templates, logos, brand guides, screenshots, or other visual inputs
 - narrative spine (`## Narrative` block)
 - revision intent (`## Revision Brief`) when changing a previously approved/rendered deck
@@ -226,6 +228,7 @@ Rules:
 - if a required logo/template/brand asset cannot be found or prepared, stop and report the missing asset
 - assemble pure designer-mode decks as PDF only, plus optional review PNGs; do not generate a PPTX version
 - add an OCR/searchable text layer to the final PDF when tooling is available
+- add the standard footer to every slide image: `CR` lower-left and the simple slide-order page number lower-right, unless disabled in the approved deck.md; do not include total-count numbering such as `1/3`
 - allow creative freedom only after the slide logic is locked
 - default to GPT Image 2 end-to-end slide generation for designer mode unless the user explicitly asks for a hybrid workflow
 - enforce `aspect_ratio: 16:9` in both the deck.md and the image-generation call
@@ -236,6 +239,7 @@ Rules:
 - treat the slide as a real presentation slide, not a loose poster or background image
 - require a visible slide structure: title zone, key-message zone, and main visual body in a fast left-to-right / Z-reading flow
 - put literal slide text in `required_text` — see `SPEC.md` for the required_text schema
+- append computed footer text to the designer-mode prompt's allowed text list so page numbers and `CR` do not violate the text lock
 - explicitly prohibit extra invented text, watermarks, logos, decorative captions, and unrequested labels
 - use `skill/references/designer-mode-gpt-image-prompt-scaffold.md` to convert the deck.md slide block into the image prompt
 - after generation, render/inspect the slide or PDF against the approved deck.md and briefing; check logo placement, asset usage, text accuracy, overlaps, clipping, safe areas, and whether the slide still lands the intended message
@@ -389,6 +393,18 @@ designer_assets:
     required: false
 ```
 
+Deck-level footer defaults also live in frontmatter:
+
+```yaml
+production_defaults:
+  footer:
+    page_numbers: true
+    page_number_format: "{page}"
+    cr_mark: true
+    cr_text: "CR"
+    placement: bottom-left-cr-bottom-right-page
+```
+
 Slide content (body, sources, speaker notes) is markdown, not YAML.
 Titles MUST be action titles: full sentence with verb, sentence case, no trailing period, ≤14 words.
 See `standards/deck-validation.md` for the full checklist.
@@ -403,7 +419,7 @@ When the request implies designer mode:
 4. **Spec lock** — make sure the slide block in deck.md is clear enough to produce without guessing; confirm the image role and asset usage
 5. **Image generation** — derive the prompt from the approved deck.md slide using `skill/references/designer-mode-gpt-image-prompt-scaffold.md`; include prepared asset references by id and usage; use `gpt-image-2`, `size="2560x1440"`, `quality="high"`, `output_format="png"`, `n=1` for final full-slide generation
 6. **PDF assembly** — assemble the generated slides into a final PDF only; add OCR/searchable text when tooling is available; do not create a PPTX wrapper for pure designer-mode output
-7. **Render review** — inspect the slide/PDF for briefing match, text accuracy, logo placement, overlaps, clipping, safe margins, and reading flow; regenerate affected slides only until it passes
+7. **Render review** — inspect the slide/PDF for briefing match, text accuracy, footer/page numbers, logo placement, overlaps, clipping, safe margins, and reading flow; regenerate affected slides only until it passes
 
 The image is a downstream artifact of the slide concept, not the first step.
 
@@ -487,6 +503,7 @@ Always define or infer:
 - typography mood
 - accent palette
 - image behavior
+- footer behavior
 - framing devices
 
 Consistency rules:
@@ -506,6 +523,7 @@ Before delivering, verify:
 - were required designer assets found and prepared before generation
 - did the rendered output pass inspection against the approved deck.md and briefing
 - are logo placement, safe margins, and overlaps correct in the rendered output
+- does every rendered slide include the standard `CR` mark and simple numeric page number
 - if this is a review change, is there a new `review-##` deck.md with `## Revision Brief`
 - did review generation preserve unchanged slides and regenerate only changed slides
 - can a busy reader get the point quickly

@@ -44,6 +44,7 @@ Workflow:
 
 Visual QA checklist:
 - no clipped or missing text
+- standard footer appears on every slide unless disabled: `CR` lower-left and simple page number lower-right, never `1/3`
 - no awkward line breaks in titles, labels, or cards
 - no text boxes overflowing their shapes
 - no labels colliding with arrows, icons, chart marks, or other labels
@@ -131,6 +132,7 @@ Prefer a small number of repeatable archetypes over one-off custom designs.
 - if card text becomes paragraph-like, shorten it or split the slide
 - keep subtitles only when they add framing beyond the title
 - keep footer and source elements visually separate from any closing bar
+- keep the standard `CR` mark and page number small, muted, and consistent across slides
 
 ## Render standard
 

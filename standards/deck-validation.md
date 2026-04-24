@@ -54,6 +54,15 @@ Examples:
 - Any slide presenting quantitative data or a factual claim MUST carry a `Sources:` line.
 - Sources MUST be specific (report name and date, not just "internal data").
 
+## Footer rules
+
+- Every generated slide MUST include the standard small footer unless the approved deck.md explicitly disables it.
+- Default footer: `CR` in the lower-left corner and a simple numeric page number in the lower-right corner.
+- Page numbers MUST render as `1`, `2`, `3`, ... in slide order, not as zero-padded filenames.
+- Page numbers MUST NOT include the total slide count, slash formats, or "of" wording; use `1`, not `1/3` or `1 of 3`.
+- Footer elements MUST follow the deck typography and color system and MUST NOT overlap sources, logos, charts, labels, or body content.
+- For designer-mode slides, the computed footer text MUST be included in the prompt's allowed text list.
+
 ## Mode rules
 
 - If a slide is set to `mode: ppt-shapes`, the `creative_direction` block SHOULD be omitted (it applies to designer-mode only).
@@ -68,6 +77,7 @@ Examples:
 
 - The agent MUST render the produced deck or slide outputs before delivery.
 - The rendered output MUST be compared against the approved deck.md, original briefing, and any `## Revision Brief`.
+- Every rendered slide MUST show the required footer mark and page number in the approved placement.
 - Required logos and assets MUST appear in the approved placement and MUST NOT overlap text or important visuals.
 - Text, labels, charts, logos, and visual blocks MUST NOT overlap or be clipped.
 - If rendered output fails review, the agent MUST revise the spec or regenerate/rebuild the affected slide, then render and inspect again.
@@ -99,6 +109,7 @@ Before emitting a deck, the agent validates:
 12. [ ] Required designer assets exist or production is blocked
 13. [ ] Rendered output has been inspected against the approved deck.md and briefing
 14. [ ] Logos/assets are correctly placed with no overlap or clipping
-15. [ ] Review changes use a new review deck.md version and regenerate only changed slides
+15. [ ] Standard footer mark and simple numeric page number appear on every rendered slide
+16. [ ] Review changes use a new review deck.md version and regenerate only changed slides
 
 If any check fails, the agent MUST fix before finalizing.

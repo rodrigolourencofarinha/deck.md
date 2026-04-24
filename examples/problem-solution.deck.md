@@ -13,6 +13,12 @@ narrative_template: problem-solution
 production_defaults:
   default_slide_mode: designer-mode       # designer-mode | ppt-shapes
   aspect_ratio: "16:9"
+  footer:
+    page_numbers: true
+    page_number_format: "{page}"
+    cr_mark: true
+    cr_text: "CR"
+    placement: bottom-left-cr-bottom-right-page
 
 image_generation:
   primary_creator: gpt-image-2

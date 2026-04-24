@@ -16,7 +16,7 @@ You write the logic — narrative structure, action titles, data, sources. The a
 
 If the human requests changes after seeing a rendered deck, the agent creates a new review version of `deck.md` such as `review-01` or `review-02`, using the previous approved deck plus the new change request. Only the changed slides should be regenerated; unchanged slide logic and visuals should be preserved.
 
-Default production is `designer-mode`. Use `ppt-shapes` only when a slide needs precise editability, data-accurate charts, tables, or template-driven PowerPoint structure. Designer-mode decks can declare `designer_assets` such as PowerPoint templates, logos, brand guides, screenshots, or visual references for the model to consider or place. Designer-mode decks produce final PDFs, not PPTX wrappers; add an OCR text layer to the PDF when tooling is available.
+Default production is `designer-mode`. Use `ppt-shapes` only when a slide needs precise editability, data-accurate charts, tables, or template-driven PowerPoint structure. Designer-mode decks can declare `designer_assets` such as PowerPoint templates, logos, brand guides, screenshots, or visual references for the model to consider or place. Designer-mode decks produce final PDFs, not PPTX wrappers; add an OCR text layer to the PDF when tooling is available. Generated slides include a small standard footer by default: `CR` at lower-left and simple page numbers (`1`, `2`, `3`, ...) at lower-right, never total-count formats like `1/3`.
 
 ## Levels of use
 
@@ -42,6 +42,7 @@ Each level is a superset of the previous. Scaling up never requires reformatting
 - Every slide title must be an **action title**: a full sentence with a verb, sentence case, no trailing period, ≤14 words.
 - Body must prove the title. Nothing more, nothing less.
 - Reading only the slide titles should reproduce the deck's argument.
+- Every generated slide should carry the small standard `CR` mark and simple numeric page number unless the approved `deck.md` explicitly disables them.
 
 ## Files
 
