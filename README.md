@@ -55,6 +55,18 @@ Each level is a superset of the previous. Scaling up never requires reformatting
 | [`examples/problem-solution.deck.md`](./examples/problem-solution.deck.md) | `problem-solution` | Startup pitch deck |
 | [`examples/update.deck.md`](./examples/update.deck.md) | `update` | Quarterly engineering status report |
 
+## The skill
+
+`skill/` is a reference implementation of the deck-architect agent skill. It shows how to wire deck.md into a working agent: narrative-to-brief generation, approval gate, slide production via GPT Image 2 or python-pptx, and PDF assembly.
+
+Use it as a starting point for your own agent. Copy `skill/` into your project and point it at your own deck.md files.
+
+| Path | Purpose |
+|---|---|
+| [`skill/SKILL.md`](./skill/SKILL.md) | Skill definition — the agent reads this |
+| [`skill/references/`](./skill/references/) | Production and workflow guides |
+| [`skill/scripts/`](./skill/scripts/) | `build_pptx.py`, `tabler_icons.py`, `split_template_deck.py` |
+
 ## License
 
 [MIT](./LICENSE)
