@@ -10,8 +10,12 @@ Start from the approved deck.md.
 Default behavior for Rodrigo's designer-mode requests:
 - use GPT Image 2 as the primary and default end-to-end slide generator
 - do not invent a hybrid background-plus-manual-assembly workflow unless the user explicitly asks for it
+- record PowerPoint templates, logos, brand guides, screenshots, and other visual inputs in `designer_assets`
+- use per-slide `asset_refs` when an asset applies only to specific slides
 - deliver pure designer-mode decks as final PDFs only; do not make PPTX wrappers because the slides are not editable
 - add OCR/searchable text to the final PDF when tooling is available, and say clearly if OCR could not be applied
+- after generation, render and inspect the slide/PDF against the approved deck.md and briefing before delivery
+- if the human asks for post-render changes, create a new review deck.md and regenerate only changed slides
 - treat the generated output as a real 16:9 presentation slide, not just a background image or poster
 - request native 16:9 output from the model itself rather than generating first and rescuing it later through crop/resize hacks
 - use `size="2560x1440"` and `quality="high"` for final full-slide outputs
@@ -21,12 +25,14 @@ Default behavior for Rodrigo's designer-mode requests:
 Sequence:
 1. lock the slide title and content blocks
 2. lock the slide layout, reading path, and image role
-3. confirm the production mode, whether it is `full-slide` or an explicitly approved hybrid/component mode, and whether a visual template reference is being used
-4. derive the image brief from the spec
-5. generate the visual if one is actually needed
-6. if hybrid mode was explicitly chosen, place the visual into the intended composition; otherwise expect the generated slide to already respect the slide composition
-7. assemble the approved designer-mode slides into a final PDF, adding OCR/searchable text when available
-8. review the rendered result and iterate
+3. confirm the production mode, whether it is `full-slide` or an explicitly approved hybrid/component mode, and which `designer_assets` / `asset_refs` apply
+4. prepare referenced assets for the image model
+5. derive the image brief from the spec
+6. generate the visual if one is actually needed
+7. if hybrid mode was explicitly chosen, place the visual into the intended composition; otherwise expect the generated slide to already respect the slide composition
+8. assemble the approved designer-mode slides into a final PDF, adding OCR/searchable text when available
+9. inspect the rendered result against the approved deck.md, assets, and briefing
+10. regenerate affected slides only until the render review passes
 
 If the output fails the slide contract, regenerate.
 Do not default to center-cropping or force-fitting the image just to make it fill the slide.
@@ -141,6 +147,8 @@ Avoid:
 
 If a slide is in `designer-mode` and the image decision is not `none`, derive the prompt from:
 - the deck design system
+- declared `designer_assets` with `scope: deck`
+- slide-specific `asset_refs`
 - the slide title
 - the slide layout
 - the slide reading path
@@ -155,9 +163,45 @@ The prompt should explicitly state:
 - whether a key-message/support line sits below the title
 - the exact quoted text to render, including title, support line, and required labels
 - that no extra text, watermarks, logos, or invented captions should appear
+- how each referenced asset should be used, including whether a logo must appear and where
 - how the eye should move horizontally or in a Z pattern across the slide
 
 Use `skill/references/designer-mode-gpt-image-prompt-scaffold.md` to turn that brief into the actual GPT Image 2 prompt.
+
+## Designer assets
+
+Record every designer-mode asset in the approved deck.md before production:
+
+```yaml
+designer_assets:
+  - id: brand_logo
+    type: logo
+    path: assets/source/logo.png
+    usage: "Place exact logo in the top-right corner"
+    scope: deck
+    placement: top-right
+    required: true
+  - id: board_template
+    type: ppt-template
+    path: assets/source/board-template.pptx
+    usage: "Use as layout and typography reference; do not copy text"
+    scope: deck
+    required: false
+```
+
+Use slide-level `asset_refs` when only some slides use an asset:
+
+```yaml
+asset_refs: [brand_logo, board_template]
+```
+
+Asset handling rules:
+- resolve every `asset_refs` id against `designer_assets`
+- stop before production if a required asset cannot be found
+- render `.pptx`, `.pdf`, or prior-deck references to PNG previews before using them with the image model
+- pass logos as image inputs when exact placement is required; state the desired `placement`
+- use template assets as layout, typography, density, or visual-rhythm references, not as permission to copy placeholder text
+- keep the asset role narrow in the prompt so a reference deck or logo does not overpower the slide message
 
 ## Generation parameter defaults
 
@@ -173,6 +217,14 @@ Final deck assembly for pure designer-mode:
 - run OCR or add a searchable text layer when tooling is available
 - do not create a PPTX wrapper around generated slide images
 - keep per-slide PNGs as review/source artifacts, not as the final deck deliverable
+
+Final render review:
+- inspect the PDF or rendered slide PNGs before delivery
+- compare against the approved deck.md, original briefing, and any `## Revision Brief`
+- verify text accuracy, title hierarchy, slide count/order, and required labels
+- verify logos and designer assets are in the intended placement and do not overlap text or visuals
+- reject clipped content, unsafe margins, unreadable text, accidental extra labels, and weak reading flow
+- regenerate only failed slides, then reassemble and inspect again
 
 Use `quality="medium"` for layout or mood previews.
 Use `quality="low"` only for fast exploration where text, fine detail, and export quality are not yet important.
@@ -263,9 +315,27 @@ Inspect for:
 - output not actually reading as a 16:9 slide
 - missing title-safe zone
 - broken horizontal / Z-reading flow
+- logo or asset placement wrong, overlapping, or off-margin
+- rendered slide no longer matching the briefing or action title
 - evidence of crop-rescue or force-fit behavior
 
 Trust the rendered slide, not just the spec or raw content.
+
+## Post-render human changes
+
+Use this when the human has seen the rendered output and asks for a change.
+
+Workflow:
+1. Keep the previous approved deck.md and rendered slide images as the baseline.
+2. Create a new spec file named like `YYYY-MM-DD-review-01-deck.md` or `YYYY-MM-DD-review-02-deck.md`.
+3. Add `## Revision Brief` with the previous deck path, review round, human change request, changed slides, unchanged slides, regeneration scope, and preserve list.
+4. Patch only the deck.md fields needed for the requested change.
+5. For each changed designer-mode slide, pass the old rendered slide image when available, the old slide spec, the updated slide spec, and the exact human change request.
+6. Prompt the image model to make only the requested change and preserve the approved composition, style, text, logo placement, and asset behavior unless those are the requested change.
+7. Reuse unchanged slide images.
+8. Reassemble the PDF, render/inspect the full artifact, and repeat only for failed changed slides.
+
+Do not treat a small review change as a fresh deck generation. The point of review versions is to make the delta explicit and keep approved work stable.
 
 ## Guardrails
 
@@ -274,3 +344,4 @@ Trust the rendered slide, not just the spec or raw content.
 - do not assume every designer-mode slide needs a generated image
 - do not turn every slide into a cinematic poster
 - do not add visuals just because they look cool
+- do not regenerate unchanged slides during a review change unless the new brief truly changes them

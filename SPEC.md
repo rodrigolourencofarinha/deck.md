@@ -32,7 +32,11 @@ Use `deck.md` when you want:
 
 **Phase 2 — Slide generation.** The agent reads an `approved` deck.md, validates it against `standards/deck-validation.md`, and produces one rendered image per slide (see `## Output`). `designer-mode` slides are generated via gpt-image-2. `ppt-shapes` slides are rendered as layout images from the design tokens. All slides are assembled into a PDF in slide order. Pure `designer-mode` decks produce PDF output only, with no PPTX wrapper.
 
-The two phases are intentionally separate. Phase 1 produces a readable, editable document — not an irreversible side effect. If the brief doesn't match what the human wanted, they edit it before anything is generated.
+**Phase 3 — Render review and repair.** The agent renders the final artifact, inspects the rendered pages/slides against the approved deck.md and original briefing, and repairs any mismatch before delivery. This includes title and body text, asset use, logo placement, overlaps, clipping, safe margins, aspect ratio, reading order, and whether the output still answers the briefing.
+
+**Phase 4 — Human review changes.** If the human asks for changes after seeing a rendered output, the agent creates a new review version of `deck.md` from the previous approved version plus the human's change request. It records the change in `## Revision Brief`, saves the new spec as a review version, and regenerates only the slides whose approved spec changed.
+
+The planning and production phases are intentionally separate. Phase 1 produces a readable, editable document — not an irreversible side effect. If the brief doesn't match what the human wanted, they edit it before anything is generated.
 
 ## File format
 
@@ -61,7 +65,7 @@ Three levels. Each is a superset of the previous. Scaling up never requires refo
 |---|---|---|---|
 | **Minimal** | 3–10 slide SCR, update, pitch | Narrative template + slide titles | [`deck.minimal.md`](./deck.minimal.md), [`examples/scr.deck.md`](./examples/scr.deck.md) |
 | **Standard** | Most working decks | Slide bodies, sources, speaker notes | [`examples/update.deck.md`](./examples/update.deck.md) |
-| **Full** | Client-facing, image-led | `creative_direction`, `required_text`, `chart`, full `key_line` | [`examples/pyramid.deck.md`](./examples/pyramid.deck.md) |
+| **Full** | Client-facing, image-led | `designer_assets`, `creative_direction`, `required_text`, `chart`, full `key_line` | [`examples/pyramid.deck.md`](./examples/pyramid.deck.md) |
 
 ## Authorship
 
@@ -98,6 +102,16 @@ image_generation:                                             # only used when m
   output_format:   "png"
   variants:        1
 
+designer_assets:                                             # optional; used by designer-mode generation
+  - id: "<stable-id>"
+    type: "<ppt-template|logo|brand-guide|reference-image|screenshot|icon|other>"
+    path: "<relative path, absolute path, or URL>"
+    usage: "<how the model should use the asset>"
+    scope: "<deck|section|slide>"
+    placement: "<optional placement, e.g. top-right, footer-left>"
+    required: <true|false>
+    notes: "<optional constraints or preparation notes>"
+
 design_tokens:
   palette:       { primary, secondary, accent, accent_soft, background, line }
   typography:    { title, body, emphasis }
@@ -124,6 +138,7 @@ Hard limits (word counts, case, bullet counts) live in [`./standards/deck-valida
 ### Image policy
 - Default to `designer-mode`. A slide opts out to `ppt-shapes` when it needs precise editability, data-accurate charts, tables, or template-driven PowerPoint structure. Charts, tables, and text-heavy analytical slides should usually declare `mode: ppt-shapes` explicitly because they render more legibly as shapes. Each archetype in [`./standards/slide-archetypes.md`](./standards/slide-archetypes.md) declares a `preferred_mode` as a starting point.
 - One strong visual idea per slide.
+- Designer-mode assets must be declared in `designer_assets` before production. Use this for PowerPoint templates the model should consider, logos that must appear in a specific place, brand guides, screenshots, visual references, and other source assets.
 - When `image_decision: full-generated-visual`, the slide MUST declare `required_text`. The model MUST NOT render any text in the image that is not listed there.
 - Reject: poster-like output, background plates, cropped salvage jobs, decorative stock-photo energy.
 
@@ -159,6 +174,7 @@ mode: "<ppt-shapes|designer-mode>"                       # inherits from product
 image_decision: "<none|icon-only|cutout|full-generated-visual>"
 visual_template_reference: "<path>"                      # overrides deck default
 visual_template_scope: "<string>"                        # overrides deck default
+asset_refs: ["<designer_assets.id>"]                      # optional; slide-specific asset references
 ```
 
 **`id` and slide ordering.** Integer IDs double as ordering keys. Inserting a slide between two existing slides requires renumbering all subsequent IDs and updating every `supporting_slides` reference. For decks that will evolve significantly, use short stable string IDs (`id: s_organic_lever`) instead — both forms are valid.
@@ -170,6 +186,57 @@ visual_template_scope: "<string>"                        # overrides deck defaul
 - `icon-only` — one or two icons placed in the composition; the rest is text.
 - `cutout` — a subject (product screenshot, person, object) isolated from its background and composited over the slide. The agent must be told what the cutout subject is via `creative_direction`.
 - `full-generated-visual` — the entire slide canvas is a generated image. MUST declare `required_text`.
+
+**`asset_refs` values.** References to `designer_assets.id`. Use slide-level `asset_refs` when only some slides should use an asset, such as `logo_client` on a title page or `template_board` for a section. If omitted, assets with `scope: deck` apply across the deck.
+
+## Designer assets
+
+The optional `designer_assets` frontmatter block records any external assets the designer-mode model should consider. It is part of the approved brief, so assets are reviewable before generation.
+
+Use `designer_assets` for:
+- PowerPoint templates or prior decks that should guide layout, density, typography, or visual rhythm.
+- Logos that should appear on the slide, including placement and whether placement is required.
+- Brand guides, screenshots, reference images, icons, or source visuals.
+
+Fields:
+- `id` — stable reference key used by `asset_refs`.
+- `type` — one of `ppt-template`, `logo`, `brand-guide`, `reference-image`, `screenshot`, `icon`, or `other`.
+- `path` — relative path, absolute path, or URL.
+- `usage` — how the asset should influence generation, e.g. "match layout only", "place exact logo", "use as brand palette reference".
+- `scope` — `deck`, `section`, or `slide`.
+- `placement` — optional placement instruction, most useful for logos or badges.
+- `required` — if `true`, production must stop if the asset cannot be found or prepared.
+- `notes` — optional constraints, such as which slide of a `.pptx` template to render first.
+
+Agents MUST prepare non-image designer assets before passing them to the image model. For example, a `.pptx` template should be rendered to PNG preview(s), and a logo should be converted to a model-readable image if needed. The prompt should name each asset by its `id` and usage. Required assets must not be ignored silently.
+
+## Revision Brief
+
+An optional `## Revision Brief` section appears in review versions after the human asks for changes to a previously approved or rendered deck. It documents what changed from the prior approved deck.md so the agent updates the spec deliberately and regenerates only the necessary slides.
+
+Review versions SHOULD be saved as:
+- `decks/<deck-slug>/specs/YYYY-MM-DD-review-01-deck.md`
+- `decks/<deck-slug>/specs/YYYY-MM-DD-review-02-deck.md`
+
+The agent MUST build a review version from two inputs:
+- the previous approved deck.md
+- the new human change request
+
+Contents are a fenced `yaml` block:
+
+```yaml
+previous_deck_md: "decks/<deck-slug>/specs/YYYY-MM-DD-v02-deck.md"
+review_round: 1
+human_change_request: "<what the human asked to change>"
+change_summary: "<short summary of what changed in the deck.md>"
+changed_slides: [2, 5]
+unchanged_slides: [1, 3, 4]
+regeneration_scope: "changed_slides_only"
+preserve:
+  - "<specific elements to keep stable, such as logo placement or prior composition>"
+```
+
+When regenerating designer-mode slides in a review round, the prompt MUST include the prior slide image or prior prompt when available, the old slide spec, the updated slide spec, and the exact change request. It should ask the image model to change only the requested elements and preserve everything else that still matches the deck.md.
 
 ### Optional per-slide fenced blocks
 
@@ -237,6 +304,21 @@ For pure `designer-mode` decks, the PDF is the final deck deliverable. Do not pr
 When OCR tooling is available, add a searchable text layer to the final designer-mode PDF using the approved slide text (`required_text`, action titles, labels, and speaker-note exports where appropriate). If OCR tooling is unavailable or fails, deliver the non-OCR PDF and report that the OCR layer was not applied.
 
 Speaker notes, if present, are embedded as PDF presenter notes. They can also be exported as a companion Markdown file (`{slug}-notes.md`) — request this in `## Notes to the agent`.
+
+### Render review
+
+Before delivery, the agent MUST inspect the rendered artifact and compare it with the approved deck.md and briefing.
+
+Render review checklist:
+- slide/page count and ordering match the approved deck.md
+- title, required text, labels, and body text match the approved spec
+- logo and required asset placement matches `designer_assets`, `asset_refs`, and `placement`
+- no text, logos, charts, labels, or visual blocks overlap
+- nothing important is clipped, cropped, too small, or outside the safe area
+- visual hierarchy and reading path match the slide intent
+- the output still satisfies the original briefing and any `## Revision Brief`
+
+If a rendered slide fails review, the agent MUST revise the deck.md if the spec is wrong, or regenerate/rebuild the slide if the implementation is wrong, then render and inspect again. Delivery happens only after the render review passes or the agent clearly reports an unresolved blocker.
 
 ### Quality
 

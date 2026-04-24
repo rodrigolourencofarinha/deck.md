@@ -12,8 +12,11 @@ You write the logic — narrative structure, action titles, data, sources. The a
 2. The agent produces a first `deck.md` with `status: draft` and sends it back for human validation.
 3. The human approves it or asks for changes; the agent revises and resends `deck.md` until the human says it is approved.
 4. Only after approval does the agent produce slides.
+5. The agent renders the output, inspects it against the approved brief, and regenerates anything that fails before delivery.
 
-Default production is `designer-mode`. Use `ppt-shapes` only when a slide needs precise editability, data-accurate charts, tables, or template-driven PowerPoint structure. Designer-mode decks produce final PDFs, not PPTX wrappers; add an OCR text layer to the PDF when tooling is available.
+If the human requests changes after seeing a rendered deck, the agent creates a new review version of `deck.md` such as `review-01` or `review-02`, using the previous approved deck plus the new change request. Only the changed slides should be regenerated; unchanged slide logic and visuals should be preserved.
+
+Default production is `designer-mode`. Use `ppt-shapes` only when a slide needs precise editability, data-accurate charts, tables, or template-driven PowerPoint structure. Designer-mode decks can declare `designer_assets` such as PowerPoint templates, logos, brand guides, screenshots, or visual references for the model to consider or place. Designer-mode decks produce final PDFs, not PPTX wrappers; add an OCR text layer to the PDF when tooling is available.
 
 ## Levels of use
 
@@ -21,7 +24,7 @@ Default production is `designer-mode`. Use `ppt-shapes` only when a slide needs 
 |---|---|---|
 | **Minimal** | 3–10 slide SCR, update, pitch | Narrative template + slide titles |
 | **Standard** | Most working decks | Slide bodies, sources, speaker notes |
-| **Full** | Client-facing, image-led | `creative_direction`, `required_text`, `chart`, full `key_line` |
+| **Full** | Client-facing, image-led | `designer_assets`, `creative_direction`, `required_text`, `chart`, full `key_line` |
 
 Each level is a superset of the previous. Scaling up never requires reformatting.
 

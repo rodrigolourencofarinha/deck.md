@@ -15,6 +15,7 @@ Clarify:
 Do not start from PowerPoint decoration.
 Do not produce slides until the human has validated and approved the current `deck.md`.
 For pure designer-mode decks, produce PDF output only and add OCR/searchable text when tooling is available.
+After production, render and inspect the output against the approved `deck.md` and briefing; repair and rerender before delivery.
 
 ## Material types and density
 
@@ -121,6 +122,7 @@ Before moving into production, check:
 - is this deck read alone or presented live
 - has the human approved the current `deck.md`, not just the initial briefing
 - if this is pure designer-mode, is the deliverable PDF-only with OCR attempted
+- after rendering, will logo placement, overlaps, safe margins, and briefing match be inspected
 - is the density right for that mode
 - does each title communicate a conclusion
 - can the title sequence stand alone as the argument
@@ -132,3 +134,13 @@ Before moving into production, check:
 If the storyline is still fuzzy, stay in the spec.
 Do not jump into slide production early.
 Default to designer-mode for production unless the human asks for `ppt-shapes` or the slide needs charts, tables, or precise editability.
+
+## Review-version rule
+
+When the human asks for changes after seeing a rendered deck:
+- create a new review deck.md version, such as `YYYY-MM-DD-review-01-deck.md`
+- include `## Revision Brief`
+- use the previous approved deck.md plus the new change request as inputs
+- patch only what changed
+- regenerate only changed slides
+- render and inspect the full deck again before delivery

@@ -45,6 +45,9 @@ Examples:
 - The model MUST NOT render any text in the generated image that is not listed in `required_text`.
 - The generated image MUST preserve the deck's `design_tokens` (palette, shape language, iconography).
 - The generated image MUST NOT contain photographic or cinematic imagery unless explicitly enabled in `creative_direction`.
+- Any slide `asset_refs` MUST point to ids declared in frontmatter `designer_assets`.
+- Any `designer_assets` entry with `required: true` MUST resolve to an available asset before production.
+- Non-image designer assets, such as `.pptx` templates, MUST be prepared as model-readable references before generation.
 
 ## Source rules
 
@@ -60,6 +63,21 @@ Examples:
 
 - Speaker notes MUST NOT duplicate the slide's body. They are what the presenter says BEYOND what's on the slide.
 - Speaker notes are for the presenter; they MUST NOT appear in the rendered slide output.
+
+## Render review rules
+
+- The agent MUST render the produced deck or slide outputs before delivery.
+- The rendered output MUST be compared against the approved deck.md, original briefing, and any `## Revision Brief`.
+- Required logos and assets MUST appear in the approved placement and MUST NOT overlap text or important visuals.
+- Text, labels, charts, logos, and visual blocks MUST NOT overlap or be clipped.
+- If rendered output fails review, the agent MUST revise the spec or regenerate/rebuild the affected slide, then render and inspect again.
+
+## Revision rules
+
+- Human change requests after a rendered output MUST create a new review deck.md version such as `review-01` or `review-02`.
+- Review versions MUST be created from the previous approved deck.md plus the new human change request.
+- Review versions SHOULD include `## Revision Brief` with previous deck path, review round, change request, changed slides, unchanged slides, and regeneration scope.
+- Designer-mode review changes SHOULD regenerate only changed slides and preserve unchanged slide images/specs.
 
 ---
 
@@ -77,5 +95,10 @@ Before emitting a deck, the agent validates:
 8. [ ] Generated images contain only text listed in `required_text`
 9. [ ] No slide exceeds 5 bullets
 10. [ ] No bullet exceeds 12 words
+11. [ ] All `asset_refs` resolve to declared `designer_assets`
+12. [ ] Required designer assets exist or production is blocked
+13. [ ] Rendered output has been inspected against the approved deck.md and briefing
+14. [ ] Logos/assets are correctly placed with no overlap or clipping
+15. [ ] Review changes use a new review deck.md version and regenerate only changed slides
 
 If any check fails, the agent MUST fix before finalizing.

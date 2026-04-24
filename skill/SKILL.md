@@ -30,6 +30,9 @@ Hard rules:
 - do not invent a parallel planning schema
 - do not begin production until the user has approved the current deck.md (set `status: approved`)
 - default `production_defaults.default_slide_mode` to `designer-mode` unless the user explicitly asks for another mode
+- record any user-provided designer-mode templates, logos, brand guides, screenshots, or visual references in `designer_assets`
+- after producing any output, render and inspect it against the approved deck.md, original briefing, and any Revision Brief; repair and rerender until it passes
+- when the user requests post-render changes, create a new review deck.md version and regenerate only changed slides
 - for pure designer-mode decks, produce final PDF only; do not create a PPTX wrapper
 - add OCR/searchable text to designer-mode PDFs when tooling is available, and report clearly if OCR could not be applied
 - save meaningful deck.md versions under `decks/<deck-slug>/specs/`
@@ -156,7 +159,9 @@ In all three cases:
 
 The deck.md should carry:
 - deck metadata and design tokens (frontmatter)
+- designer-mode asset references (`designer_assets`) for templates, logos, brand guides, screenshots, or other visual inputs
 - narrative spine (`## Narrative` block)
+- revision intent (`## Revision Brief`) when changing a previously approved/rendered deck
 - per-slide intent (`## Slides` — action titles, `type`, `layout`, `mode`)
 - image decisions and creative direction where relevant
 - production notes (`## Notes to the agent`)
@@ -207,6 +212,7 @@ Rules:
 - if the render has problems, revise the slide and re-render until it reads cleanly
 - prefer editable shapes, text, icons, and charts
 - use Tabler icons when a small pictogram, connector, or status cue helps
+- after rendering, inspect the slide/deck image for match to briefing, overlaps, clipping, logo placement, text readability, and visual hierarchy; fix and rerender until clean
 
 #### `designer-mode`
 Use GPT Image 2 as the default production engine for the slide visual output.
@@ -214,6 +220,10 @@ Use GPT Image 2 as the default production engine for the slide visual output.
 Rules:
 - do not generate before the deck.md is approved
 - generate slide by slide, not all at once
+- use only designer assets declared in `designer_assets` or explicitly supplied in the current turn
+- when a slide references `asset_refs`, load and prepare those assets before prompt construction
+- render non-image assets such as `.pptx` templates into image previews before using them as model references
+- if a required logo/template/brand asset cannot be found or prepared, stop and report the missing asset
 - assemble pure designer-mode decks as PDF only, plus optional review PNGs; do not generate a PPTX version
 - add an OCR/searchable text layer to the final PDF when tooling is available
 - allow creative freedom only after the slide logic is locked
@@ -228,6 +238,8 @@ Rules:
 - put literal slide text in `required_text` — see `SPEC.md` for the required_text schema
 - explicitly prohibit extra invented text, watermarks, logos, decorative captions, and unrequested labels
 - use `skill/references/designer-mode-gpt-image-prompt-scaffold.md` to convert the deck.md slide block into the image prompt
+- after generation, render/inspect the slide or PDF against the approved deck.md and briefing; check logo placement, asset usage, text accuracy, overlaps, clipping, safe areas, and whether the slide still lands the intended message
+- if a generated slide fails inspection, regenerate only that slide with the prior image/prompt plus the specific defect to fix
 
 #### `mixed`
 Use when some slides should stay editable and others benefit from designer-mode visuals.
@@ -236,6 +248,7 @@ Rules:
 - use `mode:` explicitly per slide in the deck.md YAML block
 - do not invent mode decisions late in the process
 - produce PPTX only when the editable `ppt-shapes` portion matters or the user explicitly asks for a mixed editable file; designer-mode slides remain raster content inside any mixed artifact
+- render and inspect the whole assembled artifact so editable and raster slides work together visually
 
 ### 6. Save history and outputs
 
@@ -250,21 +263,53 @@ Save deck work under a tight standard structure:
 Preferred filenames:
 - `decks/<deck-slug>/specs/YYYY-MM-DD-v01-deck.md`
 - `decks/<deck-slug>/specs/YYYY-MM-DD-v02-deck.md`
+- `decks/<deck-slug>/specs/YYYY-MM-DD-review-01-deck.md`
+- `decks/<deck-slug>/specs/YYYY-MM-DD-review-02-deck.md`
 - `decks/<deck-slug>/outputs/final/YYYY-MM-DD-v02-deck.pdf` — required final deliverable for designer-mode decks
 - `decks/<deck-slug>/outputs/final/YYYY-MM-DD-v02-deck.pptx` — only for `ppt-shapes` or explicitly requested mixed/editable decks
 - `decks/<deck-slug>/outputs/review/YYYY-MM-DD-v02-slide-01.png`
 
 Rules:
 - save meaningful revisions, not every trivial wording tweak
+- use review filenames for post-render human change requests
 - keep the latest approved deck.md easy to find
 - keep earlier major versions when structure changes materially
 - do not scatter duplicate export trees unless there is a clear operational reason
 - do not persist scratch crops, temporary resized variants, or throwaway assembly files
 
-### 7. Keep the user informed
+### 7. Render review and repair
+
+After producing slides, always render the artifact before delivery.
+
+Inspect:
+- slide/page count and order
+- match to the approved deck.md and original briefing
+- title, required text, labels, and body text accuracy
+- logo and designer asset placement, especially overlap and safe margins
+- clipping, unreadable text, poor contrast, broken reading path, and visual clutter
+- whether each slide still proves its action title
+
+If anything fails:
+- if the spec is wrong, patch deck.md first
+- if the generated/built output is wrong, regenerate or rebuild only the affected slide
+- render and inspect again before delivery
+
+### 8. Post-render human changes
+
+When the human says the rendered deck is basically okay but asks for a change:
+- start from the previous approved deck.md and the human's new change request
+- create a new review version such as `YYYY-MM-DD-review-01-deck.md`
+- add `## Revision Brief` with the previous deck path, review round, change request, changed slides, unchanged slides, and regeneration scope
+- patch only the affected slide specs and any deck-level fields required by the change
+- pass the old slide spec, old rendered slide image or prompt when available, updated slide spec, and exact human change request to the image model
+- ask the model to change only the requested elements and preserve everything else that still matches the approved spec
+- regenerate only changed slides, then assemble, render, and inspect the full artifact
+
+### 9. Keep the user informed
 
 Especially in designer mode, use concise progress updates such as:
 - "Slide 1 generated. Going to the next."
+- "Slide 3 failed logo overlap review; regenerating only that slide."
 
 ## Fast operating sequence
 
@@ -275,8 +320,10 @@ Especially in designer mode, use concise progress updates such as:
 5. Send the deck.md to the user for validation.
 6. Revise and resend until the user approves it (`status: approved`).
 7. Produce slides in the approved mode; for pure designer-mode, assemble the final OCRed PDF only.
-8. Save outputs under `decks/<deck-slug>/outputs/`.
-9. Review against visual standards.
+8. Render and inspect the output against the deck.md, briefing, and asset rules.
+9. Repair and rerender any failed slides.
+10. Save outputs under `decks/<deck-slug>/outputs/`.
+11. Review against visual standards.
 
 If the build is simple, keep the workflow simple.
 Do not create extra planning files unless they materially help.
@@ -291,6 +338,7 @@ type: <archetype — see standards/slide-archetypes.md>
 layout: "<layout hint>"
 mode: "<ppt-shapes|designer-mode>"      # overrides deck default
 image_decision: "<none|icon-only|cutout|full-generated-visual>"
+asset_refs: ["<designer_assets.id>"]      # optional; slide-specific designer-mode assets
 ```
 
 Optional per-slide fenced blocks:
@@ -322,6 +370,25 @@ required_text:
     - "<label 2>"
 ```
 
+Deck-level designer assets live in frontmatter:
+
+```yaml
+designer_assets:
+  - id: brand_logo
+    type: logo
+    path: assets/source/logo.png
+    usage: "Place exact logo in the top-right corner"
+    scope: deck
+    placement: top-right
+    required: true
+  - id: board_template
+    type: ppt-template
+    path: assets/source/board-template.pptx
+    usage: "Use as layout and typography reference; do not copy text"
+    scope: deck
+    required: false
+```
+
 Slide content (body, sources, speaker notes) is markdown, not YAML.
 Titles MUST be action titles: full sentence with verb, sentence case, no trailing period, ≤14 words.
 See `standards/deck-validation.md` for the full checklist.
@@ -332,9 +399,11 @@ When the request implies designer mode:
 
 1. **Content design** — define the slide objective and audience takeaway; write the action title and body before choosing imagery
 2. **Slide structure proposal** — propose the composition before generating visuals; decide the layout and image role; keep the slide aligned to the deck design system
-3. **Spec lock** — make sure the slide block in deck.md is clear enough to produce without guessing; confirm the image role
-4. **Image generation** — derive the prompt from the approved deck.md slide using `skill/references/designer-mode-gpt-image-prompt-scaffold.md`; use `gpt-image-2`, `size="2560x1440"`, `quality="high"`, `output_format="png"`, `n=1` for final full-slide generation
-5. **PDF assembly** — assemble the generated slides into a final PDF only; add OCR/searchable text when tooling is available; do not create a PPTX wrapper for pure designer-mode output
+3. **Asset preparation** — resolve `designer_assets` and slide `asset_refs`; render `.pptx` templates or prior decks to PNG previews; prepare logos and reference images for the model
+4. **Spec lock** — make sure the slide block in deck.md is clear enough to produce without guessing; confirm the image role and asset usage
+5. **Image generation** — derive the prompt from the approved deck.md slide using `skill/references/designer-mode-gpt-image-prompt-scaffold.md`; include prepared asset references by id and usage; use `gpt-image-2`, `size="2560x1440"`, `quality="high"`, `output_format="png"`, `n=1` for final full-slide generation
+6. **PDF assembly** — assemble the generated slides into a final PDF only; add OCR/searchable text when tooling is available; do not create a PPTX wrapper for pure designer-mode output
+7. **Render review** — inspect the slide/PDF for briefing match, text accuracy, logo placement, overlaps, clipping, safe margins, and reading flow; regenerate affected slides only until it passes
 
 The image is a downstream artifact of the slide concept, not the first step.
 
@@ -378,6 +447,10 @@ Do not split deck logic across multiple files unless the extra structure is oper
 - do not use decorative stock imagery where icons or clean structure would work better
 - do not treat one deck-level image as enough for a designer-mode deck; decide imagery per slide
 - do not wrap pure designer-mode slide images in a PPTX just to create a PowerPoint file
+- do not use logos, templates, or reference assets without recording them in `designer_assets`
+- do not silently ignore a required designer asset that cannot be loaded or prepared
+- do not deliver without rendering and inspecting the output
+- do not regenerate the whole deck for a localized post-render change unless the change affects the whole deck
 - do not let templates, icons, or photos overpower the message
 - do not accept title-only opening slides with too much empty space
 - do not compress overcrowded content when the right answer is to split the slide
@@ -429,6 +502,12 @@ Before delivering, verify:
 - is there a clear, approved deck.md as source of truth
 - is the production mode right per slide (check `standards/slide-archetypes.md` preferred modes)
 - if imagery is used, was that decision made per slide
+- do all slide `asset_refs` resolve to declared `designer_assets`
+- were required designer assets found and prepared before generation
+- did the rendered output pass inspection against the approved deck.md and briefing
+- are logo placement, safe margins, and overlaps correct in the rendered output
+- if this is a review change, is there a new `review-##` deck.md with `## Revision Brief`
+- did review generation preserve unchanged slides and regenerate only changed slides
 - can a busy reader get the point quickly
 - does each slide have one main job
 - does the body prove the title

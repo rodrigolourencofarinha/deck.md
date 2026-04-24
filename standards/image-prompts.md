@@ -8,12 +8,13 @@ Applies when a slide has `mode: designer-mode` AND `image_decision: full-generat
 
 ## Base prompt structure
 
-Every generated slide prompt is assembled from four parts, in order:
+Every generated slide prompt is assembled from five parts, in order:
 
 1. **Format directive** — aspect ratio, size, output constraints
 2. **Design context** — from `design_tokens` and deck-level `## Design` rules
-3. **Slide content** — title, body, type, layout
-4. **Slide-specific direction** — from `creative_direction` and `required_text`
+3. **Asset references** — from deck-level `designer_assets` and slide-level `asset_refs`
+4. **Slide content** — title, body, type, layout
+5. **Slide-specific direction** — from `creative_direction` and `required_text`
 
 ### Template
 
@@ -37,6 +38,9 @@ CONSISTENCY RULES:
 
 AVOID:
 {deck-level avoid list + slide-level creative_direction.avoid}
+
+ASSET REFERENCES:
+{declared designer_assets that apply to this slide, including id, type, usage, placement, and prepared image input label}
 
 SLIDE CONTENT:
 - Type: {slide.type}
@@ -146,6 +150,26 @@ When `visual_template_reference` is set, the agent passes the referenced image a
 
 Default scope: title typography, outer margins, footer safe area. Body composition is free.
 
+## Designer asset references
+
+When `designer_assets` is set, the agent prepares every relevant asset before generation and injects a short asset block into the prompt.
+
+Asset prompt rules:
+- Identify each prepared image input by id, e.g. `Image 1 is asset brand_logo`.
+- State the asset `type`, `usage`, and `placement` if present.
+- For logos, state whether the logo must appear exactly and where.
+- For `.pptx` templates or prior decks, render representative slide(s) to PNG first, then state whether to match layout, density, typography, visual rhythm, or palette.
+- Do not allow template or brand assets to override required text, slide logic, or the deck's approved narrative.
+- If `required: true` and the asset cannot be prepared, block generation rather than silently proceeding.
+
+Example prompt block:
+
+```text
+ASSET REFERENCES:
+- Image 1 is asset brand_logo, type logo. Place the exact logo in the top-right corner on slides where referenced.
+- Image 2 is asset board_template, type ppt-template. Use it only as a layout, density, and typography reference; do not copy placeholder text.
+```
+
 ---
 
 ## Failure modes and fixes
@@ -159,3 +183,5 @@ Default scope: title typography, outer margins, footer safe area. Body compositi
 | Icons look wrong style | Name the icon family explicitly ("tabler-outline icons"); provide example icon names |
 | Slide feels generic | Add a specific metaphor in `creative_direction.metaphor`; increase specificity of `composition_intent` |
 | Designer-mode chart is unreadable | Switch that slide to `mode: ppt-shapes` — charts render better as shapes |
+| Logo or template is ignored | Add an `ASSET REFERENCES` block with the asset id, input image label, usage, and placement |
+| Review change alters too much | Use the prior rendered slide plus old/new slide specs and ask for only the exact delta |

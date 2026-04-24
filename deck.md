@@ -43,6 +43,26 @@ image_generation:
   quality:         high
   output_format:   png
 
+# Designer-mode assets are optional inputs the model should consider or place.
+# Non-image assets such as .pptx templates should be rendered/prepared before generation.
+# Reference them on individual slides with `asset_refs`, or set `scope: deck`.
+designer_assets: []
+# Example entries:
+# - id: brand_logo
+#   type: logo                         # ppt-template | logo | brand-guide | reference-image | screenshot | icon | other
+#   path: assets/source/logo.png
+#   usage: "Place exact logo on slides where referenced"
+#   scope: deck                        # deck | section | slide
+#   placement: top-right
+#   required: true
+# - id: board_template
+#   type: ppt-template
+#   path: assets/source/board-template.pptx
+#   usage: "Use as layout, density, and typography reference; do not copy text"
+#   scope: deck
+#   required: false
+#   notes: "Render representative slides to PNG before image generation"
+
 # Design tokens drive the look and feel. Edit these to change the deck's aesthetic.
 design_tokens:
   palette:
@@ -76,6 +96,24 @@ input_summary: "<what was provided to the agent>"
 interpretation: "<what the agent inferred: audience, objective, template, narrative>"
 open_questions:
   - "<placeholder or gap the human needs to fill before approving>"
+```
+
+## Revision Brief
+
+<!-- This section is only present in review versions after the human asks for changes
+     to a previously approved or rendered deck. Build this version from the previous
+     approved deck.md plus the new human change request, then regenerate only changed slides. -->
+
+```yaml
+previous_deck_md: "<path/to/previous-approved-deck.md>"
+review_round: 1
+human_change_request: "<what the human asked to change>"
+change_summary: "<what changed in this deck.md version>"
+changed_slides: []
+unchanged_slides: []
+regeneration_scope: changed_slides_only
+preserve:
+  - "<elements that should stay fixed, e.g. approved logo placement or composition>"
 ```
 
 ## What this deck is for
@@ -194,6 +232,7 @@ type: analysis
 id: 4
 type: recommendation
 image_decision: full-generated-visual     # none | icon-only | cutout | full-generated-visual
+asset_refs: [brand_logo, board_template]  # optional; ids from designer_assets
 ```
 
 <Body — what the slide communicates in words.>
@@ -220,6 +259,16 @@ required_text:
 ## Notes to the agent
 
 <Freeform context the agent should know but that doesn't fit above: deadlines, reviewers, data file locations, related decks, things to double-check, constraints on output.>
+
+## Render review
+
+<!-- Agent-facing checklist to complete after rendering and before delivery.
+     If any item fails, revise the spec or regenerate the affected slides and render again. -->
+
+- <Slide/page count and order match this deck.md>
+- <Text, labels, logo placement, and assets match the approved spec>
+- <No overlap, clipping, unsafe margins, or unreadable text>
+- <Rendered output still matches the original briefing and any Revision Brief>
 
 ---
 

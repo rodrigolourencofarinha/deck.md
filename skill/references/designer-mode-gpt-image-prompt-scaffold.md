@@ -63,7 +63,21 @@ Ask:
 - how polished, restrained, bold, or premium should it feel
 - what kind of presentation world does this deck live in
 
-### 3. Creative direction
+### 3. Designer assets
+
+Use:
+- deck-level `designer_assets`
+- slide-level `asset_refs`
+- prepared image inputs, such as rendered `.pptx` template previews or logo files
+- asset `usage`, `placement`, and `required` flags
+
+Ask:
+- which assets apply to this slide
+- whether each asset should be copied exactly, used as a loose reference, or used only for placement/style
+- whether a required asset is missing and should block generation
+- how to name each prepared input image in the prompt
+
+### 4. Creative direction
 
 Use:
 - `creative_direction`
@@ -78,7 +92,7 @@ Ask:
 - how much visual freedom should it have
 - what clichés or failure modes should be excluded
 
-### 4. Literal text and invariants
+### 5. Literal text and invariants
 
 Use:
 - slide `title`
@@ -135,6 +149,10 @@ Deck design language:
 - <overall level of polish>
 - <consistency instruction>
 
+Asset references:
+- <Image 1 / asset id / type / usage / placement>
+- <Image 2 / asset id / type / usage / placement>
+
 Required text to render exactly:
 - Title: "<exact title>"
 - Support line: "<exact support line if used>"
@@ -184,6 +202,9 @@ The audience should immediately grasp: {{audience_takeaway}}
 Use this deck design language:
 {{deck_design_language}}
 
+Use these prepared asset references:
+{{asset_reference_block}}
+
 Required text to render exactly:
 {{required_text_block}}
 
@@ -224,6 +245,8 @@ When filling the scaffold:
 - put exact title, support line, and labels in quoted form in the required-text block
 - translate bullets into concepts, relationships, tensions, or systems
 - preserve the deck style language without repeating unnecessary metadata
+- include every relevant `designer_assets` / `asset_refs` item by id and usage
+- describe prepared asset inputs by image number or filename when the image API receives them
 - repeat preserve rules on each iteration when text, layout, or style consistency matters
 
 ## Text discipline
@@ -244,6 +267,24 @@ When a generated slide establishes the right deck style:
 - describe how to use it: match style, palette, typography mood, spacing, hierarchy, or framing
 - still repeat critical text and layout instructions; do not rely on "same style as before" alone
 - do not use reference images to force a mismatched layout onto a slide with a different job
+
+## Designer assets in prompts
+
+Use `designer_assets` when the approved deck includes external visual inputs such as logos, brand guides, PowerPoint templates, screenshots, or prior decks.
+
+Before writing the prompt:
+- resolve each slide `asset_refs` id against deck-level `designer_assets`
+- prepare non-image assets as model-readable images, e.g. render `.pptx` templates or prior decks to PNG previews
+- stop if an asset has `required: true` and cannot be found or prepared
+- assign clear input labels such as `Image 1: brand_logo` and `Image 2: board_template`
+
+Prompt each asset narrowly:
+- logos: whether to place the exact logo, where to place it, and how large it should feel
+- PowerPoint templates: what to borrow, such as layout, density, typography, margins, or visual rhythm
+- brand guides: what to follow, such as palette, type mood, icon style, or spacing
+- screenshots/reference images: whether to reproduce, abstract, crop, or merely use as context
+
+Do not let an asset override the slide message or text lock. If a template has placeholder text, explicitly tell the model not to copy it.
 
 ## Default visual template prompt block
 
@@ -269,6 +310,54 @@ When a slide misses:
 3. Repeat preserve rules for exact text, layout, palette, title-safe area, and reference-image behavior.
 4. Regenerate and compare against the prior output.
 5. Replace the accepted output only after visual review.
+
+## Review-change prompt protocol
+
+Use this when the human asks for changes after seeing a rendered slide or deck.
+
+Inputs:
+- previous approved deck.md
+- new review deck.md with `## Revision Brief`
+- prior rendered slide image when available
+- old slide spec
+- updated slide spec
+- exact human change request
+
+The prompt should say:
+- this is a targeted revision, not a new slide
+- what changed in the approved spec
+- what must be preserved from the prior rendered slide
+- whether logo placement, template reference, text lock, palette, title zone, or composition should stay fixed
+- that only the requested elements should change
+
+Reusable review-change block:
+
+```text
+This is a targeted revision of an already approved slide, not a new slide.
+
+Previous rendered slide:
+<Image 1 or filename, if available>
+
+Human change request:
+{{human_change_request}}
+
+Old slide spec summary:
+{{old_slide_spec_summary}}
+
+Updated slide spec summary:
+{{updated_slide_spec_summary}}
+
+Change only:
+{{exact_delta}}
+
+Preserve:
+- approved composition and reading path unless listed in the change request
+- approved title zone, palette, typography mood, and safe margins
+- approved logo/template/reference asset behavior unless listed in the change request
+- all required text not listed in the change request
+
+Return a revised 16:9 presentation slide that implements only the requested delta.
+```
 
 ## Freedom dial
 
@@ -338,6 +427,9 @@ Avoid cheesy 3D gears, dashboard clutter, generic corporate stock imagery, and d
 - do not ask the image model for a background plate when the requested output is the slide itself
 - do not rely on downstream cropping, squeezing, or rescue framing as part of the normal workflow
 - do not blindly copy every field from the slide spec
+- do not use an undeclared logo, template, or reference asset in designer mode
+- do not ignore required designer assets
+- do not ask for a full redesign when the human requested a targeted review change
 - do not let art direction overpower communication
 - do not let the prompt drift away from the slide message
 - do not use decorative prompts that could apply to any slide in any deck
