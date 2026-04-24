@@ -1,0 +1,186 @@
+---
+document: deck-md-specification
+schema_version: deck-md/v2-alpha
+---
+
+# The `deck.md` specification
+
+`deck.md` is a Markdown-based file format for specifying presentation decks to AI agents. It is **the brief** a human writes (or co-writes with a model) and hands to an agent, which then produces the slides. One `deck.md` per deck. It is designed to be read and edited comfortably by humans *and* parsed deterministically by agents — the same file serves both audiences.
+
+It follows [AGENTS.md](https://agents.md) conventions: plain Markdown, optional YAML frontmatter, headings for structure, fenced code blocks for machine-parseable fields.
+
+**This document (`SPEC.md`) is the authoritative specification of the format.** For a starter brief to copy and fill in, see [`./deck.md`](./deck.md). For worked examples, see [`./examples/`](./examples/).
+
+## Purpose
+
+`deck.md` separates a deck's **logic and content** (the author's responsibility) from its **composition and visual treatment** (the model's responsibility). The spec prescribes logic. It does not prescribe composition beyond what's needed for deck-wide consistency.
+
+Use `deck.md` when you want:
+- Reproducible, reviewable deck specifications.
+- A format that covers PowerPoint-shape output and image-generated slides without rewriting.
+- Coordination between multiple models or human reviewers on the same deck.
+
+## File format
+
+A valid `deck.md` is:
+1. **YAML frontmatter** between `---` delimiters — deck metadata, design tokens, production defaults.
+2. **Markdown sections** with predefined H2 headings.
+3. **Fenced `yaml` blocks** inside sections where fields must be machine-parsed (per-slide metadata, chart specs, narrative spine).
+
+Filename convention: `deck.md` at the root of a project, or `<name>.deck.md` for multiple decks in one repo.
+
+## Required surface
+
+At every level of complexity, a valid `deck.md` MUST include:
+
+- `deck.title` in the frontmatter
+- A `## Narrative` section (template-based or full block)
+- A `## Slides` section with at least one `### Slide N — "Title"` heading
+
+Everything else is optional with sensible defaults.
+
+## Levels of use
+
+Three levels. Each is a superset of the previous. Scaling up never requires reformatting.
+
+| Level | Use case | Adds | Example |
+|---|---|---|---|
+| **Minimal** | 3–10 slide SCR, update, pitch | Narrative template + slide titles | [`examples/scr.deck.md`](./examples/scr.deck.md) |
+| **Standard** | Most working decks | Slide bodies, sources, speaker notes | — |
+| **Full** | Client-facing, image-led | `creative_direction`, `required_text`, `chart`, full `key_line` | [`examples/pyramid.deck.md`](./examples/pyramid.deck.md) |
+
+## Authorship
+
+- **Human controls:** narrative structure, action titles, slide types, data, sources, validation rules.
+- **Model controls:** composition, metaphor, visual treatment, iconography, layout refinement.
+- **Tie-breaker:** human wins on conflict. The model may propose alternatives in a slide's `prompt_notes` but MUST NOT silently override human-set fields.
+
+## Frontmatter schema
+
+```yaml
+---
+deck:
+  title:     "<string, required>"
+  objective: "<string, optional>"
+  audience:  "<string, optional>"
+  language:  "<en|pt|...>"
+  author:    "<string, optional>"
+  version:   "<string, optional>"
+
+narrative_template: "<scr|pyramid|problem-solution|update>"   # required
+
+production_defaults:
+  default_slide_mode: "<designer-mode|ppt-shapes>"            # default: designer-mode
+  aspect_ratio: "16:9"
+  default_visual_template: "<path, optional>"
+  default_visual_template_scope: "<string, optional>"
+
+image_generation:                                             # only used when mode is designer-mode
+  primary_creator: "gpt-image-2"
+  size:            "2560x1440"
+  quality:         "high"
+  output_format:   "png"
+  variants:        1
+
+design_tokens:
+  palette:       { primary, secondary, accent, accent_soft, background, line }
+  typography:    { title, body, emphasis }
+  spacing:       { outer_margin, block_gap }
+  iconography:   { family }
+  shape_language: { corner_style, line_weight }
+---
+```
+
+Only `deck.title` and `narrative_template` are strictly required. All other frontmatter blocks are optional with defaults.
+
+## Design principles
+
+### Visual intent
+Premium, consulting-style. Message-first, not decoration-first. Polished but controlled. High clarity at a glance.
+
+### Text policy
+- Every slide title MUST be an **action title** — a full sentence with a verb that states the "so what", not a topic label.
+- Body MUST prove the title; nothing in the title should go unproven, nothing in the body should be irrelevant to the title.
+- Sentence case. No trailing periods. No stray invented text in generated slides.
+
+Hard limits (word counts, case, bullet counts) live in [`./standards/deck-validation.md`](./standards/deck-validation.md) and MUST be self-checked before emitting.
+
+### Image policy
+- Default to `designer-mode`; a slide may opt into `ppt-shapes` when it's simple enough that generation adds no value.
+- One strong visual idea per slide.
+- When `image_decision: full-generated-visual`, the slide MUST declare `required_text`. The model MUST NOT render any text in the image that is not listed there.
+- Reject: poster-like output, background plates, cropped salvage jobs, decorative stock-photo energy.
+
+### Consistency
+Stable title treatment, slide-type patterns, palette and emphasis behavior across the deck. No slide drifts into a different visual language.
+
+## Narrative
+
+The deck's logical spine. Set via one of four templates. Every body slide should ladder up to one argument in `key_line` (for `pyramid`) or one named narrative element.
+
+### Templates
+
+| Template | Required fields | Best for |
+|---|---|---|
+| `scr` | `situation`, `complication`, `resolution` | Short-form consulting (3–10 slides) |
+| `pyramid` | `governing_thought`; recommended: `question`, `key_line`, `mece_check` | Long or branching decks (10+ slides, multiple arguments) |
+| `problem-solution` | `problem`, `solution`, `why_now` | Pitches, proposals |
+| `update` | `plan`, `actual`, `next` | Status updates, retrospectives |
+
+See [`./standards/narrative-templates.md`](./standards/narrative-templates.md) for required fields, canonical examples, and pitfalls per template.
+
+## Slides
+
+Each slide is a `### Slide N — "Action title"` heading, followed by a fenced `yaml` metadata block, then markdown body and optional fenced blocks for `chart`, `creative_direction`, `required_text`.
+
+### Slide field reference
+
+```yaml
+id: <integer, required>
+type: <see ./standards/slide-archetypes.md, required>
+layout: "<string, optional>"
+mode: "<ppt-shapes|designer-mode>"                       # inherits from production_defaults
+image_decision: "<none|icon-only|cutout|full-generated-visual>"
+visual_template_reference: "<path>"                      # overrides deck default
+visual_template_scope: "<string>"                        # overrides deck default
+```
+
+### Optional per-slide fenced blocks
+
+- `chart:` — when the slide contains a chart. Fields: `type`, `emphasis`, `data_ref`, `annotation`. `emphasis` should echo the action title.
+- `creative_direction:` — when `mode: designer-mode`. Fields: `mood`, `metaphor`, `composition_intent`, `prompt_notes[]`, `avoid[]`. This is the model's creative surface.
+- `required_text:` — when `image_decision: full-generated-visual`. Fields: `title`, `subtitle`, `labels[]`. The model MUST NOT render text outside this list.
+
+### Prose fields (markdown, not YAML)
+
+- **Body** — the content of the slide.
+- **Sources** — attribution line.
+- **Speaker notes** — what the presenter says beyond what's on the slide.
+
+### Slide archetypes
+
+The `type` field must be a value in [`./standards/slide-archetypes.md`](./standards/slide-archetypes.md): `executive_summary`, `section_divider`, `situation`, `complication`, `key_takeaways`, `analysis`, `chart`, `framework`, `recommendation`, `roadmap`, `risk_mitigation`, `next_steps`, `appendix`.
+
+## Precedence
+
+1. Per-slide fields override everything else.
+2. `## Narrative` defines the logical spine — body slides must ladder up to it.
+3. `## Design principles` sets deck-wide behavior.
+4. Frontmatter sets defaults.
+5. Referenced standards (archetypes, validation, prompts) are authoritative within their domain.
+
+On conflict, the closer-in rule wins. Human-set fields beat model improvisation.
+
+## References
+
+- [`./standards/narrative-templates.md`](./standards/narrative-templates.md) — reference for each `narrative_template` value: required fields, canonical examples, pitfalls.
+- [`./standards/slide-archetypes.md`](./standards/slide-archetypes.md) — catalog of valid `type` values with required fields and typical layouts.
+- [`./standards/deck-validation.md`](./standards/deck-validation.md) — hard rules the agent self-checks before emitting.
+- [`./standards/image-prompts.md`](./standards/image-prompts.md) — prompt templates for `gpt-image-2` calls.
+
+## Examples
+
+- [`./examples/scr.deck.md`](./examples/scr.deck.md) — minimal 5-slide SCR narrative.
+- [`./examples/pyramid.deck.md`](./examples/pyramid.deck.md) — full pyramid deck with `executive_summary`, `analysis` (chart), and `recommendation` (designer-mode with `required_text`).
+- [`./examples/problem-solution.deck.md`](./examples/problem-solution.deck.md) — a startup pitch deck using the `problem-solution` template.
+- [`./examples/update.deck.md`](./examples/update.deck.md) — a quarterly engineering status report using the `update` template.
