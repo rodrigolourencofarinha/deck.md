@@ -8,9 +8,12 @@ You write the logic — narrative structure, action titles, data, sources. The a
 
 ## How it works
 
-1. Copy `deck.md` and fill it in (title, narrative, slide titles, body).
-2. Hand the file to an agent.
-3. The agent produces slides — as generated images (`designer-mode`) or PowerPoint shapes (`ppt-shapes`).
+1. The human sends a briefing, source material, or an existing partial `deck.md`.
+2. The agent produces a first `deck.md` with `status: draft` and sends it back for human validation.
+3. The human approves it or asks for changes; the agent revises and resends `deck.md` until the human says it is approved.
+4. Only after approval does the agent produce slides.
+
+Default production is `designer-mode`. Use `ppt-shapes` only when a slide needs precise editability, data-accurate charts, tables, or template-driven PowerPoint structure. Designer-mode decks produce final PDFs, not PPTX wrappers; add an OCR text layer to the PDF when tooling is available.
 
 ## Levels of use
 
@@ -59,7 +62,7 @@ Each level is a superset of the previous. Scaling up never requires reformatting
 
 ## The skill
 
-`skill/` is a reference implementation of the deck-architect agent skill. It shows how to wire deck.md into a working agent: narrative-to-brief generation, approval gate, slide production via GPT Image 2 or python-pptx, and PDF assembly.
+`skill/` is a reference implementation of the deck-architect agent skill. It shows how to wire deck.md into a working agent: narrative-to-brief generation, approval gate, designer-mode PDF production with OCR when available, editable `ppt-shapes` production via python-pptx, and PDF assembly.
 
 | Path | Purpose |
 |---|---|

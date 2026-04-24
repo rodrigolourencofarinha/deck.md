@@ -13,6 +13,8 @@ Clarify:
 - required output: outline, approved spec, editable deck, or polished visual slides
 
 Do not start from PowerPoint decoration.
+Do not produce slides until the human has validated and approved the current `deck.md`.
+For pure designer-mode decks, produce PDF output only and add OCR/searchable text when tooling is available.
 
 ## Material types and density
 
@@ -117,6 +119,8 @@ Before moving into production, check:
 - what decision should this deck support
 - could the audience understand the main story quickly
 - is this deck read alone or presented live
+- has the human approved the current `deck.md`, not just the initial briefing
+- if this is pure designer-mode, is the deliverable PDF-only with OCR attempted
 - is the density right for that mode
 - does each title communicate a conclusion
 - can the title sequence stand alone as the argument
@@ -127,3 +131,4 @@ Before moving into production, check:
 
 If the storyline is still fuzzy, stay in the spec.
 Do not jump into slide production early.
+Default to designer-mode for production unless the human asks for `ppt-shapes` or the slide needs charts, tables, or precise editability.

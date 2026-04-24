@@ -28,7 +28,10 @@ For visual QA, prefer Microsoft PowerPoint renders when available.
 Hard rules:
 - use the `deck.md` format defined in `SPEC.md` for all deck planning
 - do not invent a parallel planning schema
-- do not begin production until the user has approved the deck.md (set `status: approved`)
+- do not begin production until the user has approved the current deck.md (set `status: approved`)
+- default `production_defaults.default_slide_mode` to `designer-mode` unless the user explicitly asks for another mode
+- for pure designer-mode decks, produce final PDF only; do not create a PPTX wrapper
+- add OCR/searchable text to designer-mode PDFs when tooling is available, and report clearly if OCR could not be applied
 - save meaningful deck.md versions under `decks/<deck-slug>/specs/`
 
 ## Assets and tools
@@ -142,7 +145,9 @@ The user may arrive with:
 
 In all three cases:
 - normalize into a `deck.md` following the format in `SPEC.md`
+- set `production_defaults.default_slide_mode: designer-mode` unless the user explicitly asks for `ppt-shapes` or a mixed/editable build
 - for cases 1 and 2, generate the deck.md with `status: draft` and populate `## Brief` with what was provided and what was inferred — see `SPEC.md` for the `## Brief` schema
+- send the complete draft deck.md to the user before producing any slides
 - do not jump into production while structure is still unclear
 - make the action-title sequence readable as the deck's argument before producing slide bodies
 - choose the right `narrative_template`: `scr`, `pyramid`, `problem-solution`, or `update`
@@ -162,6 +167,14 @@ Mode nuance:
 
 ### 3. Mandatory approval gate
 
+The human approval loop is required:
+1. human sends briefing, source material, or partial deck.md
+2. agent drafts a complete deck.md with `status: draft`
+3. agent sends that deck.md to the human for validation
+4. human approves or requests changes
+5. agent revises and resends deck.md until the human approves
+6. only then does production begin
+
 Do not:
 - build slides
 - generate slide visuals
@@ -170,7 +183,7 @@ Do not:
 
 until `status: approved` is set in the deck.md frontmatter.
 
-When the deck.md is agent-generated (from a broad idea or raw content), the user MUST review `## Brief` and all slide titles before approving. Agents MAY use `quality: low` for any draft-phase preview renders.
+When the deck.md is agent-generated (from a broad idea or raw content), the user MUST review `## Brief` and all slide titles before approving. Draft renders do not replace this approval gate.
 
 ### 4. Choose production mode
 
@@ -178,7 +191,7 @@ Modes: `ppt-shapes` | `designer-mode` | `mixed`
 
 The `production_defaults.default_slide_mode` in the deck.md frontmatter sets the deck default. Individual slides override with `mode:` in their YAML block. Each archetype in `standards/slide-archetypes.md` declares a `preferred_mode` as a starting point.
 
-If the user has not chosen, recommend the simplest mode that fits the deck.
+If the user has not chosen, use `designer-mode` as the default. Override individual chart, table, and heavily editable analytical slides to `mode: ppt-shapes` when that will produce clearer or more maintainable output.
 
 ### 5. Produce in the chosen mode
 
@@ -201,6 +214,8 @@ Use GPT Image 2 as the default production engine for the slide visual output.
 Rules:
 - do not generate before the deck.md is approved
 - generate slide by slide, not all at once
+- assemble pure designer-mode decks as PDF only, plus optional review PNGs; do not generate a PPTX version
+- add an OCR/searchable text layer to the final PDF when tooling is available
 - allow creative freedom only after the slide logic is locked
 - default to GPT Image 2 end-to-end slide generation for designer mode unless the user explicitly asks for a hybrid workflow
 - enforce `aspect_ratio: 16:9` in both the deck.md and the image-generation call
@@ -220,6 +235,7 @@ Use when some slides should stay editable and others benefit from designer-mode 
 Rules:
 - use `mode:` explicitly per slide in the deck.md YAML block
 - do not invent mode decisions late in the process
+- produce PPTX only when the editable `ppt-shapes` portion matters or the user explicitly asks for a mixed editable file; designer-mode slides remain raster content inside any mixed artifact
 
 ### 6. Save history and outputs
 
@@ -234,8 +250,8 @@ Save deck work under a tight standard structure:
 Preferred filenames:
 - `decks/<deck-slug>/specs/YYYY-MM-DD-v01-deck.md`
 - `decks/<deck-slug>/specs/YYYY-MM-DD-v02-deck.md`
-- `decks/<deck-slug>/outputs/final/YYYY-MM-DD-v02-deck.pptx`
-- `decks/<deck-slug>/outputs/final/YYYY-MM-DD-v02-deck.pdf`
+- `decks/<deck-slug>/outputs/final/YYYY-MM-DD-v02-deck.pdf` — required final deliverable for designer-mode decks
+- `decks/<deck-slug>/outputs/final/YYYY-MM-DD-v02-deck.pptx` — only for `ppt-shapes` or explicitly requested mixed/editable decks
 - `decks/<deck-slug>/outputs/review/YYYY-MM-DD-v02-slide-01.png`
 
 Rules:
@@ -254,12 +270,13 @@ Especially in designer mode, use concise progress updates such as:
 
 1. Classify the request.
 2. Draft the storyline.
-3. Create the deck.md (or refine the existing one).
+3. Create the deck.md (or refine the existing one) with `status: draft` and designer-mode as the default production mode.
 4. Save the current version under `decks/<deck-slug>/specs/`.
-5. Get approval (`status: approved`).
-6. Produce slides in the chosen mode.
-7. Save outputs under `decks/<deck-slug>/outputs/`.
-8. Review against visual standards.
+5. Send the deck.md to the user for validation.
+6. Revise and resend until the user approves it (`status: approved`).
+7. Produce slides in the approved mode; for pure designer-mode, assemble the final OCRed PDF only.
+8. Save outputs under `decks/<deck-slug>/outputs/`.
+9. Review against visual standards.
 
 If the build is simple, keep the workflow simple.
 Do not create extra planning files unless they materially help.
@@ -317,13 +334,13 @@ When the request implies designer mode:
 2. **Slide structure proposal** — propose the composition before generating visuals; decide the layout and image role; keep the slide aligned to the deck design system
 3. **Spec lock** — make sure the slide block in deck.md is clear enough to produce without guessing; confirm the image role
 4. **Image generation** — derive the prompt from the approved deck.md slide using `skill/references/designer-mode-gpt-image-prompt-scaffold.md`; use `gpt-image-2`, `size="2560x1440"`, `quality="high"`, `output_format="png"`, `n=1` for final full-slide generation
-5. **Slide assembly** — if using full-slide designer mode, the generated image itself should already respect the intended slide composition; do not crop, squeeze, or force-fit generated images after the fact
+5. **PDF assembly** — assemble the generated slides into a final PDF only; add OCR/searchable text when tooling is available; do not create a PPTX wrapper for pure designer-mode output
 
 The image is a downstream artifact of the slide concept, not the first step.
 
 ## Editable deck production
 
-Use when the user wants a `.pptx`.
+Use when the user wants a `.pptx` and the deck is `ppt-shapes` or explicitly mixed/editable. Do not use this path for pure designer-mode decks.
 
 Preferred build path:
 - use `python skill/scripts/build_pptx.py OUTPUT_PPTX DECK_MD [TEMPLATE_PPTX]`
@@ -343,8 +360,11 @@ Use when the user wants exact per-slide thinking without producing files yet.
 ### Slide critique
 Use when reviewing or improving an existing slide/deck.
 
+### Designer-mode PDF
+Use when the approved deck is pure `designer-mode`. Deliver a final PDF, add OCR/searchable text when available, and keep review PNGs only as supporting artifacts.
+
 ### Editable deck production
-Use when the user wants a `.pptx` and possibly a `.pdf`.
+Use when the user wants a `.pptx` and the deck has editable `ppt-shapes` content.
 
 ## Reuse rule
 
@@ -357,6 +377,7 @@ Do not split deck logic across multiple files unless the extra structure is oper
 - do not force images across the whole deck
 - do not use decorative stock imagery where icons or clean structure would work better
 - do not treat one deck-level image as enough for a designer-mode deck; decide imagery per slide
+- do not wrap pure designer-mode slide images in a PPTX just to create a PowerPoint file
 - do not let templates, icons, or photos overpower the message
 - do not accept title-only opening slides with too much empty space
 - do not compress overcrowded content when the right answer is to split the slide
@@ -418,6 +439,8 @@ Before delivering, verify:
 - for consulting-style slides, does the title state one insight and does the body prove it directly
 - do source, units, notes, and footer/status markings meet the consulting-slide standard where relevant
 - if designer mode was requested, did the workflow stay GPT Image 2-first rather than drifting into an unapproved hybrid
+- if the deck is pure designer-mode, is the final deliverable PDF-only rather than PPTX
+- was OCR/searchable text added to the designer-mode PDF, or clearly reported as unavailable
 - does the result clearly read as a native 16:9 slide rather than a rescued crop
 - was the aspect ratio obtained from generation rather than forced later through cropping or squeezing
 - is the title area controlled, with no oversized paragraph-like heading

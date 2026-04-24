@@ -8,7 +8,8 @@
 
 schema_version: deck-md/v2-alpha
 
-# Workflow status. Set to 'approved' to release slide generation.
+# Workflow status. Keep as 'draft' until the human validates this deck.md.
+# Set to 'approved' only after the human approves slide production.
 # If this deck.md was agent-generated, review ## Brief below before approving.
 status: draft                             # draft | approved
 
@@ -28,9 +29,9 @@ narrative_template: pyramid
 
 # Output: designer-mode generates each slide as an image via gpt-image-2, using
 # the narrative and design tokens below. A slide can opt out with `mode: ppt-shapes`
-# when it's simple enough that generation isn't worth the cost.
+# when it needs precise editability, data-accurate charts, tables, or PPT templates.
 production_defaults:
-  default_slide_mode: ppt-shapes          # ppt-shapes | designer-mode
+  default_slide_mode: designer-mode       # designer-mode | ppt-shapes
   aspect_ratio: "16:9"
   # default_visual_template: assets/visual-templates/default-slide.png
 
@@ -137,7 +138,9 @@ Each slide is one `### Slide N — "action title"` heading, followed by a small 
 
 **Horizontal logic.** Reading only the action titles of all your slides should reproduce the deck's argument. If it doesn't, either the titles or the argument structure above needs work.
 
-**Output mode.** Default is `ppt-shapes` — the agent renders the slide as a layout image from the design tokens. Opt into `mode: designer-mode` on individual slides where a generated visual adds clear value (executive summaries, recommendations, section dividers). For finer control on a designer-mode slide, add a `creative_direction` and `required_text` block (see Slide 4).
+**Output mode.** Default is `designer-mode` -- the agent produces slides as generated visual compositions from the narrative and design tokens. Opt out with `mode: ppt-shapes` when a slide needs precise editability, data-accurate charts, tables, or template-driven PowerPoint structure. For finer control on a designer-mode slide, add a `creative_direction` and `required_text` block (see Slide 4).
+
+**Designer-mode deliverable.** If the approved deck is pure designer-mode, produce a final PDF only, not a PPTX wrapper. Add OCR/searchable text to the PDF when tooling is available.
 
 Valid `type` values are listed in [`./standards/slide-archetypes.md`](./standards/slide-archetypes.md).
 

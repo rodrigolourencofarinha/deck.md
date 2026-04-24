@@ -1,6 +1,8 @@
 ---
 schema_version: deck-md/v2-alpha
 
+status: draft
+
 deck:
   title:    "<your deck title>"
   audience: "<who will see it>"
@@ -9,7 +11,7 @@ deck:
 narrative_template: scr    # scr | pyramid | problem-solution | update
 
 production_defaults:
-  default_slide_mode: ppt-shapes
+  default_slide_mode: designer-mode
   aspect_ratio: "16:9"
 ---
 

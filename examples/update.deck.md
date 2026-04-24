@@ -11,7 +11,7 @@ deck:
 narrative_template: update
 
 production_defaults:
-  default_slide_mode: ppt-shapes          # ppt-shapes | designer-mode
+  default_slide_mode: designer-mode       # designer-mode | ppt-shapes
   aspect_ratio: "16:9"
 
 image_generation:

@@ -10,6 +10,8 @@ Start from the approved deck.md.
 Default behavior for Rodrigo's designer-mode requests:
 - use GPT Image 2 as the primary and default end-to-end slide generator
 - do not invent a hybrid background-plus-manual-assembly workflow unless the user explicitly asks for it
+- deliver pure designer-mode decks as final PDFs only; do not make PPTX wrappers because the slides are not editable
+- add OCR/searchable text to the final PDF when tooling is available, and say clearly if OCR could not be applied
 - treat the generated output as a real 16:9 presentation slide, not just a background image or poster
 - request native 16:9 output from the model itself rather than generating first and rescuing it later through crop/resize hacks
 - use `size="2560x1440"` and `quality="high"` for final full-slide outputs
@@ -23,7 +25,8 @@ Sequence:
 4. derive the image brief from the spec
 5. generate the visual if one is actually needed
 6. if hybrid mode was explicitly chosen, place the visual into the intended composition; otherwise expect the generated slide to already respect the slide composition
-7. review the rendered result and iterate
+7. assemble the approved designer-mode slides into a final PDF, adding OCR/searchable text when available
+8. review the rendered result and iterate
 
 If the output fails the slide contract, regenerate.
 Do not default to center-cropping or force-fitting the image just to make it fill the slide.
@@ -164,6 +167,12 @@ For final full-slide designer-mode output:
 - `quality="high"`
 - `output_format="png"`
 - `n=1`
+
+Final deck assembly for pure designer-mode:
+- create one final PDF from the approved slide PNGs
+- run OCR or add a searchable text layer when tooling is available
+- do not create a PPTX wrapper around generated slide images
+- keep per-slide PNGs as review/source artifacts, not as the final deck deliverable
 
 Use `quality="medium"` for layout or mood previews.
 Use `quality="low"` only for fast exploration where text, fine detail, and export quality are not yet important.

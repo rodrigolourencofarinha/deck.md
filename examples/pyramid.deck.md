@@ -12,7 +12,7 @@ deck:
 narrative_template: pyramid
 
 production_defaults:
-  default_slide_mode: ppt-shapes          # ppt-shapes | designer-mode
+  default_slide_mode: designer-mode       # designer-mode | ppt-shapes
   aspect_ratio: "16:9"
   default_visual_template: assets/visual-templates/default-slide.png
 
