@@ -27,9 +27,9 @@ deck:
 #   update           — Plan / Actual / Next                              (status, retros)
 narrative_template: pyramid
 
-# Output: designer-mode generates each slide through Codex image generation first,
-# using the narrative and design tokens below. Direct OpenAI Image API generation
-# is a fallback only after Codex image generation fails and the human approves it.
+# Output: designer-mode generates each slide with gpt-image-2 through Codex
+# OAuth/Codex image tooling first. Direct OpenAI Image API-key generation is a
+# fallback only after the Codex-authenticated path fails and the human approves it.
 # A slide can opt out with `mode: ppt-shapes` when it needs precise editability,
 # data-accurate charts, tables, or editable PPT structure.
 production_defaults:
@@ -47,8 +47,9 @@ production_defaults:
 # image_generation is only used for slides with mode: designer-mode.
 # Remove this block if your deck has no designer-mode slides.
 image_generation:
-  primary_creator: codex-imagegen
-  fallback_creator: openai-api:gpt-image-2
+  model: gpt-image-2
+  primary_auth: codex-oauth
+  fallback_auth: openai-api-key
   fallback_requires_user_approval: true
   size:            "2560x1440"
   quality:         high
@@ -271,7 +272,7 @@ creative_direction:
   metaphor: "<the visual idea — e.g. three parallel tracks, a rising curve, a cross-section>"
   composition_intent: "<how the visual should be composed on the slide>"
   prompt_notes:
-    - "<specific guidance for Codex image generation>"
+    - "<specific guidance for gpt-image-2>"
   avoid:
     - "<anti-patterns, e.g. photographic imagery, cinematic lighting>"
 
@@ -317,7 +318,7 @@ required_text:
 - [`./standards/narrative-templates.md`](./standards/narrative-templates.md) — narrative template reference
 - [`./standards/slide-archetypes.md`](./standards/slide-archetypes.md) — slide type catalog
 - [`./standards/deck-validation.md`](./standards/deck-validation.md) — hard rules the agent self-checks
-- [`./standards/image-prompts.md`](./standards/image-prompts.md) — Codex image generation prompt templates
+- [`./standards/image-prompts.md`](./standards/image-prompts.md) — gpt-image-2 prompt templates
 - [`./standards/artifact-structure.md`](./standards/artifact-structure.md) — standard production instance folders and artifact naming
 - [`./examples/scr.deck.md`](./examples/scr.deck.md) — minimal filled SCR example
 - [`./examples/pyramid.deck.md`](./examples/pyramid.deck.md) — full pyramid example

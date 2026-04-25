@@ -8,8 +8,8 @@ Do not start from an image.
 Start from the approved deck.md.
 
 Default behavior for Rodrigo's designer-mode requests:
-- use Codex image generation as the primary and default end-to-end slide generator
-- use the direct OpenAI Image API only as a fallback after Codex image generation fails and the human approves continuing with the API fallback
+- use `gpt-image-2` through Codex OAuth/Codex image tooling as the primary and default end-to-end slide generator
+- use the direct OpenAI Image API key path only as a fallback after the Codex-authenticated path fails and the human approves continuing with the fallback
 - do not invent a hybrid background-plus-manual-assembly workflow unless the user explicitly asks for it
 - record every asset the visual model should receive in `designer_assets`: logos, existing decks, rendered slide previews, templates, brand guides, screenshots, icons, and reference images
 - do not pass undeclared assets to the visual model
@@ -111,7 +111,7 @@ Good fits:
 - isolated object or subject
 - explanatory metaphor
 - dominant framework visual
-- full-slide art-directed pages where Codex image generation can carry both the composition and the visual language cleanly
+- full-slide art-directed pages where `gpt-image-2` can carry both the composition and the visual language cleanly
 
 Usually poor fits:
 - dense process slides
@@ -239,8 +239,9 @@ Asset handling rules:
 ## Generation parameter defaults
 
 For final full-slide designer-mode output:
-- `primary_creator="codex-imagegen"`
-- `fallback_creator="openai-api:gpt-image-2"` only after Codex image generation fails and the human approves the fallback
+- `model="gpt-image-2"`
+- `primary_auth="codex-oauth"`
+- `fallback_auth="openai-api-key"` only after Codex OAuth/Codex image tooling fails and the human approves the fallback
 - `size="2560x1440"`
 - `quality="high"`
 - `output_format="png"`

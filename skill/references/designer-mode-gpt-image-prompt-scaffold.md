@@ -1,6 +1,6 @@
 # Designer-mode image prompt scaffold
 
-Use this reference when converting a slide spec into the actual prompt for Codex image generation. The same prompt can be reused for the direct OpenAI Image API fallback only after Codex image generation fails and the human approves continuing with the API fallback.
+Use this reference when converting a slide spec into the actual prompt for `gpt-image-2` through Codex OAuth/Codex image tooling. The same prompt can be reused for the direct OpenAI Image API key fallback only after the Codex-authenticated path fails and the human approves continuing with the fallback.
 
 This is not the canonical deck spec.
 It is the downstream prompt scaffold for the visual layer of one designer-mode slide.

@@ -21,8 +21,9 @@ production_defaults:
     placement: bottom-left-cr-bottom-right-page
 
 image_generation:
-  primary_creator: codex-imagegen
-  fallback_creator: openai-api:gpt-image-2
+  model: gpt-image-2
+  primary_auth: codex-oauth
+  fallback_auth: openai-api-key
   fallback_requires_user_approval: true
   size: "2560x1440"
   quality: high
