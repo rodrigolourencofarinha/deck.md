@@ -1,6 +1,6 @@
 ---
 name: deck-architect
-description: "Plan, critique, redesign, and produce slide decks from deck.md briefs. Use for consulting-style decks, executive reports, MBA/class decks, workshops, talk decks, designer-mode PDF output with gpt-image-2, editable ppt-shapes PPTX output with artifact-tool, visual redesigns from existing decks, and Tabler/template-assisted slide construction when those assets are installed."
+description: "Plan, critique, redesign, and produce slide decks from deck.md briefs. Use for consulting-style decks, executive reports, MBA/class decks, workshops, talk decks, designer-mode PDF output with gpt-image-2, editable ppt-shapes PPTX output with artifact-tool, and visual redesigns from user-supplied decks, templates, screenshots, logos, brand guides, icon packs, or reference assets."
 ---
 
 # Deck Architect
@@ -16,7 +16,8 @@ Hard rules:
 - Keep `status: draft` until the human approves production.
 - Do not build slides, generate images, assemble PDFs, or export PPTX files before approval.
 - Default `production_defaults.default_slide_mode` to `designer-mode` unless the user asks for `ppt-shapes` or mixed/editable output.
-- Declare every model input in `designer_assets` before approval; do not send undeclared files to the visual model.
+- Declare every model input in `designer_assets` before approval; do not send or use undeclared files.
+- Treat all logos, templates, old decks, screenshots, brand guides, icon packs, fonts, and reference images as external assets supplied by the user or declared by URL/path. This public skill has no bundled visual asset library.
 - For pure `designer-mode`, deliver PDF output only; add OCR/searchable text when available and report if OCR was not applied.
 - Use the standard footer unless the approved brief disables it: small `CR` lower-left and simple page numbers (`1`, `2`, `3`) lower-right.
 - Render and inspect the produced artifact before delivery; repair and rerender failed slides.
@@ -52,9 +53,7 @@ Read only the files needed for the task:
 - `references/designer-mode-workflow.md` - designer-mode production and review loop.
 - `references/designer-mode-gpt-image-prompt-scaffold.md` - convert an approved slide block into a `gpt-image-2` prompt.
 - `references/designer-mode-direct-api-pattern.md` - direct OpenAI Image API fallback, only after Codex path failure and human approval.
-- `references/pptx-production.md` - editable PPTX production with artifact-tool and legacy `python-pptx`.
-- `references/template-catalog.md` - optional template library, only if `assets/templates/` is installed.
-- `references/tabler-icon-selection.md` - optional Tabler icon selection, only if `assets/tabler-icons/` is installed.
+- `references/pptx-production.md` - editable PPTX production with artifact-tool.
 
 ## Production Modes
 
@@ -66,23 +65,19 @@ Use `ppt-shapes` for editable analytical slides, precise charts, tables, process
 python scripts/build_pptx_artifact_tool.py OUTPUT.pptx APPROVED_DECK.md
 ```
 
-Use the legacy compatibility renderer only when needed:
-
-```bash
-python scripts/build_pptx.py OUTPUT.pptx APPROVED_DECK.md
-```
+This is the public editable-PPTX path. It creates an isolated artifact-tool workspace with `src/`, `scratch/`, and `output/`; uses editable presentation primitives; exports PPTX, PNG previews, layout JSON, and a quality report; and prepares only assets declared in the approved brief.
 
 Use `mixed` only when specific slides need different modes. Set `mode:` explicitly per slide.
 
-## Optional Assets
+## External Asset Contract
 
-The skill works for planning and basic editable rendering without large visual assets. If an installed skill has `assets/`, use it as follows:
+The installable skill is intentionally asset-neutral. Do not assume any bundled templates, logo sets, icon packs, deck examples, fonts, or brand materials exist inside the skill.
 
-- `assets/visual-templates/default-slide.png` for normal designer-mode template references.
-- `assets/visual-templates/title-page.png` for covers or title pages.
-- `assets/templates/` for explicit template-driven PPTX builds.
-- `assets/RLF_PPT_Template_v1.pptx` only as the legacy `python-pptx` base.
-- `assets/tabler-icons/` for optional icon export.
+When the user provides assets, add them to `designer_assets` before approval. Supported generic types include `logo`, `ppt-template`, `existing-deck`, `slide-preview`, `brand-guide`, `reference-image`, `screenshot`, `icon-pack`, `font`, and `other`.
+
+For `designer-mode`, prepare declared non-image assets into model-readable inputs and record them in `method/model-inputs.yaml`.
+
+For `ppt-shapes`, pass declared local assets through the artifact-tool workspace under `scratch/assets/` and record them in `scratch/external-assets.json`. Use them only when referenced by `scope: deck` or slide-level `asset_refs`.
 
 If an approved deck marks an asset as `required: true` and it cannot be found or prepared, stop and report the missing asset. Optional missing assets should not block storyline planning or validation.
 

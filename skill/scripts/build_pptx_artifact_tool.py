@@ -9,6 +9,7 @@ import shutil
 import subprocess
 import sys
 from pathlib import Path
+from urllib.parse import urlparse
 
 import yaml
 
@@ -195,6 +196,7 @@ def parse_deck_markdown(path: Path, text: str) -> dict | None:
             "slide_mode": metadata.get("mode"),
             "template": metadata.get("template"),
             "image_decision": metadata.get("image_decision"),
+            "asset_refs": ensure_list(metadata.get("asset_refs")),
             "content": content,
             "sources": parse_sources(segment),
         }
@@ -211,6 +213,7 @@ def parse_deck_markdown(path: Path, text: str) -> dict | None:
         "narrative_template": frontmatter.get("narrative_template"),
         "production_defaults": frontmatter.get("production_defaults") or {},
         "image_generation": frontmatter.get("image_generation") or {},
+        "designer_assets": frontmatter.get("designer_assets") or [],
         "design_tokens": frontmatter.get("design_tokens") or {},
         "slides": slides,
     }
@@ -294,6 +297,126 @@ def ensure_list(value) -> list:
     if isinstance(value, list):
         return value
     return [value]
+
+
+def slugify(value: str, default: str = "asset") -> str:
+    slug = re.sub(r"[^a-zA-Z0-9_-]+", "-", str(value or "")).strip("-").lower()
+    return slug or default
+
+
+def is_remote_ref(value: str) -> bool:
+    parsed = urlparse(value)
+    return parsed.scheme in {"http", "https"}
+
+
+def resolve_local_ref(spec_path: Path, value: str) -> Path:
+    path = Path(value).expanduser()
+    if not path.is_absolute():
+        path = spec_path.parent / path
+    return path.resolve()
+
+
+def boolish(value) -> bool:
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        return value.strip().lower() in {"1", "true", "yes", "y", "required"}
+    return bool(value)
+
+
+def copy_declared_asset(source: Path, destination_root: Path, asset_id: str) -> Path:
+    safe_id = slugify(asset_id)
+    if source.is_dir():
+        destination = destination_root / safe_id
+        if destination.exists():
+            shutil.rmtree(destination)
+        shutil.copytree(source, destination)
+        return destination
+
+    suffix = source.suffix or ".asset"
+    destination = destination_root / f"{safe_id}{suffix}"
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(source, destination)
+    return destination
+
+
+def prepare_external_assets(spec_path: Path, spec: dict, workspace: Path) -> list[dict]:
+    raw_assets = spec.get("designer_assets") or []
+    if raw_assets is None:
+        raw_assets = []
+    if not isinstance(raw_assets, list):
+        die("designer_assets must be a list when present")
+
+    scratch_assets = workspace / "scratch" / "assets"
+    scratch_assets.mkdir(parents=True, exist_ok=True)
+    prepared: list[dict] = []
+    seen: set[str] = set()
+
+    for index, raw in enumerate(raw_assets, start=1):
+        if not isinstance(raw, dict):
+            die(f"designer_assets item {index} must be a mapping")
+        asset_id = str(raw.get("id") or "").strip()
+        if not asset_id:
+            die(f"designer_assets item {index} is missing id")
+        if asset_id in seen:
+            die(f"duplicate designer_assets id: {asset_id}")
+        seen.add(asset_id)
+
+        source = str(raw.get("path") or raw.get("url") or "").strip()
+        required = boolish(raw.get("required", False))
+        record = {
+            "id": asset_id,
+            "type": str(raw.get("type") or "other").strip() or "other",
+            "source": source,
+            "usage": raw.get("usage"),
+            "scope": raw.get("scope") or "deck",
+            "placement": raw.get("placement"),
+            "required": required,
+            "notes": raw.get("notes"),
+            "exists": False,
+            "remote": False,
+            "prepared_path": None,
+        }
+
+        if not source:
+            if required:
+                die(f"required designer asset has no path/url: {asset_id}")
+            prepared.append(record)
+            continue
+
+        if is_remote_ref(source):
+            record["remote"] = True
+            record["exists"] = True
+            prepared.append(record)
+            continue
+
+        local_path = resolve_local_ref(spec_path, source)
+        record["source_path"] = str(local_path)
+        if not local_path.exists():
+            if required:
+                die(f"required designer asset not found: {asset_id} -> {local_path}")
+            prepared.append(record)
+            continue
+
+        copied = copy_declared_asset(local_path, scratch_assets, asset_id)
+        record["exists"] = True
+        record["is_directory"] = copied.is_dir()
+        record["prepared_path"] = copied.relative_to(workspace).as_posix()
+        prepared.append(record)
+
+    asset_log = workspace / "scratch" / "external-assets.json"
+    asset_log.write_text(json.dumps(prepared, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    return prepared
+
+
+def attach_prepared_assets(rendered: dict, assets: list[dict]) -> None:
+    rendered["prepared_assets"] = assets
+    ids = {asset["id"] for asset in assets}
+    for slide in rendered.get("slides", []):
+        refs = ensure_list(slide.get("asset_refs"))
+        missing = [ref for ref in refs if ref not in ids]
+        if missing:
+            die(f"slide id={slide.get('id')} references undeclared designer_assets ids: {', '.join(map(str, missing))}")
 
 
 def read_chart_data(spec_path: Path, chart_spec: dict, allow_missing_data: bool) -> dict | None:
@@ -391,6 +514,7 @@ def compile_slide_payload(spec_path: Path, slide: dict, allow_missing_data: bool
         "title": slide.get("title") or "Untitled slide",
         "subtitle": slide.get("subtitle"),
         "sources": slide.get("sources"),
+        "asset_refs": ensure_list(slide.get("asset_refs")),
         "bullets": body_items,
     }
 
@@ -492,6 +616,7 @@ const {{
   grid,
   panel,
   text,
+  image,
   shape,
   chart,
   rule,
@@ -568,6 +693,30 @@ function footer(slide) {{
   ]);
 }}
 
+function assetApplies(asset, slide) {{
+  if (!asset?.exists || !asset?.prepared_path) return false;
+  const refs = slide.asset_refs || [];
+  return refs.includes(asset.id) || asset.scope === "deck";
+}}
+
+function firstPreparedAsset(slide, types) {{
+  const wanted = new Set(types);
+  return (deck.prepared_assets || []).find((asset) => wanted.has(asset.type) && assetApplies(asset, slide));
+}}
+
+function logoNode(slide) {{
+  const asset = firstPreparedAsset(slide, ["logo"]);
+  if (!asset) return null;
+  return image({{
+    name: `asset-${{asset.id}}`,
+    path: asset.prepared_path,
+    width: fixed(190),
+    height: fixed(66),
+    fit: "contain",
+    alt: asset.id,
+  }});
+}}
+
 function titleStack(slide, subtitle) {{
   return column({{ name: "title-stack", width: fill, height: hug, gap: 14 }}, [
     t(slide.title, {{
@@ -607,6 +756,7 @@ function bulletList(items, name = "proof-list") {{
 
 function root(slide, bodyChildren, options = {{}}) {{
   const slideObj = presentation.slides.add();
+  const logo = logoNode(slide);
   slideObj.compose(
     grid(
       {{
@@ -619,7 +769,10 @@ function root(slide, bodyChildren, options = {{}}) {{
         padding: {{ x: 86, y: 64 }},
       }},
       [
-        titleStack(slide, options.subtitle),
+        row({{ name: "header", width: fill, height: hug, justify: "between", align: "start", gap: 36 }}, [
+          titleStack(slide, options.subtitle),
+          logo,
+        ].filter(Boolean)),
         column({{ name: "body", width: fill, height: fill, gap: 22 }}, bodyChildren.filter(Boolean)),
         footer(slide),
       ],
@@ -737,8 +890,10 @@ function renderChart(slide) {{
 
 function renderSection(slide) {{
   const slideObj = presentation.slides.add();
+  const logo = logoNode(slide);
   slideObj.compose(
-    grid({{ name: "section-root", width: fill, height: fill, columns: [fr(1)], rows: [fr(1), auto], padding: {{ x: 92, y: 78 }} }}, [
+    grid({{ name: "section-root", width: fill, height: fill, columns: [fr(1)], rows: [auto, fr(1), auto], padding: {{ x: 92, y: 78 }} }}, [
+      row({{ name: "section-header", width: fill, height: hug, justify: "end" }}, [logo].filter(Boolean)),
       column({{ name: "section-title-stack", width: fill, height: fill, justify: "center", gap: 28 }}, [
         rule({{ name: "section-rule", width: fixed(260), stroke: palette.accent, weight: 7 }}),
         t(slide.title, {{ name: "slide-title", width: wrap(1400), fontFace: font.title, fontSize: 64, bold: true, color: palette.primary }}),
@@ -787,6 +942,14 @@ await pptxBlob.save("output/output.pptx");
 fs.writeFileSync("scratch/build-report.json", JSON.stringify({{
   slide_count: deck.slides.length,
   skipped_non_ppt_shapes: deck.skipped || 0,
+  prepared_assets: (deck.prepared_assets || []).map((asset) => ({{
+    id: asset.id,
+    type: asset.type,
+    scope: asset.scope,
+    exists: asset.exists,
+    remote: asset.remote,
+    prepared_path: asset.prepared_path,
+  }})),
   previews: previewDir,
   output: "output/output.pptx",
 }}, null, 2));
@@ -864,6 +1027,9 @@ def main(argv: list[str]) -> int:
 
     spec_json_path = workspace / "scratch" / "deck-render-spec.json"
     spec_json_path.parent.mkdir(parents=True, exist_ok=True)
+
+    prepared_assets = prepare_external_assets(spec_path, spec, workspace)
+    attach_prepared_assets(prepared, prepared_assets)
     spec_json_path.write_text(json.dumps(prepared, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
     module_path = write_deck_module(workspace, prepared)

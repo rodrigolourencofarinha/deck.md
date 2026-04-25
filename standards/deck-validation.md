@@ -43,7 +43,7 @@ Examples:
 
 - When `image_decision: full-generated-visual`, the slide MUST declare `required_text`.
 - The model MUST NOT render any text in the generated image that is not listed in `required_text`.
-- The generated image MUST preserve the deck's `design_tokens` (palette, shape language, iconography).
+- The generated image MUST preserve the deck's `design_tokens` (palette, typography, and shape language).
 - The generated image MUST NOT contain photographic or cinematic imagery unless explicitly enabled in `creative_direction`.
 - Any slide `asset_refs` MUST point to ids declared in frontmatter `designer_assets`.
 - Every file, preview, logo, template, slide image, or reference image passed to the visual model MUST be declared in `designer_assets`; undeclared model inputs are not allowed.
@@ -69,8 +69,8 @@ Examples:
 
 - If a slide is set to `mode: ppt-shapes`, the `creative_direction` block SHOULD be omitted (it applies to designer-mode only).
 - If a slide is set to `mode: designer-mode` and includes a `chart:` block, the agent SHOULD warn — charts are typically more legible as ppt-shapes.
-- For new `ppt-shapes` decks, `production_defaults.ppt_shapes_engine` SHOULD be `artifact-tool` or omitted. Use `python-pptx` only as an explicit fallback.
-- Template-driven `ppt-shapes` slides SHOULD declare the chosen template and rationale in deck.md. Fresh `ppt-shapes` slides SHOULD NOT require a template selection.
+- New `ppt-shapes` decks use the artifact-tool renderer.
+- Template-guided `ppt-shapes` slides SHOULD declare the external template asset and rationale in deck.md. Fresh `ppt-shapes` slides SHOULD NOT require a template selection.
 
 ## Speaker notes
 

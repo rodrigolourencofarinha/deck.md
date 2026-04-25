@@ -279,7 +279,7 @@ When a generated slide establishes the right deck style:
 
 ## Designer assets in prompts
 
-Use `designer_assets` when the approved deck includes external visual inputs such as logos, brand guides, PowerPoint templates, screenshots, existing decks, rendered slide previews, icons, or reference images.
+Use `designer_assets` when the approved deck includes external visual inputs such as logos, brand guides, PowerPoint templates, screenshots, existing decks, rendered slide previews, icon packs, fonts, or reference images.
 
 Before writing the prompt:
 - resolve each slide `asset_refs` id against deck-level `designer_assets`
@@ -293,6 +293,7 @@ Prompt each asset narrowly:
 - PowerPoint templates: what to borrow, such as layout, density, typography, margins, or visual rhythm
 - existing decks and slide previews: preserve message and key evidence, borrow useful visual rhythm, and redesign composition freely unless the approved brief says close redesign
 - brand guides: what to follow, such as palette, type mood, icon style, or spacing
+- icon packs and fonts: use only when declared and only in the style or files supplied by that asset
 - screenshots/reference images: whether to reproduce, abstract, crop, or merely use as context
 
 Do not let an asset override the slide message or text lock. If a template or old slide has placeholder text or outdated wording, explicitly tell the model not to copy it.
@@ -306,20 +307,19 @@ Borrow useful density, visual rhythm, and brand cues, but redesign the compositi
 Do not copy outdated wording, placeholder text, low-quality spacing, or cramped layout from the reference.
 ```
 
-## Default visual template prompt block
+## External reference prompt block
 
-When Rodrigo asks to "use my default template", pass `assets/visual-templates/default-slide.png` as `Image 1` and include this block in the prompt. For cover/title slides, use `assets/visual-templates/title-page.png` instead and adapt the wording to the cover layout.
+When the user supplies a slide template image, deck preview, or other visual reference, declare it in `designer_assets`, prepare it as an image input, and include this block in the prompt.
 
 ```text
-Image 1 is Rodrigo's default slide template reference.
-Use Image 1 only for the white canvas, large bold title typography, title placement, spacious margins, and footer/page-number safe area.
-Do not copy any placeholder text from Image 1.
-Do not copy the dashed footer placeholder as a visible design element.
+Image {n} is asset {asset_id}, a prepared external reference.
+Use Image {n} only for the approved purpose: {asset_usage}.
+Do not copy placeholder text, stale content, or unrelated objects from Image {n}.
 
 The body of the slide is intentionally open.
 Create new body visuals, diagrams, metaphors, icons, and accent colors that fit this slide's message.
-Keep the new body content inside the open white area below the title and above the footer so the generated slide works naturally inside the same deck template.
-The result should feel compatible with Image 1's font scale and overall clean look, while the visual concept and colors can be invented for this specific slide.
+Keep the new body content within the approved title, margin, and footer-safe areas.
+The result should feel compatible with the reference's useful structure while the visual concept and colors can be invented for this specific slide unless the approved brief says otherwise.
 ```
 
 ## Standard footer block

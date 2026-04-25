@@ -10,6 +10,7 @@ from pathlib import Path
 
 REQUIRED_FILES = [
     "SKILL.md",
+    "agents/openai.yaml",
     "references/SPEC.md",
     "references/deck.md",
     "references/deck.minimal.md",
@@ -27,24 +28,10 @@ REQUIRED_FILES = [
     "references/consulting-slide-standards.md",
     "references/single-slide-workflow.md",
     "references/pptx-production.md",
-    "references/template-catalog.md",
     "references/designer-mode-workflow.md",
     "references/designer-mode-gpt-image-prompt-scaffold.md",
     "references/designer-mode-direct-api-pattern.md",
-    "references/tabler-icon-selection.md",
-    "scripts/build_pptx.py",
     "scripts/build_pptx_artifact_tool.py",
-    "scripts/split_template_deck.py",
-    "scripts/tabler_icons.py",
-]
-
-OPTIONAL_ASSET_PATHS = [
-    "assets/RLF_PPT_Template_v1.pptx",
-    "assets/templates",
-    "assets/templates_full.pptx",
-    "assets/visual-templates/default-slide.png",
-    "assets/visual-templates/title-page.png",
-    "assets/tabler-icons/aliases.json",
 ]
 
 SKILL_BAD_PATTERNS = [
@@ -53,6 +40,21 @@ SKILL_BAD_PATTERNS = [
     (re.compile(r"(?<!references/)SPEC\.md"), "Use references/SPEC.md inside SKILL.md."),
     (re.compile(r"(?<!references/)standards/"), "Use references/standards/ paths inside SKILL.md."),
 ]
+
+PUBLIC_BAD_PATTERNS = [
+    (re.compile(r"\bRLF\b|RLF_"), "Personal RLF assets must not be referenced in the public skill."),
+    (re.compile(r"\bRRF\b|RRF_"), "Personal RRF assets must not be referenced in the public skill."),
+    (re.compile(r"\bTabler\b|\btabler\b"), "Bundled Tabler/icon-pack references must not appear in the public skill."),
+    (re.compile(r"template-catalog"), "Bundled template catalog references must not appear in the public skill."),
+    (re.compile(r"assets/templates"), "Bundled template assets must not appear in the public skill."),
+    (re.compile(r"visual-templates"), "Bundled visual-template assets must not appear in the public skill."),
+    (re.compile(r"split_template_deck"), "Template-splitting helper must not ship in the public skill."),
+    (re.compile(r"tabler_icons"), "Bundled icon helper must not ship in the public skill."),
+    (re.compile(r"python-pptx|build_pptx\.py"), "Legacy python-pptx path must not ship in the public skill."),
+    (re.compile(r"/Users/|/Volumes/|Dropbox/Resources"), "Personal filesystem paths must not appear in the public skill."),
+]
+
+TEXT_SUFFIXES = {".md", ".py", ".yaml", ".yml", ".json", ".txt", ".mjs", ".js"}
 
 
 def frontmatter(text: str) -> dict[str, str]:
@@ -70,7 +72,13 @@ def frontmatter(text: str) -> dict[str, str]:
     return data
 
 
-def validate(skill_dir: Path, *, strict_assets: bool = False) -> dict[str, list[str]]:
+def iter_text_files(skill_dir: Path):
+    for path in skill_dir.rglob("*"):
+        if path.is_file() and path.suffix.lower() in TEXT_SUFFIXES:
+            yield path
+
+
+def validate(skill_dir: Path) -> dict[str, list[str]]:
     errors: list[str] = []
     warnings: list[str] = []
 
@@ -98,11 +106,20 @@ def validate(skill_dir: Path, *, strict_assets: bool = False) -> dict[str, list[
             if pattern.search(text):
                 errors.append(message)
 
-    missing_assets = [rel for rel in OPTIONAL_ASSET_PATHS if not (skill_dir / rel).exists()]
-    if missing_assets:
-        target = errors if strict_assets else warnings
-        for rel in missing_assets:
-            target.append(f"optional asset path missing: {rel}")
+    assets_dir = skill_dir / "assets"
+    if assets_dir.exists():
+        errors.append("public skill package must not contain an assets/ directory; declare external assets in deck.md")
+
+    for path in iter_text_files(skill_dir):
+        rel = path.relative_to(skill_dir).as_posix()
+        try:
+            text = path.read_text(encoding="utf-8")
+        except UnicodeDecodeError:
+            continue
+        for pattern, message in PUBLIC_BAD_PATTERNS:
+            if pattern.search(text):
+                errors.append(f"{message} Offending file: {rel}")
+                break
 
     return {"errors": errors, "warnings": warnings}
 
@@ -110,12 +127,11 @@ def validate(skill_dir: Path, *, strict_assets: bool = False) -> dict[str, list[
 def main(argv: list[str]) -> int:
     parser = argparse.ArgumentParser(description="Validate a deck-architect skill tree.")
     parser.add_argument("skill_dir", nargs="?", default="skill", help="Skill directory to validate.")
-    parser.add_argument("--strict-assets", action="store_true", help="Treat optional assets as required.")
     parser.add_argument("--json", action="store_true", help="Emit JSON only.")
     args = parser.parse_args(argv)
 
     skill_dir = Path(args.skill_dir).expanduser().resolve()
-    result = validate(skill_dir, strict_assets=args.strict_assets)
+    result = validate(skill_dir)
     ok = not result["errors"]
 
     payload = {

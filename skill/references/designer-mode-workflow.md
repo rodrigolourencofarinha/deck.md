@@ -7,7 +7,7 @@ Use this note when the slide should be more art-directed, image-led, or transfor
 Do not start from an image.
 Start from the approved deck.md.
 
-Default behavior for Rodrigo's designer-mode requests:
+Default behavior for designer-mode requests:
 - use `gpt-image-2` through Codex OAuth/Codex image tooling as the primary and default end-to-end slide generator
 - use the direct OpenAI Image API key path only as a fallback after the Codex-authenticated path fails and the human approves continuing with the fallback
 - do not invent a hybrid background-plus-manual-assembly workflow unless the user explicitly asks for it
@@ -23,7 +23,7 @@ Default behavior for Rodrigo's designer-mode requests:
 - request native 16:9 output from the model itself rather than generating first and rescuing it later through crop/resize hacks
 - use `size="2560x1440"` and `quality="high"` for final full-slide outputs
 - use lower quality only for fast exploration before a final slide is selected
-- when Rodrigo says "use my default template", pass `assets/visual-templates/default-slide.png` as a reference image for normal slides; use `assets/visual-templates/title-page.png` for cover/title slides
+- when the user asks to use a template or visual reference, require an external asset declared in `designer_assets`; do not assume a bundled template exists
 
 Sequence:
 1. lock the slide title and content blocks
@@ -213,7 +213,7 @@ designer_assets:
     required: false
   - id: visual_template
     type: reference-image
-    path: assets/source/default-slide-template.png
+    path: assets/source/supplied-slide-reference.png
     usage: "Use as title, margin, typography, and footer-safe-area reference; do not copy placeholder text"
     scope: deck
     required: false
@@ -286,14 +286,10 @@ Do not use a reference image to override the slide's actual content logic.
 
 ## Visual template references
 
-Use this path when Rodrigo asks for designer mode and says "use my default template" or otherwise points to a template image.
-
-Default references:
-- normal content slide: `assets/visual-templates/default-slide.png`
-- cover or title page: `assets/visual-templates/title-page.png`
+Use this path when the user points to an external template image, existing slide, or slide reference asset in `designer_assets`.
 
 Behavior:
-- pass the template PNG as `Image 1` in the image edit/reference call
+- pass the prepared reference as an image input in the image edit/reference call
 - treat the template as a placement and typography reference, not a full visual style lock
 - preserve the white background, large title typography, title placement, spacious margins, and footer/page-number safe area
 - replace all placeholder text with the real slide title, subtitle, standard `CR` footer mark, and simple slide number unless the approved deck.md disables the footer
@@ -303,9 +299,9 @@ Behavior:
 - repeat the reference instructions on every slide generation; do not rely on the model remembering the template from a prior slide
 
 Spec convention:
-- add `visual_template_reference: assets/visual-templates/default-slide.png` for content slides when the default template is requested
-- add `visual_template_scope: preserve white background, title typography/placement, spacious margins, and footer safe area only`
-- add `visual_template_freedom: body visuals, colors, diagrams, and metaphors may change to fit the slide`
+- add a `designer_assets` entry with `type: reference-image` or `type: ppt-template`
+- add slide-level `asset_refs` when only specific slides should use the reference
+- capture the preservation scope in the asset `usage` or slide `creative_direction.prompt_notes`
 
 ## Standard artifact workspace
 

@@ -40,8 +40,6 @@ design_tokens:
   shape_language:
     corner_style: subtle
     line_weight:  medium
-  iconography:
-    family: tabler-outline
 ---
 
 # Engineering Q3 status update

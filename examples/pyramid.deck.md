@@ -20,8 +20,6 @@ production_defaults:
     cr_mark: true
     cr_text: "CR"
     placement: bottom-left-cr-bottom-right-page
-  default_visual_template: assets/visual-templates/default-slide.png
-
 image_generation:
   primary_creator: gpt-image-2
   size:            "2560x1440"
@@ -42,8 +40,6 @@ design_tokens:
   shape_language:
     corner_style: subtle
     line_weight:  medium
-  iconography:
-    family: tabler-outline
 ---
 
 # 2026 growth recovery plan
@@ -81,7 +77,7 @@ Decisive and forward-looking. Strong accent color on recommendations, restrained
 - Section dividers use full-bleed accent color with white title
 - Chart emphasis always uses `accent`; de-emphasis in `secondary`
 - Action titles top-left, max two lines, sentence case
-- Three-column slides use equal-weight columns with tabler icons anchoring each block
+- Three-column slides use equal-weight columns with simple line icons only when an external icon pack is declared
 
 ### Avoid
 - Cinematic or photographic imagery of any kind
@@ -112,7 +108,7 @@ creative_direction:
   prompt_notes:
     - flat design; no photography
     - preserve white background
-    - tabler-outline icons above each column label
+    - simple line icons above each column label only if an approved icon-pack asset is declared
   avoid:
     - cinematic or gradient backgrounds
     - drop shadows or heavy depth

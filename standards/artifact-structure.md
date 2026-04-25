@@ -66,8 +66,8 @@ decks/<deck-slug>/
 ## Folder meanings
 
 - `specs/` stores approved and review deck.md versions. These are the logical source of truth.
-- `assets/source/` stores human-provided source assets declared in `designer_assets`, such as logos, existing decks, templates, screenshots, icons, and brand guides.
-- `assets/prepared/` stores model-readable inputs prepared from source assets, such as rendered existing-deck slide previews, rendered template PNGs, normalized logos, cropped screenshots, or converted icons.
+- `assets/source/` stores human-provided source assets declared in `designer_assets`, such as logos, existing decks, templates, screenshots, icon packs, fonts, and brand guides.
+- `assets/prepared/` stores model-readable inputs prepared from source assets, such as rendered existing-deck slide previews, rendered template PNGs, normalized logos, cropped screenshots, or converted icon files.
 - `instances/` stores production attempts and review rounds.
 - `images/raw/` stores direct model outputs or direct render outputs before manipulation.
 - `images/composed/` stores manipulated/composited slide images, such as logo placement, footer fixes, padding, OCR prep, or other post-processing.

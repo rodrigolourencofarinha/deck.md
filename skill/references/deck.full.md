@@ -34,7 +34,6 @@ narrative_template: pyramid
 # data-accurate charts, tables, or editable PPT structure.
 production_defaults:
   default_slide_mode: designer-mode       # designer-mode | ppt-shapes
-  ppt_shapes_engine: artifact-tool        # artifact-tool | python-pptx; used only for ppt-shapes
   aspect_ratio: "16:9"
   footer:
     page_numbers: true                    # simple 1, 2, 3, ... in the lower-right
@@ -42,7 +41,6 @@ production_defaults:
     cr_mark: true                         # small CR mark in the lower-left
     cr_text: "CR"
     placement: bottom-left-cr-bottom-right-page
-  # default_visual_template: assets/visual-templates/default-slide.png
 
 # image_generation is only used for slides with mode: designer-mode.
 # Remove this block if your deck has no designer-mode slides.
@@ -55,14 +53,14 @@ image_generation:
   quality:         high
   output_format:   png
 
-# Designer-mode assets are the exact inputs the visual model should receive.
+# Designer assets are external inputs the model or renderer may receive.
 # Delete unused examples. Add logos, existing slides/decks, templates, screenshots,
-# brand guides, icons, and reference images here before setting status: approved.
+# brand guides, icon packs, fonts, and reference images here before setting status: approved.
 # Non-image assets such as .pptx/.pdf decks or templates must be rendered into
 # assets/prepared/ previews before image generation and recorded in method/model-inputs.yaml.
 designer_assets:
   - id: brand_logo
-    type: logo                         # ppt-template | existing-deck | slide-preview | logo | brand-guide | reference-image | screenshot | icon | other
+    type: logo                         # logo | ppt-template | existing-deck | slide-preview | brand-guide | reference-image | screenshot | icon-pack | font | other
     path: assets/source/logo.png
     usage: "Place exact logo on slides where referenced"
     scope: deck                        # deck | section | slide
@@ -85,9 +83,15 @@ designer_assets:
     notes: "Prepared from existing_deck; use slide-level asset_refs when only some slides apply"
   - id: visual_template
     type: reference-image
-    path: assets/source/default-slide-template.png
+    path: assets/source/supplied-slide-reference.png
     usage: "Use as title, margin, typography, and footer-safe-area reference; do not copy placeholder text"
     scope: deck
+    required: false
+  - id: icon_pack
+    type: icon-pack
+    path: assets/source/icons/
+    usage: "Use only if a slide references this asset; match its stroke and naming style"
+    scope: slide
     required: false
 
 # Design tokens drive the look and feel. Edit these to change the deck's aesthetic.
@@ -105,8 +109,6 @@ design_tokens:
   shape_language:
     corner_style: subtle        # subtle | sharp | rounded
     line_weight:  medium        # light | medium
-  iconography:
-    family: tabler-outline
 ---
 
 # <Your deck title>

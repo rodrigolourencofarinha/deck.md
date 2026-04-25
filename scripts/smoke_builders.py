@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import subprocess
 import sys
 import tempfile
@@ -25,17 +26,19 @@ def make_ppt_shapes_copy(source: Path, output: Path) -> None:
     output.write_text(text, encoding="utf-8")
 
 
+def require_path(path: Path, label: str) -> None:
+    if not path.exists():
+        raise SystemExit(f"{label} does not exist: {path}")
+    if path.is_file() and path.stat().st_size == 0:
+        raise SystemExit(f"{label} is empty: {path}")
+
+
 def parse_args(argv: list[str]) -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Smoke-test both editable deck builders.")
+    parser = argparse.ArgumentParser(description="Smoke-test the artifact-tool editable PPTX builder.")
     parser.add_argument(
         "--deck",
         default="deck.minimal.md",
         help="Source deck.md file. A temporary ppt-shapes copy is created for the smoke test.",
-    )
-    parser.add_argument(
-        "--skip-artifact-tool",
-        action="store_true",
-        help="Only run the legacy python-pptx builder.",
     )
     return parser.parse_args(argv)
 
@@ -51,30 +54,34 @@ def main(argv: list[str]) -> int:
         smoke_deck = tmp_dir / "deck.minimal.ppt-shapes.md"
         make_ppt_shapes_copy(source, smoke_deck)
 
-        legacy_output = tmp_dir / "legacy-smoke.pptx"
-        run([sys.executable, "skill/scripts/build_pptx.py", str(legacy_output), str(smoke_deck)])
-        if not legacy_output.exists() or legacy_output.stat().st_size == 0:
-            raise SystemExit(f"legacy builder did not create output: {legacy_output}")
-
-        artifact_output = None
-        if not args.skip_artifact_tool:
-            artifact_output = tmp_dir / "artifact-tool-smoke.pptx"
-            run(
-                [
-                    sys.executable,
-                    "skill/scripts/build_pptx_artifact_tool.py",
-                    str(artifact_output),
-                    str(smoke_deck),
-                    "--allow-draft",
-                    "--skip-quality-check",
-                ]
-            )
-            if not artifact_output.exists() or artifact_output.stat().st_size == 0:
-                raise SystemExit(f"artifact-tool builder did not create output: {artifact_output}")
-
-        print("legacy_builder=ok")
-        if artifact_output:
-            print("artifact_tool_builder=ok")
+        artifact_output = tmp_dir / "artifact-tool-smoke.pptx"
+        workspace = tmp_dir / "artifact-tool-workspace"
+        run(
+            [
+                sys.executable,
+                "skill/scripts/build_pptx_artifact_tool.py",
+                str(artifact_output),
+                str(smoke_deck),
+                "--workspace",
+                str(workspace),
+                "--allow-draft",
+            ]
+        )
+        require_path(artifact_output, "artifact-tool output PPTX")
+        previews = sorted((workspace / "scratch" / "previews").glob("*.png"))
+        layouts = sorted((workspace / "scratch" / "layouts").glob("*.layout.json"))
+        if not previews:
+            raise SystemExit("artifact-tool builder did not create PNG previews")
+        if not layouts:
+            raise SystemExit("artifact-tool builder did not create layout JSON")
+        require_path(workspace / "scratch" / "quality-report.json", "quality report")
+        print(json.dumps({
+            "artifact_tool_builder": "ok",
+            "output_pptx": str(artifact_output),
+            "previews": len(previews),
+            "layouts": len(layouts),
+            "quality_report": str(workspace / "scratch" / "quality-report.json"),
+        }, indent=2))
 
     return 0
 

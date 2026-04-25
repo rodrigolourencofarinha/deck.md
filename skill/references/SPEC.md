@@ -31,7 +31,7 @@ Use `deck.md` when you want:
 
 **Phase 1 — Brief generation.** The agent receives raw input and produces a complete `deck.md` with `status: draft`. It populates `## Brief` with a summary of what it received and how it interpreted it, then sends the complete `deck.md` to the human. The human validates it, asks for changes if needed, and approves only when the current `deck.md` is ready for production. The agent MUST keep revising and resending `deck.md` until approval; it MUST NOT proceed to phase 2 while `status: draft`.
 
-**Phase 2 — Slide generation.** The agent reads an `approved` deck.md, validates it against `standards/deck-validation.md`, and produces one rendered image per slide (see `## Output`). `designer-mode` slides are generated with `gpt-image-2` through the Codex OAuth/Codex image path first. `ppt-shapes` slides are rendered as layout images from the design tokens. All slides are assembled into a PDF in slide order. Pure `designer-mode` decks produce PDF output only, with no PPTX wrapper.
+**Phase 2 — Slide generation.** The agent reads an `approved` deck.md, validates it against `standards/deck-validation.md`, and produces the approved output mode. `designer-mode` slides are generated with `gpt-image-2` through the Codex OAuth/Codex image path first and pure `designer-mode` decks produce PDF output only, with no PPTX wrapper. `ppt-shapes` slides are authored as editable PowerPoint-native content with the artifact-tool renderer and exported with PNG previews, layout JSON, and a quality report.
 
 **Phase 3 — Render review and repair.** The agent renders the final artifact, inspects the rendered pages/slides against the approved deck.md and original briefing, and repairs any mismatch before delivery. This includes title and body text, asset use, logo placement, overlaps, clipping, safe margins, aspect ratio, reading order, and whether the output still answers the briefing.
 
@@ -71,7 +71,7 @@ Three levels. Each is a superset of the previous. Scaling up never requires refo
 ## Authorship
 
 - **Human controls:** narrative structure, action titles, slide types, data, sources, validation rules.
-- **Model controls:** composition, metaphor, visual treatment, iconography, layout refinement.
+- **Model controls:** composition, metaphor, visual treatment, hierarchy, layout refinement.
 - **Tie-breaker:** human wins on conflict. The model may propose alternatives in a slide's `prompt_notes` but MUST NOT silently override human-set fields.
 
 ## Frontmatter schema
@@ -92,10 +92,7 @@ narrative_template: "<scr|pyramid|problem-solution|update>"   # required
 
 production_defaults:
   default_slide_mode: "<designer-mode|ppt-shapes>"            # default: designer-mode
-  ppt_shapes_engine: "<artifact-tool|python-pptx>"             # default for ppt-shapes: artifact-tool
   aspect_ratio: "16:9"
-  default_visual_template: "<path, optional>"
-  default_visual_template_scope: "<string, optional>"
   footer:
     page_numbers: true                                        # default: true
     page_number_format: "{page}"                              # must render standalone 1, 2, 3, ... only
@@ -115,7 +112,7 @@ image_generation:                                             # only used when m
 
 designer_assets:                                             # optional; used by designer-mode generation
   - id: "<stable-id>"
-    type: "<ppt-template|existing-deck|slide-preview|logo|brand-guide|reference-image|screenshot|icon|other>"
+    type: "<logo|ppt-template|existing-deck|slide-preview|brand-guide|reference-image|screenshot|icon-pack|font|other>"
     path: "<relative path, absolute path, or URL>"
     usage: "<how the model should use the asset>"
     scope: "<deck|section|slide>"
@@ -127,7 +124,6 @@ design_tokens:
   palette:       { primary, secondary, accent, accent_soft, background, line }
   typography:    { title, body, emphasis }
   spacing:       { outer_margin, block_gap }
-  iconography:   { family }
   shape_language: { corner_style, line_weight }
 ---
 ```
@@ -148,16 +144,15 @@ Hard limits (word counts, case, bullet counts) live in [`./standards/deck-valida
 
 ### Editable PPT policy
 
-- `ppt-shapes` output is for editable PowerPoint-native decks. The preferred engine is `artifact-tool`, which authors editable slides with native text, shapes, chart objects, and layout primitives from the approved `deck.md`.
-- Table-heavy slides should still use `ppt-shapes`, but this repo's current artifact-tool renderer needs a table component, a template-driven path, or a targeted renderer extension before table output should be treated as covered.
-- `python-pptx` remains a compatibility fallback for the older coded render layer.
-- Pre-existing PowerPoint templates are optional structural references, not the default production path. Use them only when a user asks to match a template or when a specific slide skeleton is genuinely useful.
+- `ppt-shapes` output is for editable PowerPoint-native decks. The renderer is `artifact-tool`, which authors editable slides with native text, shapes, chart objects, tables where supported, images, rules, and layout primitives from the approved `deck.md`.
+- Table-heavy slides should still use `ppt-shapes`, but a renderer extension is needed before a new table pattern should be treated as fully covered.
+- Pre-existing PowerPoint templates are optional external structural references, not bundled defaults. Use them only when declared in `designer_assets` and when the user asks to match a template or a specific slide skeleton is genuinely useful.
 - Do not make template selection the primary design step for fresh `ppt-shapes` slides. Start from slide job, action title, evidence, and native editable component choice.
 
 ### Image policy
 - Default to `designer-mode`. A slide opts out to `ppt-shapes` when it needs precise editability, data-accurate charts, tables, editable PowerPoint structure, or an explicitly template-driven build. Charts, tables, and text-heavy analytical slides should usually declare `mode: ppt-shapes` explicitly because they render more legibly as shapes. Each archetype in [`./standards/slide-archetypes.md`](./standards/slide-archetypes.md) declares a `preferred_mode` as a starting point.
 - One strong visual idea per slide.
-- Designer-mode assets must be declared in `designer_assets` before production. Use this for every asset the visual model should receive: logos, existing decks, rendered slide previews, PowerPoint templates, brand guides, screenshots, icons, reference images, and other source assets.
+- Designer-mode assets must be declared in `designer_assets` before production. Use this for every asset the visual model should receive: logos, existing decks, rendered slide previews, PowerPoint templates, brand guides, screenshots, icon packs, fonts, reference images, and other source assets.
 - Existing decks and slides are treated as content-and-style references by default: preserve the message and key evidence, borrow useful layout density and visual rhythm, and redesign the composition freely unless the approved brief asks for a close redesign.
 - Assets that are not declared in `designer_assets` must not be passed to the visual model, even if they were supplied in chat or live in the workspace.
 - Designer-mode image generation MUST use `gpt-image-2` through the Codex OAuth/Codex image path first. If Codex OAuth or the Codex image path is unavailable or fails, the agent must report the failure and ask the human whether to continue with the direct OpenAI Image API key fallback before making any API call outside the Codex-authenticated path.
@@ -202,8 +197,6 @@ type: <see ./standards/slide-archetypes.md, required>
 layout: "<string, optional>"
 mode: "<ppt-shapes|designer-mode>"                       # inherits from production_defaults
 image_decision: "<none|icon-only|cutout|full-generated-visual>"
-visual_template_reference: "<path>"                      # overrides deck default
-visual_template_scope: "<string>"                        # overrides deck default
 asset_refs: ["<designer_assets.id>"]                      # optional; slide-specific asset references
 ```
 
@@ -217,21 +210,21 @@ asset_refs: ["<designer_assets.id>"]                      # optional; slide-spec
 - `cutout` — a subject (product screenshot, person, object) isolated from its background and composited over the slide. The agent must be told what the cutout subject is via `creative_direction`.
 - `full-generated-visual` — the entire slide canvas is a generated image. MUST declare `required_text`.
 
-**`asset_refs` values.** References to `designer_assets.id`. Use slide-level `asset_refs` when only some slides should use an asset, such as `brand_logo` on a title page, `existing_slide_previews` for a visual redesign, or `visual_template` for a section. If omitted, assets with `scope: deck` apply across the deck.
+**`asset_refs` values.** References to `designer_assets.id`. Use slide-level `asset_refs` when only some slides should use an asset, such as `brand_logo` on a title page, `existing_slide_previews` for a visual redesign, an externally supplied template, or an icon pack. If omitted, assets with `scope: deck` apply across the deck.
 
 ## Designer assets
 
-The optional `designer_assets` frontmatter block records every external asset the designer-mode model should receive or consider. It is part of the approved brief, so assets are reviewable before generation. If a file should not be sent to the visual model, do not put it in `designer_assets`; mention it in `## Notes to the agent` instead.
+The optional `designer_assets` frontmatter block records every external asset the model should receive, prepare, or consider. It is part of the approved brief, so assets are reviewable before generation. The public skill does not bundle personal templates, icon packs, logos, fonts, or reference decks. If a file should not be used by the model or renderer, do not put it in `designer_assets`; mention it in `## Notes to the agent` instead.
 
 Use `designer_assets` for:
 - Existing PowerPoint/PDF decks, rendered slide previews, or screenshots that should guide content, density, typography, layout, or visual rhythm.
 - PowerPoint templates or visual templates that should guide margins, title placement, typography, or structure.
 - Logos that should appear on the slide, including placement and whether placement is required.
-- Brand guides, screenshots, reference images, icons, or source visuals.
+- Brand guides, screenshots, reference images, icon packs, fonts, or source visuals.
 
 Fields:
 - `id` — stable reference key used by `asset_refs`.
-- `type` — one of `ppt-template`, `existing-deck`, `slide-preview`, `logo`, `brand-guide`, `reference-image`, `screenshot`, `icon`, or `other`.
+- `type` — one of `logo`, `ppt-template`, `existing-deck`, `slide-preview`, `brand-guide`, `reference-image`, `screenshot`, `icon-pack`, `font`, or `other`.
 - `path` — relative path, absolute path, or URL.
 - `usage` — how the asset should influence generation, e.g. "match layout only", "place exact logo", "use as brand palette reference".
 - `scope` — `deck`, `section`, or `slide`.
@@ -267,7 +260,7 @@ designer_assets:
     required: false
   - id: visual_template
     type: reference-image
-    path: assets/source/default-slide-template.png
+    path: assets/source/supplied-slide-reference.png
     usage: "Use as title, margin, typography, and footer-safe-area reference; do not copy placeholder text"
     scope: deck
     required: false

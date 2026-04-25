@@ -37,14 +37,14 @@ result = client.images.generate(
 
 Use this only as the approved fallback for designer-mode full-slide generation when writing direct Python examples.
 
-Reference-template pattern:
+Reference-asset pattern:
 
-Use this when Rodrigo asks to "use my default template" in designer mode. This uses the Image API edit/reference path so the model can see the template PNG.
+Use this when the approved deck declares an external image reference in `designer_assets`. This uses the Image API edit/reference path so the model can see the prepared image.
 
 ```python
 result = client.images.edit(
     model="gpt-image-2",
-    image=open("assets/visual-templates/default-slide.png", "rb"),
+    image=open(prepared_reference_path, "rb"),
     prompt=prompt,
     size="2560x1440",
     quality="high",
@@ -53,8 +53,7 @@ result = client.images.edit(
 )
 ```
 
-For cover/title slides, use `assets/visual-templates/title-page.png`.
-The prompt must say that the template is only a reference for the white background, title typography/placement, spacious margins, and footer safe area. Body visuals, diagrams, metaphors, icons, and accent colors can change to fit the slide message.
+The prompt must say exactly what the declared reference is allowed to influence, such as title typography/placement, spacious margins, visual rhythm, density, or footer safe area. Body visuals, diagrams, metaphors, icons, and accent colors can change to fit the slide message unless the approved brief says otherwise.
 
 Interpretation notes:
 - the prompt should already describe a real presentation slide, not just an illustration

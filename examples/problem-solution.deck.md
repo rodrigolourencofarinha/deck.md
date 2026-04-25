@@ -40,8 +40,6 @@ design_tokens:
   shape_language:
     corner_style: rounded
     line_weight:  medium
-  iconography:
-    family: tabler-outline
 ---
 
 # Reviewr

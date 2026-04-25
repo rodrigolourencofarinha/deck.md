@@ -63,9 +63,8 @@ To install or refresh the OpenClaw copy:
 python3 scripts/package_skill.py --target ~/.openclaw/skills/deck-architect --force
 ```
 
-The packager copies `skill/`, overlays the current root spec/templates/standards/examples into `skill/references/`, validates the result, and preserves an existing target `assets/` folder by default when this repo does not include large optional assets.
-
-For a first install with a separate asset bundle, add `--with-assets /path/to/assets`.
+The packager copies `skill/`, overlays the current root spec/templates/standards/examples into `skill/references/`, validates the result, and writes a clean asset-neutral skill tree.
+The public skill package intentionally contains no bundled visual assets. Logos, templates, old decks, screenshots, icon packs, brand guides, fonts, and reference images are supplied at deck-production time through external paths or URLs declared in `designer_assets`.
 
 Validate a skill tree without installing:
 
@@ -73,7 +72,7 @@ Validate a skill tree without installing:
 python3 scripts/validate_skill_install.py skill
 ```
 
-Optional large assets live under `assets/` in installed skill copies when available. The skill can still plan decks and run basic editable rendering without them; template, icon, and visual-template workflows require those optional assets.
+Do not install private asset folders into the skill. Keep source assets next to the deck project, then declare them in the approved `deck.md`.
 
 ## Build Smoke Tests
 
@@ -83,7 +82,13 @@ From the repo root:
 python3 scripts/smoke_builders.py
 ```
 
-The smoke script reads `deck.minimal.md`, creates a temporary `ppt-shapes` copy, and runs both editable PPTX builders.
+The smoke script reads `deck.minimal.md`, creates a temporary `ppt-shapes` copy, and runs the artifact-tool editable PPTX builder. It verifies the PPTX, PNG previews, layout JSON, and quality report.
+
+External asset handling can be smoke-tested with:
+
+```bash
+python3 scripts/smoke_external_assets.py
+```
 
 ## License
 

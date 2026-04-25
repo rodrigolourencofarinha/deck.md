@@ -32,7 +32,7 @@ DESIGN LANGUAGE:
 - Palette: primary {primary}, secondary {secondary}, accent {accent}, background {background}
 - Typography: title {typography.title}; body {typography.body}
 - Shape language: corners {corner_style}, line weight {line_weight}
-- Icons: {iconography.family}
+- Icon style: use only the declared icon-pack asset, or omit icons when none is declared
 
 CONSISTENCY RULES:
 {deck-level consistency rules from ## Design}
@@ -154,16 +154,6 @@ Do not rely on chat history as the only record of how a slide was generated.
 
 ---
 
-## Visual template reference
-
-When `visual_template_reference` is set, the agent passes the referenced image as a style/layout reference to `gpt-image-2` through the Codex OAuth/Codex image path. The `visual_template_scope` field specifies what to preserve:
-
-- `"preserve title placement, margins, footer"` — structural elements only
-- `"preserve everything"` — full template lock
-- `"preserve palette and typography"` — aesthetic only
-
-Default scope: title typography, outer margins, footer safe area. Body composition is free.
-
 ## Footer prompt rules
 
 Every designer-mode slide prompt should include the computed footer unless the approved deck.md disables it:
@@ -183,7 +173,8 @@ Asset prompt rules:
 - Identify each prepared image input by id, e.g. `Image 1 is asset brand_logo`.
 - State the asset `type`, `usage`, and `placement` if present.
 - For logos, state whether the logo must appear exactly and where.
-- For `.pptx` templates and existing `.pptx` or `.pdf` decks, render representative slide(s) to PNG first, then state whether to match layout, density, typography, visual rhythm, or palette.
+- For externally declared `.pptx` templates and existing `.pptx` or `.pdf` decks, render representative slide(s) to PNG first, then state whether to match layout, density, typography, visual rhythm, or palette.
+- For externally declared icon packs, state the intended stroke/fill style and use only icons that exist in the declared pack.
 - For existing slides/decks, default to content-and-style reference behavior: preserve message and key evidence, borrow useful visual rhythm, and redesign composition freely.
 - Do not allow template or brand assets to override required text, slide logic, or the deck's approved narrative.
 - Do not pass any visual input to the model unless it is declared in `designer_assets` and listed in `method/model-inputs.yaml`.
@@ -221,7 +212,7 @@ ASSET REFERENCES:
 | Image is photographic when deck avoids it | Add explicit "flat vector design, no photography" to prompt |
 | Title is cut off or illegible | Increase title area in layout hint; reduce body content |
 | Colors don't match palette | Pass hex codes explicitly (not color names); emphasize palette in prompt |
-| Icons look wrong style | Name the icon family explicitly ("tabler-outline icons"); provide example icon names |
+| Icons look wrong style | Name the declared icon-pack asset explicitly; provide example icon names from that pack |
 | Slide feels generic | Add a specific metaphor in `creative_direction.metaphor`; increase specificity of `composition_intent` |
 | Designer-mode chart is unreadable | Switch that slide to `mode: ppt-shapes` — charts render better as shapes |
 | Logo, old slide, or template is ignored | Add an `ASSET REFERENCES` block with the asset id, input image label, usage, and placement |

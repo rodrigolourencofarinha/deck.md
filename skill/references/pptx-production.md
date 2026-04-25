@@ -4,20 +4,18 @@ Use this note when the user wants an editable `.pptx` deck.
 
 ## Core build path
 
-1. choose either the component-native artifact-tool path, the legacy coded python-pptx path, or the explicit template-driven path
+1. choose the component-native artifact-tool path
 2. work from the approved deck.md
-3. for fresh editable slides, default to the component-native artifact-tool path
-4. for artifact-tool slides, run `python3 scripts/build_pptx_artifact_tool.py OUTPUT_PPTX DECK_MD`
-5. for legacy coded slides, run `python scripts/build_pptx.py OUTPUT_PPTX DECK_MD [TEMPLATE_PPTX]`
-6. for explicit template-driven slides, read `references/template-catalog.md`, suggest the best template, then copy the selected one-slide template into the deck workspace and populate it with editable text, shapes, charts, icons, or tables
-7. render the populated slide or deck to PNG
-8. inspect the rendered PNG and adjust the PPTX until the slide reads cleanly
-9. deliver only after the visual review loop passes
-10. save the production round as an instance with raw renders, composed/edited renders, reviewed renders, method notes, manifest, and outputs
+3. for fresh editable slides, start from slide job, action title, evidence, and native components
+4. run `python3 scripts/build_pptx_artifact_tool.py OUTPUT_PPTX DECK_MD`
+5. render the populated slide or deck to PNG
+6. inspect the rendered PNG and adjust the deck.md or renderer until the slide reads cleanly
+7. deliver only after the visual review loop passes
+8. save the production round as an instance with raw renders, composed/edited renders, reviewed renders, method notes, manifest, and outputs
 
 deck.md is the planning artifact. Do not invent a second planning schema.
 
-Use the artifact-tool path as the default for new `ppt-shapes` decks. Use `assets/RLF_PPT_Template_v1.pptx` as the default base for legacy `python-pptx` coded slides unless the user asks for another base.
+The public skill ships no bundled templates, icons, logos, fonts, or brand materials. Use only external assets declared in the approved `designer_assets` block.
 
 ## Component-native artifact-tool loop
 
@@ -25,46 +23,29 @@ Use this path for fresh editable PowerPoint output.
 
 Workflow:
 1. Confirm the approved deck.md uses `mode: ppt-shapes` or `production_defaults.default_slide_mode: ppt-shapes`.
-2. Prefer `production_defaults.ppt_shapes_engine: artifact-tool`; absence of the field also means artifact-tool for new builds.
-3. Run `python3 scripts/build_pptx_artifact_tool.py OUTPUT_PPTX DECK_MD`.
-4. The builder creates an artifact-tool workspace under the active instance's `method/artifact-tool-workspace/`.
-5. The builder maps deck.md slides into editable native components: title stacks, proof lists, process rows, matrices, section dividers, quotes, and chart layouts.
-6. The builder exports a final PPTX, full-size slide PNG previews, layout exports, a build report, and a headless package quality report.
-7. Inspect the PNG previews in `scratch/previews/` and repair the deck.md or component renderer if the slide does not prove the action title cleanly.
+2. Run `python3 scripts/build_pptx_artifact_tool.py OUTPUT_PPTX DECK_MD`.
+3. The builder creates an artifact-tool workspace under the active instance's `method/artifact-tool-workspace/`.
+4. The workspace has `src/`, `scratch/`, and `output/` folders.
+5. The builder maps deck.md slides into editable native primitives: `text`, `grid`, `row`, `column`, `shape`, `chart`, `table` where supported, `image`, and `rule`.
+6. Declared local assets are copied into `scratch/assets/` and recorded in `scratch/external-assets.json`; undeclared assets are ignored.
+7. The builder exports a final PPTX, full-size slide PNG previews, layout exports, a build report, and a headless package quality report.
+8. Inspect the PNG previews in `scratch/previews/` and repair the deck.md or component renderer if the slide does not prove the action title cleanly.
 
 Rules:
 - start from the slide job and evidence, not from a pre-existing template
 - use native editable text, shapes, charts, and layout primitives
 - use native charts when the relationship is chartable
-- for tabular slides, add a table component, use the template-driven path, or make a targeted renderer extension before treating the slide as covered
-- keep templates as optional structural references only
+- for tabular slides, add or extend a native table component before treating the slide as covered
+- keep externally supplied templates as optional structural references only
 - do not use designer-mode assets, generated full-slide images, or PDF-only assembly on this path
 - do not treat a successful PPTX export as sufficient; the rendered PNGs and package quality report must pass
 
-For template-driven slides, the model must suggest a template before production.
-The suggestion should include:
-- template file
+For externally supplied template references, the model must describe the intended use before production:
+- declared asset id
 - slide job it supports
 - why it fits the message
-- any adaptation needed, such as fewer cards, renamed lanes, or a simplified diagram
-
-Keep the template suggestion inside the deck.md so the user can approve the choice with the rest of the slide logic.
-Create a new slide/deck from the selected template; do not overwrite the template itself.
-
-## Template-driven `ppt-shapes` loop
-
-Use this path when the user wants editable PowerPoint output that benefits from the template catalog.
-
-Workflow:
-1. Identify the slide job: cover, agenda, process, matrix, funnel, journey, dashboard, hierarchy, text blocks, or image cards.
-2. Read `references/template-catalog.md` and pick one primary template plus, when useful, one fallback.
-3. Add the selected template file and rationale to the deck.md.
-4. After approval, duplicate the template into the deck workspace or output build path.
-5. Replace placeholder text with the slide's actual message; do not carry over lorem ipsum or generic labels.
-6. Preserve the useful structure, but change counts, labels, colors, icons, and object sizes when the content requires it.
-7. Render the slide to PNG for review.
-8. Inspect the PNG visually.
-9. Fix the PPTX and re-render until the slide passes.
+- what to borrow, such as margins, density, typography, or object rhythm
+- what not to copy, such as placeholder text, outdated labels, or irrelevant objects
 
 Visual QA checklist:
 - no clipped or missing text
@@ -89,15 +70,6 @@ Fix order:
 
 The PPTX file existing is not enough.
 The rendered PNG must look correct.
-
-## Legacy coded render layer
-
-When using the legacy python-pptx coded render layer:
-1. start from `assets/RLF_PPT_Template_v1.pptx` unless the user asks for another base
-2. run `python scripts/build_pptx.py OUTPUT_PPTX DECK_MD [TEMPLATE_PPTX]`
-3. let the script map supported `ppt-shapes` slides into the coded render layer
-4. inspect the rendered output
-5. make targeted follow-up edits only after visual review
 
 ## Output hygiene
 
@@ -129,39 +101,6 @@ The component-native artifact-tool renderer currently supports:
 - quote
 
 This path is intended to grow by adding reusable native components, not by adding more required template files.
-
-## Current legacy coded archetypes
-
-The legacy `python-pptx` render layer supports:
-- takeaway
-- agenda
-- process
-- matrix
-- bar-column
-- section-divider
-- quote
-
-Current mapping intent:
-- `layout: takeaway + support` → `takeaway`
-- `layout: agenda` → `agenda`
-- `layout: horizontal process` or `process` → `process`
-- `layout: matrix` → `matrix`
-- `layout: bar-column` → `bar-column`
-- `layout: section-divider` → `section-divider`
-- `layout: quote` → `quote`
-
-## Structural inspiration
-
-Use these only as structural references, not as shipping template mixes:
-- `assets/think-cell-selected/Text Box.potx`
-- `assets/think-cell-selected/Process, Flow Chart, Phase.potx`
-- `assets/think-cell-selected/Matrix, SWOT Analysis.potx`
-- `assets/think-cell-selected/Agenda, Schedule, Timetable.potx`
-- `assets/think-cell-selected/Dashboard, Statistic.potx`
-- `assets/think-cell-selected/Bar, Column.potx`
-
-Recreate the useful pattern inside the RLF template.
-Prefer a small number of repeatable archetypes over one-off custom designs.
 
 ## Layout rules
 
