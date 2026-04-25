@@ -36,6 +36,7 @@ Golden rule:
 - the body proves that insight
 - nothing in the title is unsupported by the body
 - nothing in the body is unrelated to the title
+- analysis is filtered into a decision-ready takeaway, not displayed as a research dump
 
 If a slide has two insights, split it.
 If the title cannot be written as one clear sentence, the slide logic is not ready.
@@ -144,6 +145,8 @@ Quantitative slide:
 - subheading states what, unit, and scope
 - one accent color highlights the point
 - source is mandatory
+- one chart is usually enough; multiple charts need a very clear comparison logic
+- do not show every analysis cut; show the minimum proof needed for the takeaway
 
 Qualitative slide:
 - structure beats prose
@@ -224,6 +227,7 @@ Before calling a slide done:
 - The body proves the title and nothing else.
 - The most important element is visually dominant.
 - The visual form is the simplest one that carries the message.
+- The slide is not a chart dump; the data has been reduced to one takeaway.
 - Numbers have units.
 - Charts have clear labels and direct annotations where helpful.
 - Source and footnotes are present where needed.

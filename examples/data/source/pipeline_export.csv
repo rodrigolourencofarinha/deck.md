@@ -1,0 +1,7 @@
+opportunity_id,segment,stage,revenue_gap
+opp-001,Enterprise,Qualified,4.1
+opp-002,Enterprise,Proposal,5.3
+opp-003,Enterprise,Negotiation,3.0
+opp-004,Mid-market,Qualified,2.0
+opp-005,Mid-market,Proposal,2.8
+opp-006,SMB,Qualified,1.6

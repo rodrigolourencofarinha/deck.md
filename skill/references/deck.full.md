@@ -94,6 +94,21 @@ designer_assets:
     scope: slide
     required: false
 
+# Use this block when data, SQL, CSV/Excel, metrics, or benchmark analysis drives the deck.
+# Create these artifacts before approving deck.md. Uncomment and fill only when relevant.
+# analysis_artifacts:
+#   manifest: analysis/manifest.yaml
+#   notes: analysis/notes.md
+#   queries:
+#     - id: analysis_query
+#       path: analysis/queries/analysis_query.sql
+#   tables:
+#     - id: chart_ready_table
+#       path: data/charts/chart_ready_table.csv
+#       kind: chart                         # source | working | analysis | chart
+#       used_by_slides: [3]
+#       required_columns: []
+
 # Design tokens drive the look and feel. Edit these to change the deck's aesthetic.
 design_tokens:
   palette:
@@ -211,6 +226,8 @@ Each slide is one `### Slide N — "action title"` heading, followed by a small 
 
 **Designer-mode deliverable.** If the approved deck is pure designer-mode, produce a final PDF only, not a PPTX wrapper. Add OCR/searchable text to the PDF when tooling is available.
 
+**Data-backed decks.** When the deck is based on data or SQL, first create `data/` and `analysis/` artifacts. Keep chart slides selective: one takeaway per slide, one simplest proof, and no chart dump. Declare the manifest, notes, queries, and chart-ready CSVs in `analysis_artifacts`.
+
 Valid `type` values are listed in [`./standards/slide-archetypes.md`](./standards/slide-archetypes.md).
 
 ---
@@ -289,7 +306,7 @@ required_text:
 
 ## Notes to the agent
 
-<Freeform context the agent should know but that doesn't fit above: deadlines, reviewers, data file locations, related decks, things to double-check, constraints on output.>
+<Freeform context the agent should know but that doesn't fit above: deadlines, reviewers, data file locations, related decks, things to double-check, constraints on output. For data-driven decks, summarize where analysis artifacts live and any caveats the human must approve.>
 
 ## Artifact organization
 
@@ -311,6 +328,7 @@ required_text:
 - <Raw, composed, reviewed, method, manifest, and output artifacts are stored in the current instance folder>
 - <No overlap, clipping, unsafe margins, or unreadable text>
 - <Rendered output still matches the original briefing and any Revision Brief>
+- <Data-driven charts match approved `chart.data_ref`, source, units, and takeaway>
 
 ---
 
@@ -320,6 +338,7 @@ required_text:
 - [`./standards/narrative-templates.md`](./standards/narrative-templates.md) — narrative template reference
 - [`./standards/slide-archetypes.md`](./standards/slide-archetypes.md) — slide type catalog
 - [`./standards/deck-validation.md`](./standards/deck-validation.md) — hard rules the agent self-checks
+- [`./standards/data-analysis-workflow.md`](./standards/data-analysis-workflow.md) — data/SQL analysis workflow and manifest contract
 - [`./standards/image-prompts.md`](./standards/image-prompts.md) — gpt-image-2 prompt templates
 - [`./standards/artifact-structure.md`](./standards/artifact-structure.md) — standard production instance folders and artifact naming
 - [`./examples/scr.deck.md`](./examples/scr.deck.md) — minimal filled SCR example

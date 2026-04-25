@@ -10,6 +10,7 @@ import subprocess
 import sys
 from pathlib import Path
 from urllib.parse import urlparse
+from urllib.request import Request, urlopen
 
 import yaml
 
@@ -88,11 +89,12 @@ def split_markdown_frontmatter(text: str, path: Path) -> tuple[dict, str] | None
 def parse_sources(markdown: str) -> str | None:
     for raw_line in markdown.splitlines():
         line = raw_line.strip()
-        lower = line.lower()
-        if lower.startswith("**sources:**"):
-            return line.split("**Sources:**", 1)[-1].strip()
-        if lower.startswith("sources:"):
-            return line.split(":", 1)[-1].strip()
+        match = re.match(r"^\*\*sources?:\*\*\s*(.*)$", line, re.IGNORECASE)
+        if match:
+            return match.group(1).strip()
+        match = re.match(r"^sources?:\s*(.*)$", line, re.IGNORECASE)
+        if match:
+            return match.group(1).strip()
     return None
 
 
@@ -214,6 +216,7 @@ def parse_deck_markdown(path: Path, text: str) -> dict | None:
         "production_defaults": frontmatter.get("production_defaults") or {},
         "image_generation": frontmatter.get("image_generation") or {},
         "designer_assets": frontmatter.get("designer_assets") or [],
+        "analysis_artifacts": frontmatter.get("analysis_artifacts") or {},
         "design_tokens": frontmatter.get("design_tokens") or {},
         "slides": slides,
     }
@@ -340,6 +343,20 @@ def copy_declared_asset(source: Path, destination_root: Path, asset_id: str) -> 
     return destination
 
 
+def download_declared_asset(source: str, destination_root: Path, asset_id: str) -> Path:
+    safe_id = slugify(asset_id)
+    suffix = Path(urlparse(source).path).suffix or ".asset"
+    destination = destination_root / f"{safe_id}{suffix}"
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    request = Request(source, headers={"User-Agent": "deck-architect/1.0"})
+    with urlopen(request, timeout=30) as response:
+        status = getattr(response, "status", 200)
+        if status >= 400:
+            raise OSError(f"HTTP {status}")
+        destination.write_bytes(response.read())
+    return destination
+
+
 def prepare_external_assets(spec_path: Path, spec: dict, workspace: Path) -> list[dict]:
     raw_assets = spec.get("designer_assets") or []
     if raw_assets is None:
@@ -386,7 +403,16 @@ def prepare_external_assets(spec_path: Path, spec: dict, workspace: Path) -> lis
 
         if is_remote_ref(source):
             record["remote"] = True
+            try:
+                downloaded = download_declared_asset(source, scratch_assets, asset_id)
+            except Exception as exc:
+                record["download_error"] = str(exc)
+                if required:
+                    die(f"required designer asset URL could not be downloaded: {asset_id} -> {source}: {exc}")
+                prepared.append(record)
+                continue
             record["exists"] = True
+            record["prepared_path"] = downloaded.relative_to(workspace).as_posix()
             prepared.append(record)
             continue
 

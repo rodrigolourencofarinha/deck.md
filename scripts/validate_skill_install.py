@@ -16,6 +16,7 @@ REQUIRED_FILES = [
     "references/deck.minimal.md",
     "references/deck.full.md",
     "references/standards/deck-validation.md",
+    "references/standards/data-analysis-workflow.md",
     "references/standards/slide-archetypes.md",
     "references/standards/narrative-templates.md",
     "references/standards/image-prompts.md",
@@ -24,6 +25,10 @@ REQUIRED_FILES = [
     "references/examples/pyramid.deck.md",
     "references/examples/problem-solution.deck.md",
     "references/examples/update.deck.md",
+    "references/examples/data-driven.deck.md",
+    "references/examples/data/charts/segment_gap.csv",
+    "references/examples/analysis/manifest.yaml",
+    "references/examples/analysis/notes.md",
     "references/deck-workflow.md",
     "references/consulting-slide-standards.md",
     "references/single-slide-workflow.md",
@@ -32,6 +37,7 @@ REQUIRED_FILES = [
     "references/designer-mode-gpt-image-prompt-scaffold.md",
     "references/designer-mode-direct-api-pattern.md",
     "scripts/build_pptx_artifact_tool.py",
+    "scripts/validate_deck_data.py",
 ]
 
 SKILL_BAD_PATTERNS = [

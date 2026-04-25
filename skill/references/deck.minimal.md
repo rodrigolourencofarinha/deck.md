@@ -62,4 +62,6 @@ type: recommendation
 ## Notes to the agent
 
 Use this as the quick-start brief. Keep `status: draft` until the human approves production.
+If the request includes data, SQL, CSV/Excel, metrics, or analysis, create `data/` and `analysis/` artifacts first, then reference them in `analysis_artifacts` before approval.
+Each slide must have one clear takeaway. Use charts only when they are the simplest proof of that takeaway.
 For the richer template with designer assets, revision briefs, design tokens, and detailed generated-image controls, see `deck.full.md`.

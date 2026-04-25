@@ -26,6 +26,7 @@ Examples:
 - One idea per slide — if a slide has more than one claim, split it.
 - Every claim in the body MUST either support the title or be removed.
 - Nothing in the title should go unproven in the body; nothing in the body should be irrelevant to the title.
+- For data-driven slides, the body MUST prove the takeaway instead of showing analysis for its own sake.
 
 ## Narrative rules
 
@@ -56,6 +57,16 @@ Examples:
 - Any slide presenting quantitative data or a factual claim MUST carry a `Sources:` line.
 - Sources MUST be specific (report name and date, not just "internal data").
 
+## Data analysis rules
+
+- If the request includes data, CSV/Excel, SQL, metrics, benchmark outputs, or asks for analysis/rationale, the agent MUST run the data-analysis workflow before drafting `deck.md`.
+- Data-driven decks SHOULD declare `analysis_artifacts` with `manifest`, `notes`, and any query/table outputs that support the deck.
+- Raw data, SQL, transformations, derived CSVs, caveats, and open questions MUST be traceable in `analysis/manifest.yaml` or `analysis/notes.md`.
+- Every `chart.data_ref` MUST point to a local, non-empty CSV with a header and at least one numeric series.
+- Every chart MUST have an `emphasis` that echoes the slide takeaway.
+- A chart is allowed only when it is the simplest proof of the slide takeaway; do not turn every analysis table into a chart.
+- If charts dominate the deck, the agent MUST challenge the structure and consider an executive synthesis, framework, recommendation slide, or appendix split.
+
 ## Footer rules
 
 - Every generated slide MUST include the standard small footer unless the approved deck.md explicitly disables it.
@@ -84,6 +95,7 @@ Examples:
 - Every rendered slide MUST show the required footer mark and page number in the approved placement.
 - Required logos and assets MUST appear in the approved placement and MUST NOT overlap text or important visuals.
 - Text, labels, charts, logos, and visual blocks MUST NOT overlap or be clipped.
+- Data-driven charts MUST match the approved `chart.data_ref`, emphasis, units, and source line.
 - Production artifacts SHOULD follow `artifact-structure.md`: raw outputs in `images/raw/`, manipulated/composed images in `images/composed/`, inspected final slide images in `images/reviewed/`, and prompts/metadata/review notes in `method/`.
 - Designer-mode production SHOULD include `method/model-inputs.yaml` listing the prepared assets sent to the image model.
 - Every production instance SHOULD include `manifest.yaml` with source spec, previous instance when relevant, changed slides, reused slides, status, reviewed images, and final output paths.
@@ -110,19 +122,23 @@ Before emitting a deck, the agent validates:
 5. [ ] Every body slide appears in at least one `supporting_slides` list (pyramid only)
 6. [ ] Reading only the titles reproduces the deck's argument
 7. [ ] Every quantitative claim has a source
-8. [ ] Generated images contain only text listed in `required_text`
-9. [ ] No slide exceeds 5 bullets
-10. [ ] No bullet exceeds 12 words
-11. [ ] All `asset_refs` resolve to declared `designer_assets`
-12. [ ] All model inputs are declared in `designer_assets`; no undeclared files are sent to the model
-13. [ ] Required designer assets exist or production is blocked
-14. [ ] Non-image designer assets are prepared under `assets/prepared/`
-15. [ ] `method/model-inputs.yaml` records prepared model inputs and image labels
-16. [ ] Rendered output has been inspected against the approved deck.md and briefing
-17. [ ] Logos/assets are correctly placed with no overlap or clipping
-18. [ ] Standard footer mark and simple numeric page number appear on every rendered slide
-19. [ ] Raw, composed, reviewed, method, and output artifacts are stored under the standard instance structure
-20. [ ] Instance `manifest.yaml` records source spec, changed/reused slides, status, and output paths
-21. [ ] Review changes use a new review deck.md version, new production instance, and regenerate only changed slides
+8. [ ] Data-driven decks include traceable analysis artifacts before approval
+9. [ ] Every `chart.data_ref` exists, is non-empty, and has a numeric series
+10. [ ] Every chart has an emphasis that matches the slide takeaway
+11. [ ] The deck is not a chart dump; each chart advances a distinct argument
+12. [ ] Generated images contain only text listed in `required_text`
+13. [ ] No slide exceeds 5 bullets
+14. [ ] No bullet exceeds 12 words
+15. [ ] All `asset_refs` resolve to declared `designer_assets`
+16. [ ] All model inputs are declared in `designer_assets`; no undeclared files are sent to the model
+17. [ ] Required designer assets exist or production is blocked
+18. [ ] Non-image designer assets are prepared under `assets/prepared/`
+19. [ ] `method/model-inputs.yaml` records prepared model inputs and image labels
+20. [ ] Rendered output has been inspected against the approved deck.md and briefing
+21. [ ] Logos/assets are correctly placed with no overlap or clipping
+22. [ ] Standard footer mark and simple numeric page number appear on every rendered slide
+23. [ ] Raw, composed, reviewed, method, and output artifacts are stored under the standard instance structure
+24. [ ] Instance `manifest.yaml` records source spec, changed/reused slides, status, and output paths
+25. [ ] Review changes use a new review deck.md version, new production instance, and regenerate only changed slides
 
 If any check fails, the agent MUST fix before finalizing.

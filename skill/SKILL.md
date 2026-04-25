@@ -18,6 +18,8 @@ Hard rules:
 - Default `production_defaults.default_slide_mode` to `designer-mode` unless the user asks for `ppt-shapes` or mixed/editable output.
 - Declare every model input in `designer_assets` before approval; do not send or use undeclared files.
 - Treat all logos, templates, old decks, screenshots, brand guides, icon packs, fonts, and reference images as external assets supplied by the user or declared by URL/path. This public skill has no bundled visual asset library.
+- If the request includes data, CSV/Excel, SQL, metrics, benchmarks, or asks for analysis/rationale, complete the data-analysis workflow before drafting `deck.md`.
+- Make the takeaway unmistakable on every slide. Use charts as proof, not decoration or a catalog of analysis cuts.
 - For pure `designer-mode`, deliver PDF output only; add OCR/searchable text when available and report if OCR was not applied.
 - Use the standard footer unless the approved brief disables it: small `CR` lower-left and simple page numbers (`1`, `2`, `3`) lower-right.
 - Render and inspect the produced artifact before delivery; repair and rerender failed slides.
@@ -26,12 +28,13 @@ Hard rules:
 
 ## Fast Workflow
 
-1. Classify the request: outline, content plan, critique, designer-mode PDF, editable PPTX, or mixed deck.
-2. Draft or update `deck.md` with the narrative, action titles, slide types, production defaults, and declared assets.
-3. Send the full draft `deck.md` to the human for approval.
-4. After approval, validate the brief, prepare declared assets, and produce only in the approved mode.
-5. Render, inspect, repair, and save the output in a production instance.
-6. For review changes, fork from the previous approved brief, add `## Revision Brief`, and reuse unchanged slides.
+1. Classify the request: outline, content plan, data-to-deck, critique, designer-mode PDF, editable PPTX, or mixed deck.
+2. If data or SQL is involved, preserve inputs, create analysis/chart CSVs, write notes and a manifest, then reference them in `deck.md`.
+3. Draft or update `deck.md` with the narrative, action titles, slide types, production defaults, declared assets, and analysis artifacts when relevant.
+4. Send the full draft `deck.md` to the human for approval.
+5. After approval, validate the brief, prepare declared assets, validate data refs, and produce only in the approved mode.
+6. Render, inspect, repair, and save the output in a production instance.
+7. For review changes, fork from the previous approved brief, add `## Revision Brief`, and reuse unchanged slides.
 
 If the build is simple, keep the workflow simple. Do not create extra planning files unless they materially help review or production.
 
@@ -43,6 +46,7 @@ Read only the files needed for the task:
 - `references/deck.md` - quick-start starter brief.
 - `references/deck.full.md` - rich starter with assets, revision brief, design tokens, and advanced designer-mode controls.
 - `references/standards/deck-validation.md` - hard validation rules and self-check checklist.
+- `references/standards/data-analysis-workflow.md` - SQL/CSV/spreadsheet analysis preflight, artifact layout, manifest schema, and chart economy rules.
 - `references/standards/slide-archetypes.md` - valid slide `type` values and preferred production modes.
 - `references/standards/narrative-templates.md` - SCR, pyramid, problem-solution, and update templates.
 - `references/standards/artifact-structure.md` - specs, assets, instances, image folders, method files, manifests, and outputs.
@@ -85,8 +89,10 @@ If an approved deck marks an asset as `required: true` and it cannot be found or
 
 Before delivering, check:
 - the current `deck.md` is approved
+- data-driven decks have `analysis_artifacts`, local chart CSVs, notes/manifest, and clear caveats
 - narrative template and slide types are valid
 - slide titles are action titles and the title sequence tells the argument
+- each slide has one consulting takeaway and any chart directly proves it
 - quantitative claims have sources
 - all `asset_refs` resolve to declared `designer_assets`
 - prepared model inputs are recorded in `method/model-inputs.yaml` when designer assets are used

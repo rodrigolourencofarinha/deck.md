@@ -1,0 +1,40 @@
+input_files:
+  - id: raw_pipeline
+    path: data/source/pipeline_export.csv
+    description: "Illustrative raw pipeline export"
+    grain: "opportunity"
+    refreshed_at: "2026-04-25"
+
+questions:
+  - "Which segment explains the revenue gap?"
+  - "What is the minimum evidence needed for the recovery story?"
+
+transformations:
+  - "Grouped revenue_gap by segment"
+  - "Created chart-ready segment_gap.csv with only the columns needed for the chart"
+
+output_tables:
+  - id: pipeline_by_segment
+    path: data/analysis/pipeline_by_segment.csv
+    grain: "segment"
+    used_by_slides: [2]
+  - id: chart_segment_gap
+    path: data/charts/segment_gap.csv
+    grain: "segment"
+    used_by_slides: [2]
+
+queries:
+  - id: pipeline_extract
+    path: analysis/queries/pipeline_extract.sql
+
+claims:
+  - claim: "Enterprise accounts explain most of the revenue gap"
+    evidence_file: data/charts/segment_gap.csv
+    used_by_slides: [2]
+
+caveats:
+  - "The data is illustrative and not a live pipeline export"
+  - "Renewal exclusion should be confirmed before approval"
+
+open_questions:
+  - "Confirm whether renewals should be excluded"

@@ -9,14 +9,17 @@ This repo also ships `deck-architect`, a public skill for OpenAI/Codex-style age
 ## How It Works
 
 1. The human sends a briefing, source material, existing slides, assets, or a partial `deck.md`.
-2. The agent drafts a complete `deck.md` with `status: draft`.
-3. The human approves the brief or asks for changes.
-4. Only after approval does the agent produce slides.
-5. The agent renders the output, inspects it against the approved brief, and repairs anything that fails.
+2. If the request includes data, SQL, CSV/Excel, metrics, or asks for analysis/rationale, the agent first creates traceable analysis artifacts: source data, SQL/query notes, derived CSVs, interpretation notes, and a manifest.
+3. The agent drafts a complete `deck.md` with `status: draft`, clear consulting takeaways, and data/chart references when relevant.
+4. The human approves the brief or asks for changes.
+5. Only after approval does the agent produce slides.
+6. The agent renders the output, inspects it against the approved brief, and repairs anything that fails.
 
 Post-render changes create a new review version, such as `review-01`, and regenerate only changed slides.
 
 Default production is `designer-mode`. Use `ppt-shapes` when a slide needs precise editability, data-accurate charts, tables, or native PowerPoint structure. Pure `designer-mode` decks produce final PDFs, not PPTX wrappers, with OCR/searchable text added when tooling is available.
+
+For data-driven decks, the skill is intentionally consulting-first: it should reduce the analysis to a storyline, not turn every table into a chart. Every slide needs one clear takeaway; charts are proof for that takeaway.
 
 ## Requirements
 
@@ -74,8 +77,10 @@ For a non-OpenAI model or agent:
 
 For any agent:
 - Start with a complete `deck.md` and keep `status: draft` until the human approves production.
+- For data-driven requests, create the analysis artifacts before drafting the final `deck.md`: `data/source/`, `data/analysis/`, `data/charts/`, `analysis/queries/`, `analysis/notes.md`, and `analysis/manifest.yaml`.
 - Do not generate slides from chat history alone; `deck.md` is the production contract.
 - Declare every external asset in `designer_assets` before production.
+- Keep charts selective: use the minimum evidence that proves the action title.
 - Run the validation and smoke commands before trusting a new install.
 
 ## Quick Start
@@ -89,11 +94,14 @@ Use [`deck.md`](./deck.md) or [`deck.minimal.md`](./deck.minimal.md) as the firs
 
 Use [`deck.full.md`](./deck.full.md) when you need designer assets, design tokens, revision briefs, advanced image controls, or richer production notes.
 
+For data-backed decks, follow [`standards/data-analysis-workflow.md`](./standards/data-analysis-workflow.md) before approving `deck.md`. The deck should link to a manifest, notes, queries, and chart-ready CSVs through `analysis_artifacts`.
+
 ## Key Rules
 
 - Every slide title must be an action title: a full sentence with a verb, sentence case, no trailing period.
 - Body content must prove the title.
 - Reading only the slide titles should reproduce the deck argument.
+- Data analysis must become a clear argument, not a pile of charts.
 - Every visual-model input must be declared in `designer_assets` before approval.
 - Every generated slide should carry the small `CR` mark and simple page number unless disabled in the approved brief.
 - Every production round should use a new instance folder; do not overwrite raw images, method metadata, or reviewed slides.
@@ -107,7 +115,7 @@ Use [`deck.full.md`](./deck.full.md) when you need designer assets, design token
 | [`deck.full.md`](./deck.full.md) | Rich starter with assets, revision brief, design tokens, and advanced controls |
 | [`SPEC.md`](./SPEC.md) | Authoritative format specification |
 | [`standards/`](./standards/) | Archetypes, validation, prompts, narrative templates, and artifact structure |
-| [`examples/`](./examples/) | Worked SCR, pyramid, problem-solution, and update examples |
+| [`examples/`](./examples/) | Worked SCR, pyramid, problem-solution, update, and data-driven examples |
 | [`skill/`](./skill/) | Installable `deck-architect` skill source |
 | [`scripts/`](./scripts/) | Packaging and validation scripts |
 
@@ -134,6 +142,12 @@ Validate a skill tree without installing:
 python3 scripts/validate_skill_install.py skill
 ```
 
+Validate data artifacts referenced by a draft or approved deck:
+
+```bash
+python3 skill/scripts/validate_deck_data.py deck.md
+```
+
 Do not install private asset folders into the skill. Keep source assets next to the deck project, then declare them in the approved `deck.md`.
 
 ## Build Smoke Tests
@@ -150,6 +164,12 @@ External asset handling can be smoke-tested with:
 
 ```bash
 python3 scripts/smoke_external_assets.py
+```
+
+Data-to-deck validation can be smoke-tested with:
+
+```bash
+python3 scripts/smoke_data_analysis.py
 ```
 
 ## License

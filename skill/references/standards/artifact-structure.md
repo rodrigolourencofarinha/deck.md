@@ -19,6 +19,17 @@ decks/<deck-slug>/
     YYYY-MM-DD-v01-deck.md
     YYYY-MM-DD-review-01-deck.md
 
+  data/
+    source/
+    working/
+    analysis/
+    charts/
+
+  analysis/
+    queries/
+    notes.md
+    manifest.yaml
+
   assets/
     source/
     prepared/
@@ -66,6 +77,13 @@ decks/<deck-slug>/
 ## Folder meanings
 
 - `specs/` stores approved and review deck.md versions. These are the logical source of truth.
+- `data/source/` stores raw data files, spreadsheet extracts, SQL exports, or user-supplied CSVs.
+- `data/working/` stores intermediate cleaned data that is useful for audit but not final evidence.
+- `data/analysis/` stores derived evidence tables used to form the deck rationale.
+- `data/charts/` stores small chart-ready CSVs referenced by `chart.data_ref`.
+- `analysis/queries/` stores SQL files or query notes used to produce data outputs.
+- `analysis/notes.md` stores findings, caveats, and the consulting storyline logic.
+- `analysis/manifest.yaml` stores input files, transformations, output tables, claims, caveats, and open questions.
 - `assets/source/` stores human-provided source assets declared in `designer_assets`, such as logos, existing decks, templates, screenshots, icon packs, fonts, and brand guides.
 - `assets/prepared/` stores model-readable inputs prepared from source assets, such as rendered existing-deck slide previews, rendered template PNGs, normalized logos, cropped screenshots, or converted icon files.
 - `instances/` stores production attempts and review rounds.
@@ -106,6 +124,39 @@ model_inputs:
 notes: "Regenerated slide 3 only; reused reviewed images for other slides."
 ```
 
+## Analysis manifest
+
+When data analysis informs the deck, include `analysis/manifest.yaml` before `deck.md` approval:
+
+```yaml
+input_files:
+  - id: raw_pipeline
+    path: data/source/pipeline_export.csv
+    description: "Raw pipeline export"
+    grain: "opportunity"
+    refreshed_at: "2026-04-25"
+transformations:
+  - "Grouped pipeline by segment and stage"
+output_tables:
+  - id: chart_segment_gap
+    path: data/charts/segment_gap.csv
+    grain: "segment"
+    used_by_slides: [3]
+queries:
+  - id: pipeline_extract
+    path: analysis/queries/pipeline_extract.sql
+claims:
+  - claim: "Enterprise accounts explain most of the gap"
+    evidence_file: data/charts/segment_gap.csv
+    used_by_slides: [3]
+caveats:
+  - "Stage definitions changed during the period"
+open_questions:
+  - "Confirm whether renewals should be excluded"
+```
+
+The analysis manifest is separate from the production instance manifest. The analysis manifest explains the data logic; the instance manifest explains how the rendered deck was produced.
+
 ## Naming rules
 
 - Instance folders are zero-padded and semantic: `001-initial`, `002-review-01`, `003-review-02`.
@@ -132,3 +183,4 @@ When the human asks for a post-render change:
 - Do not scatter final PDFs across multiple ad hoc folders.
 - Do not overwrite earlier prompts, request metadata, or reviewed images.
 - If a raw image is accepted without manipulation, copy it into `images/reviewed/` and record that no composition step was needed.
+- Do not bury raw data, SQL, or derived chart CSVs inside production instance folders; keep them in `data/` and `analysis/` so review rounds can reuse the same evidence.

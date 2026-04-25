@@ -23,11 +23,13 @@ Use `deck.md` when you want:
 
 ## Agent workflow
 
-`deck.md` supports two authorship modes and a two-phase generation pipeline.
+`deck.md` supports two authorship modes, an optional data preflight, and a two-phase generation pipeline.
 
 **Authorship modes:**
 - **Human-authored brief:** A human writes (or finishes) the `deck.md` and hands it to the agent. If `status: approved`, the agent validates and may proceed to phase 2. If it is still `draft`, the agent returns validation notes and asks for approval before producing slides.
 - **Agent-generated brief:** A human provides a broad idea, raw content, or partial notes. The agent writes the `deck.md` (phase 1), sends it to the human for validation, revises it until the human approves, then generates slides (phase 2).
+
+**Data preflight — before phase 1 when data is involved.** If the request includes raw data, CSV/Excel files, SQL, database extracts, metrics, benchmarks, or asks the agent to analyze and build a rationale, the agent first creates a reproducible analysis trail: preserve source files, run/profile the analysis, save SQL and derived CSVs, write interpretation notes, and record a manifest. The draft `deck.md` then references those outputs through `analysis_artifacts` and `chart.data_ref`. The agent MUST NOT skip directly from raw data to slide production.
 
 **Phase 1 — Brief generation.** The agent receives raw input and produces a complete `deck.md` with `status: draft`. It populates `## Brief` with a summary of what it received and how it interpreted it, then sends the complete `deck.md` to the human. The human validates it, asks for changes if needed, and approves only when the current `deck.md` is ready for production. The agent MUST keep revising and resending `deck.md` until approval; it MUST NOT proceed to phase 2 while `status: draft`.
 
@@ -120,6 +122,19 @@ designer_assets:                                             # optional; used by
     required: <true|false>
     notes: "<optional constraints or preparation notes>"
 
+analysis_artifacts:                                          # optional; required when data analysis drove the deck
+  manifest: "analysis/manifest.yaml"
+  notes: "analysis/notes.md"
+  queries:
+    - id: "<stable-query-id>"
+      path: "analysis/queries/<query>.sql"
+  tables:
+    - id: "<stable-table-id>"
+      path: "data/charts/<chart-ready-table>.csv"
+      kind: "<source|working|analysis|chart>"
+      used_by_slides: [1]
+      required_columns: ["<column>"]
+
 design_tokens:
   palette:       { primary, secondary, accent, accent_soft, background, line }
   typography:    { title, body, emphasis }
@@ -139,6 +154,7 @@ Premium, consulting-style. Message-first, not decoration-first. Polished but con
 - Every slide title MUST be an **action title** — a full sentence with a verb that states the "so what", not a topic label.
 - Body MUST prove the title; nothing in the title should go unproven, nothing in the body should be irrelevant to the title.
 - Sentence case. No trailing periods. No stray invented text in generated slides.
+- Data-driven slides MUST be message-first. The chart is proof, not the point. Do not create a sequence of charts unless each one advances a distinct argument.
 
 Hard limits (word counts, case, bullet counts) live in [`./standards/deck-validation.md`](./standards/deck-validation.md) and MUST be self-checked before emitting.
 
@@ -266,6 +282,42 @@ designer_assets:
     required: false
 ```
 
+## Data and analysis artifacts
+
+The optional `analysis_artifacts` frontmatter block records the reproducible analysis trail behind a data-driven deck. Use it when the agent received data, SQL, spreadsheets, metrics, or benchmark outputs and converted them into a deck rationale.
+
+Fields:
+- `manifest` — path to `analysis/manifest.yaml`, describing inputs, transformations, output tables, claims, caveats, and open questions.
+- `notes` — path to `analysis/notes.md`, summarizing findings and the storyline logic.
+- `queries` — optional list of SQL files or query notes used to produce analysis outputs.
+- `tables` — list of source, working, analysis, or chart-ready tables used by the deck.
+
+Each table entry should include:
+- `id` — stable reference key.
+- `path` — local CSV path. Remote data must be downloaded or exported first; chart rendering uses local files.
+- `kind` — `source`, `working`, `analysis`, or `chart`.
+- `used_by_slides` — slide ids that use the table.
+- `required_columns` — optional list of columns that must exist.
+
+Charts should usually point to small chart-ready CSVs under `data/charts/`, while fuller evidence tables stay in `data/analysis/`.
+
+```yaml
+analysis_artifacts:
+  manifest: analysis/manifest.yaml
+  notes: analysis/notes.md
+  queries:
+    - id: pipeline_extract
+      path: analysis/queries/pipeline_extract.sql
+  tables:
+    - id: chart_segment_gap
+      path: data/charts/segment_gap.csv
+      kind: chart
+      used_by_slides: [3]
+      required_columns: [segment, revenue_gap]
+```
+
+Data-driven `deck.md` files remain approval-gated. The human approves the argument, selected evidence, caveats, and artifact references before the agent produces slides.
+
 ## Revision Brief
 
 An optional `## Revision Brief` section appears in review versions after the human asks for changes to a previously approved or rendered deck. It documents what changed from the prior approved deck.md so the agent updates the spec deliberately and regenerates only the necessary slides.
@@ -298,7 +350,7 @@ The production artifacts for a review round MUST be saved as a new instance unde
 
 ### Optional per-slide fenced blocks
 
-- `chart:` — when the slide contains a chart. Fields: `type`, `emphasis`, `data_ref`, `annotation`. `emphasis` should echo the action title.
+- `chart:` — when the slide contains a chart. Fields: `type`, `emphasis`, `data_ref`, `annotation`. `emphasis` should echo the action title. `data_ref` should point to a local chart-ready CSV, usually under `data/charts/`, and should be declared in `analysis_artifacts.tables` when the deck is data-driven.
 - `creative_direction:` — when `mode: designer-mode`. Fields: `mood`, `metaphor`, `composition_intent`, `prompt_notes[]`, `avoid[]`. This is the model's creative surface.
 - `required_text:` — when `image_decision: full-generated-visual`. Fields: `title`, `subtitle`, `labels[]`. The model MUST NOT render text outside this list.
 
@@ -358,6 +410,15 @@ Core layout:
 ```text
 decks/<deck-slug>/
   specs/
+  data/
+    source/
+    working/
+    analysis/
+    charts/
+  analysis/
+    queries/
+    notes.md
+    manifest.yaml
   assets/
     source/
     prepared/
@@ -386,7 +447,7 @@ decks/<deck-slug>/
     review/
 ```
 
-Every production round gets an instance folder. `assets/source/` stores the human-provided files declared in `designer_assets`. `assets/prepared/` stores model-readable inputs produced from those files, such as rendered deck previews, rendered template previews, normalized logos, or cropped screenshots. `images/raw/` stores untouched model or render outputs. `images/composed/` stores manipulated images, such as logo placement, footer fixes, crop/padding, or OCR preparation. `images/reviewed/` stores the exact images that passed inspection and were assembled. `method/` stores prompts, request/response metadata, generation settings, manipulation logs, render-review notes, OCR notes, and `model-inputs.yaml` documenting which prepared assets were sent to the model. `manifest.yaml` records changed slides, reused slides, source spec, previous instance, and final outputs.
+Every production round gets an instance folder. `data/source/` stores raw data files or exports. `data/working/` stores intermediate cleaned data. `data/analysis/` stores evidence tables. `data/charts/` stores small chart-ready CSVs referenced by `chart.data_ref`. `analysis/queries/` stores SQL or query notes. `analysis/notes.md` and `analysis/manifest.yaml` document the analytical rationale and traceability. `assets/source/` stores the human-provided visual files declared in `designer_assets`. `assets/prepared/` stores model-readable inputs produced from those files, such as rendered deck previews, rendered template previews, normalized logos, or cropped screenshots. `images/raw/` stores untouched model or render outputs. `images/composed/` stores manipulated images, such as logo placement, footer fixes, crop/padding, or OCR preparation. `images/reviewed/` stores the exact images that passed inspection and were assembled. `method/` stores prompts, request/response metadata, generation settings, manipulation logs, render-review notes, OCR notes, and `model-inputs.yaml` documenting which prepared assets were sent to the model. `manifest.yaml` records changed slides, reused slides, source spec, previous instance, and final outputs.
 
 ### Slide files
 
@@ -429,6 +490,7 @@ Render review checklist:
 - every model input used in prompts is declared in `designer_assets` and recorded in `method/model-inputs.yaml`
 - raw, composed, and reviewed images are stored in the standard instance folders where relevant
 - method artifacts and manifest explain how the instance was produced
+- data-driven charts resolve to local CSVs and match the approved analytical takeaway
 - no text, logos, charts, labels, or visual blocks overlap
 - nothing important is clipped, cropped, too small, or outside the safe area
 - visual hierarchy and reading path match the slide intent
@@ -467,6 +529,7 @@ On conflict, the closer-in rule wins. Human-set fields beat model improvisation.
 - [`./standards/deck-validation.md`](./standards/deck-validation.md) — hard rules the agent self-checks before emitting.
 - [`./standards/image-prompts.md`](./standards/image-prompts.md) — prompt templates for `gpt-image-2` via Codex OAuth and direct API-key fallback.
 - [`./standards/artifact-structure.md`](./standards/artifact-structure.md) — standardized folder structure for specs, instances, raw/composed/reviewed images, methods, and outputs.
+- [`./standards/data-analysis-workflow.md`](./standards/data-analysis-workflow.md) — analysis-first workflow for SQL, CSV, spreadsheets, chart data, and rationale building.
 
 ## Examples
 
@@ -474,3 +537,4 @@ On conflict, the closer-in rule wins. Human-set fields beat model improvisation.
 - [`./examples/pyramid.deck.md`](./examples/pyramid.deck.md) — full pyramid deck with `executive_summary`, `analysis` (chart), and `recommendation` (designer-mode with `required_text`).
 - [`./examples/problem-solution.deck.md`](./examples/problem-solution.deck.md) — a startup pitch deck using the `problem-solution` template.
 - [`./examples/update.deck.md`](./examples/update.deck.md) — a quarterly engineering status report using the `update` template.
+- [`./examples/data-driven.deck.md`](./examples/data-driven.deck.md) — analysis-first example with manifest, SQL note, derived CSVs, and a chart-ready `data_ref`.

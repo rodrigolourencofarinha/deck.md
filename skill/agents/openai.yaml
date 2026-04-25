@@ -1,4 +1,4 @@
 interface:
   display_name: "Deck Architect"
-  short_description: "Plan deck.md briefs and build polished slides"
-  default_prompt: "Use $deck-architect to turn this material into an approved deck.md brief before producing slides. Keep status: draft until approval, declare every visual-model input in designer_assets, default to designer-mode unless editable output is requested, render and inspect the result, and use review deck.md versions for post-render changes."
+  short_description: "Plan data-backed deck.md briefs and build polished slides"
+  default_prompt: "Use $deck-architect to turn this material into an approved deck.md brief before producing slides. If data, SQL, CSV, metrics, or analysis is involved, first create traceable analysis artifacts and chart-ready CSVs, then draft the deck with clear consulting takeaways. Keep status: draft until approval, declare every visual-model input in designer_assets, default to designer-mode unless editable output is requested, render and inspect the result, and use review deck.md versions for post-render changes."
