@@ -8,7 +8,8 @@ Do not start from an image.
 Start from the approved deck.md.
 
 Default behavior for Rodrigo's designer-mode requests:
-- use GPT Image 2 as the primary and default end-to-end slide generator
+- use Codex image generation as the primary and default end-to-end slide generator
+- use the direct OpenAI Image API only as a fallback after Codex image generation fails and the human approves continuing with the API fallback
 - do not invent a hybrid background-plus-manual-assembly workflow unless the user explicitly asks for it
 - record every asset the visual model should receive in `designer_assets`: logos, existing decks, rendered slide previews, templates, brand guides, screenshots, icons, and reference images
 - do not pass undeclared assets to the visual model
@@ -110,7 +111,7 @@ Good fits:
 - isolated object or subject
 - explanatory metaphor
 - dominant framework visual
-- full-slide art-directed pages where GPT Image 2 can carry both the composition and the visual language cleanly
+- full-slide art-directed pages where Codex image generation can carry both the composition and the visual language cleanly
 
 Usually poor fits:
 - dense process slides
@@ -177,7 +178,7 @@ The prompt should explicitly state:
 - the computed footer text and placement for this slide
 - how the eye should move horizontally or in a Z pattern across the slide
 
-Use `skill/references/designer-mode-gpt-image-prompt-scaffold.md` to turn that brief into the actual GPT Image 2 prompt.
+Use `skill/references/designer-mode-gpt-image-prompt-scaffold.md` to turn that brief into the actual image generation prompt.
 
 ## Designer assets
 
@@ -238,7 +239,8 @@ Asset handling rules:
 ## Generation parameter defaults
 
 For final full-slide designer-mode output:
-- `model="gpt-image-2"`
+- `primary_creator="codex-imagegen"`
+- `fallback_creator="openai-api:gpt-image-2"` only after Codex image generation fails and the human approves the fallback
 - `size="2560x1440"`
 - `quality="high"`
 - `output_format="png"`

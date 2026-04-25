@@ -15,7 +15,7 @@ Use this skill for:
 - slide critique and redesign
 - converting rough ideas into presentation logic
 - building editable `.pptx` decks
-- producing premium designer-mode slides with GPT Image 2
+- producing premium designer-mode slides with Codex image generation
 - using bundled Tabler icons for clean analytical slides
 
 For new editable `ppt-shapes` deck output, prefer the artifact-tool renderer. Use `assets/RLF_PPT_Template_v1.pptx` as the default base only for legacy `python-pptx` output.
@@ -74,7 +74,7 @@ Read only what the task needs.
 - `standards/narrative-templates.md` — SCR, pyramid, problem-solution, update template reference
 - `standards/slide-archetypes.md` — valid slide `type` values and preferred modes
 - `standards/deck-validation.md` — hard rules the agent self-checks before emitting
-- `standards/image-prompts.md` — gpt-image-2 prompt templates and token injection
+- `standards/image-prompts.md` — Codex image generation prompt templates and token injection
 - `standards/artifact-structure.md` — standard instance folders for raw/composed/reviewed images, method files, manifests, and outputs
 
 ### Deck logic
@@ -94,8 +94,8 @@ Read only what the task needs.
 
 ### Designer mode
 - `skill/references/designer-mode-workflow.md` — designer-mode workflow, visual branches, image decisions, and iteration loop
-- `skill/references/designer-mode-gpt-image-prompt-scaffold.md` — convert one deck.md slide into a GPT Image 2 prompt
-- `skill/references/designer-mode-direct-api-pattern.md` — default direct GPT Image 2 API pattern for native 16:9 full-slide generation
+- `skill/references/designer-mode-gpt-image-prompt-scaffold.md` — convert one deck.md slide into a Codex image generation prompt
+- `skill/references/designer-mode-direct-api-pattern.md` — permissioned direct OpenAI Image API fallback pattern for native 16:9 full-slide generation
 
 ### Rendering and icons
 - `skill/references/tabler-icon-selection.md` — shortlist/safe icon choice guidance
@@ -227,11 +227,13 @@ Rules:
 - after rendering, inspect the slide/deck image for match to briefing, overlaps, clipping, logo placement, text readability, and visual hierarchy; fix and rerender until clean
 
 #### `designer-mode`
-Use GPT Image 2 as the default production engine for the slide visual output.
+Use Codex image generation as the default production engine for the slide visual output. Use the direct OpenAI Image API only as a fallback after Codex image generation fails and the human approves continuing with the API fallback.
 
 Rules:
 - do not generate before the deck.md is approved
 - generate slide by slide, not all at once
+- use Codex image generation first for designer-mode images
+- if Codex image generation is unavailable or fails, tell the human what failed and ask whether to continue with the direct OpenAI Image API before making any API call
 - use only designer assets declared in `designer_assets`
 - when a slide references `asset_refs`, load and prepare those assets before prompt construction
 - render non-image assets such as `.pptx` templates and existing `.pptx`/`.pdf` decks into image previews before using them as model references
@@ -241,7 +243,7 @@ Rules:
 - add an OCR/searchable text layer to the final PDF when tooling is available
 - add the standard footer to every slide image: `CR` lower-left and the simple slide-order page number lower-right, unless disabled in the approved deck.md; do not include total-count numbering such as `1/3`
 - allow creative freedom only after the slide logic is locked
-- default to GPT Image 2 end-to-end slide generation for designer mode unless the user explicitly asks for a hybrid workflow
+- default to Codex image generation for designer mode unless the user explicitly asks for a hybrid workflow
 - enforce `aspect_ratio: 16:9` in both the deck.md and the image-generation call
 - prefer native 16:9 generation with `size="2560x1440"` as the default full-slide resolution
 - use `quality="high"` for final designer-mode slides
@@ -398,7 +400,7 @@ creative_direction:
   metaphor: "<the visual idea>"
   composition_intent: "<how to compose the slide>"
   prompt_notes:
-    - "<specific guidance for gpt-image-2>"
+    - "<specific guidance for Codex image generation>"
   avoid:
     - "<anti-patterns>"
 ```
@@ -472,7 +474,7 @@ When the request implies designer mode:
 2. **Slide structure proposal** — propose the composition before generating visuals; decide the layout and image role; keep the slide aligned to the deck design system
 3. **Asset preparation** — resolve `designer_assets` and slide `asset_refs`; render `.pptx` templates and existing `.pptx`/`.pdf` decks to PNG previews; prepare logos and reference images for the model; record every prepared input in `method/model-inputs.yaml`
 4. **Spec lock** — make sure the slide block in deck.md is clear enough to produce without guessing; confirm the image role and asset usage
-5. **Image generation** — derive the prompt from the approved deck.md slide using `skill/references/designer-mode-gpt-image-prompt-scaffold.md`; include prepared asset references by id and usage; use `gpt-image-2`, `size="2560x1440"`, `quality="high"`, `output_format="png"`, `n=1` for final full-slide generation
+5. **Image generation** — derive the prompt from the approved deck.md slide using `skill/references/designer-mode-gpt-image-prompt-scaffold.md`; include prepared asset references by id and usage; use Codex image generation first with `size="2560x1440"`, `quality="high"`, `output_format="png"`, `n=1` for final full-slide generation; if that fails, ask the human before using the direct OpenAI Image API fallback
 6. **PDF assembly** — assemble the generated slides into a final PDF only; add OCR/searchable text when tooling is available; do not create a PPTX wrapper for pure designer-mode output
 7. **Render review** — inspect the slide/PDF for briefing match, text accuracy, footer/page numbers, logo placement, overlaps, clipping, safe margins, and reading flow; regenerate affected slides only until it passes
 
@@ -596,7 +598,7 @@ Before delivering, verify:
 - does the slide feel occupied enough to look finished
 - for consulting-style slides, does the title state one insight and does the body prove it directly
 - do source, units, notes, and footer/status markings meet the consulting-slide standard where relevant
-- if designer mode was requested, did the workflow stay GPT Image 2-first rather than drifting into an unapproved hybrid
+- if designer mode was requested, did the workflow stay Codex-image-generation-first rather than drifting into an unapproved hybrid or direct API call
 - if the deck is pure designer-mode, is the final deliverable PDF-only rather than PPTX
 - was OCR/searchable text added to the designer-mode PDF, or clearly reported as unavailable
 - does the result clearly read as a native 16:9 slide rather than a rescued crop

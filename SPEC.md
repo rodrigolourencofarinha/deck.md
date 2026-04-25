@@ -31,7 +31,7 @@ Use `deck.md` when you want:
 
 **Phase 1 — Brief generation.** The agent receives raw input and produces a complete `deck.md` with `status: draft`. It populates `## Brief` with a summary of what it received and how it interpreted it, then sends the complete `deck.md` to the human. The human validates it, asks for changes if needed, and approves only when the current `deck.md` is ready for production. The agent MUST keep revising and resending `deck.md` until approval; it MUST NOT proceed to phase 2 while `status: draft`.
 
-**Phase 2 — Slide generation.** The agent reads an `approved` deck.md, validates it against `standards/deck-validation.md`, and produces one rendered image per slide (see `## Output`). `designer-mode` slides are generated via gpt-image-2. `ppt-shapes` slides are rendered as layout images from the design tokens. All slides are assembled into a PDF in slide order. Pure `designer-mode` decks produce PDF output only, with no PPTX wrapper.
+**Phase 2 — Slide generation.** The agent reads an `approved` deck.md, validates it against `standards/deck-validation.md`, and produces one rendered image per slide (see `## Output`). `designer-mode` slides are generated through Codex image generation first. `ppt-shapes` slides are rendered as layout images from the design tokens. All slides are assembled into a PDF in slide order. Pure `designer-mode` decks produce PDF output only, with no PPTX wrapper.
 
 **Phase 3 — Render review and repair.** The agent renders the final artifact, inspects the rendered pages/slides against the approved deck.md and original briefing, and repairs any mismatch before delivery. This includes title and body text, asset use, logo placement, overlaps, clipping, safe margins, aspect ratio, reading order, and whether the output still answers the briefing.
 
@@ -104,7 +104,9 @@ production_defaults:
     placement: "bottom-left-cr-bottom-right-page"
 
 image_generation:                                             # only used when mode is designer-mode
-  primary_creator: "gpt-image-2"
+  primary_creator: "codex-imagegen"
+  fallback_creator: "openai-api:gpt-image-2"
+  fallback_requires_user_approval: true
   size:            "2560x1440"
   quality:         "high"
   output_format:   "png"
@@ -157,6 +159,7 @@ Hard limits (word counts, case, bullet counts) live in [`./standards/deck-valida
 - Designer-mode assets must be declared in `designer_assets` before production. Use this for every asset the visual model should receive: logos, existing decks, rendered slide previews, PowerPoint templates, brand guides, screenshots, icons, reference images, and other source assets.
 - Existing decks and slides are treated as content-and-style references by default: preserve the message and key evidence, borrow useful layout density and visual rhythm, and redesign the composition freely unless the approved brief asks for a close redesign.
 - Assets that are not declared in `designer_assets` must not be passed to the visual model, even if they were supplied in chat or live in the workspace.
+- Designer-mode image generation MUST use Codex's built-in image generation path first. If Codex image generation is unavailable or fails, the agent must report the failure and ask the human whether to continue with the direct OpenAI Image API fallback before making any API call.
 - When `image_decision: full-generated-visual`, the slide MUST declare `required_text`. The model MUST NOT render any text in the image that is not listed there.
 - Reject: poster-like output, background plates, cropped salvage jobs, decorative stock-photo energy.
 
@@ -394,7 +397,7 @@ Every production round gets an instance folder. `assets/source/` stores the huma
 ### Slide files
 
 Every slide produces one PNG regardless of mode:
-- `designer-mode` slides are generated via gpt-image-2 per the prompt templates in [`./standards/image-prompts.md`](./standards/image-prompts.md).
+- `designer-mode` slides are generated through Codex image generation first, using the prompt templates in [`./standards/image-prompts.md`](./standards/image-prompts.md). The direct OpenAI Image API is a fallback only after Codex image generation fails and the human explicitly approves continuing with the API fallback.
 - `ppt-shapes` slides are rendered as layout images by the agent from the deck's `design_tokens` — no image generation call is made, but the output is still a PNG sized to `image_generation.size`.
 
 Simple exports may use `slides/slide-01.png`, `slides/slide-02.png`, etc. Inside the standard instance structure, use `images/raw/slide-01.raw.png`, `images/composed/slide-01.composed.png`, and `images/reviewed/slide-01.review.png`. Slide numbers are zero-padded to two digits; use three digits for decks over 99 slides. Assembly order follows `id` values ascending. For string IDs, document order applies.
@@ -468,7 +471,7 @@ On conflict, the closer-in rule wins. Human-set fields beat model improvisation.
 - [`./standards/narrative-templates.md`](./standards/narrative-templates.md) — reference for each `narrative_template` value: required fields, canonical examples, pitfalls.
 - [`./standards/slide-archetypes.md`](./standards/slide-archetypes.md) — catalog of valid `type` values with required fields and typical layouts.
 - [`./standards/deck-validation.md`](./standards/deck-validation.md) — hard rules the agent self-checks before emitting.
-- [`./standards/image-prompts.md`](./standards/image-prompts.md) — prompt templates for `gpt-image-2` calls.
+- [`./standards/image-prompts.md`](./standards/image-prompts.md) — prompt templates for Codex image generation and direct API fallback.
 - [`./standards/artifact-structure.md`](./standards/artifact-structure.md) — standardized folder structure for specs, instances, raw/composed/reviewed images, methods, and outputs.
 
 ## Examples

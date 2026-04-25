@@ -1,6 +1,6 @@
-# Designer-mode GPT Image 2 prompt scaffold
+# Designer-mode image prompt scaffold
 
-Use this reference when converting a slide spec into the actual prompt for GPT Image 2.
+Use this reference when converting a slide spec into the actual prompt for Codex image generation. The same prompt can be reused for the direct OpenAI Image API fallback only after Codex image generation fails and the human approves continuing with the API fallback.
 
 This is not the canonical deck spec.
 It is the downstream prompt scaffold for the visual layer of one designer-mode slide.
@@ -13,7 +13,7 @@ Primary upstream source:
 Turn a designer-mode slide block into a strong image-generation brief that:
 - preserves the slide message
 - inherits the deck design language
-- gives GPT Image 2 enough context to create a presentation-grade slide output
+- gives the image generator enough context to create a presentation-grade slide output
 - keeps the model inside real slide constraints such as 16:9 framing, title-safe zones, and reading flow
 - avoids over-constraining the model when creativity is useful
 
@@ -109,7 +109,7 @@ Ask:
 
 ## Prompt-writing style
 
-For GPT Image 2, prefer prompts that are:
+For designer-mode generation, prefer prompts that are:
 - concept-first
 - presentation-aware
 - organized in a consistent order: goal/use case, canvas/layout, required text, key visual details, style/materials, constraints

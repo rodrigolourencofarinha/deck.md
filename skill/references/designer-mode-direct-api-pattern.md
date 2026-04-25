@@ -1,8 +1,10 @@
-# Designer-mode direct API pattern
+# Designer-mode direct API fallback pattern
 
-Use this when designer mode should generate a full slide directly with GPT Image 2 and a concrete runnable example will reduce tool/API drift.
+Use this only when Codex image generation is unavailable or fails, the user has been told what failed, and the user has approved continuing with the direct OpenAI Image API fallback.
 
 Default rule:
+- use Codex image generation first; do not start with the direct API
+- if Codex image generation fails, report the failure and ask whether to continue with the OpenAI API fallback
 - prefer native 16:9 generation
 - default full-slide size: `2560x1440`
 - use `2560x1440` as the preferred 2K/QHD slide target for `gpt-image-2`; current OpenAI guidance treats it as the upper reliability boundary before larger outputs become more experimental
@@ -33,7 +35,7 @@ result = client.images.generate(
 )
 ```
 
-Use this as the preferred default for designer-mode full-slide generation when writing direct Python examples.
+Use this only as the approved fallback for designer-mode full-slide generation when writing direct Python examples.
 
 Reference-template pattern:
 

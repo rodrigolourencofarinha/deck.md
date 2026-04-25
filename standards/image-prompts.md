@@ -1,6 +1,6 @@
 # Image prompt templates
 
-How to convert a `deck.md` slide into a `gpt-image-2` call. This file defines the prompt structure, token injection, and guardrails that produce consistent designer-mode slides.
+How to convert a `deck.md` slide into a Codex image generation request. This file defines the prompt structure, token injection, and guardrails that produce consistent designer-mode slides. Direct OpenAI Image API calls are a fallback only after Codex image generation is unavailable or fails and the human explicitly approves continuing with the API.
 
 Applies when a slide has `mode: designer-mode` AND `image_decision: full-generated-visual` (or `cutout`).
 
@@ -156,7 +156,7 @@ Do not rely on chat history as the only record of how a slide was generated.
 
 ## Visual template reference
 
-When `visual_template_reference` is set, the agent passes the referenced image as a style/layout reference to gpt-image-2. The `visual_template_scope` field specifies what to preserve:
+When `visual_template_reference` is set, the agent passes the referenced image as a style/layout reference to the Codex image generation path. The `visual_template_scope` field specifies what to preserve:
 
 - `"preserve title placement, margins, footer"` — structural elements only
 - `"preserve everything"` — full template lock
@@ -188,6 +188,19 @@ Asset prompt rules:
 - Do not allow template or brand assets to override required text, slide logic, or the deck's approved narrative.
 - Do not pass any visual input to the model unless it is declared in `designer_assets` and listed in `method/model-inputs.yaml`.
 - If `required: true` and the asset cannot be prepared, block generation rather than silently proceeding.
+
+## Generation path and fallback
+
+Default path:
+- Use Codex's built-in image generation capability for designer-mode slide images.
+- Use the same prompt, prepared image inputs, text lock, footer rules, and output constraints described in this file.
+- Store prompts, prepared-input metadata, and output metadata in the active instance's `method/` folder.
+
+Fallback path:
+- Do not start with the direct OpenAI Image API.
+- If Codex image generation is unavailable, errors, or cannot accept the required prepared inputs, tell the human what failed.
+- Ask the human whether to continue with the direct OpenAI Image API fallback.
+- Only after approval, use `image_generation.fallback_creator` and record the fallback approval and reason in `method/model-inputs.yaml` or the slide request metadata.
 
 Example prompt block:
 

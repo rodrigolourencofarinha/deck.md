@@ -27,9 +27,11 @@ deck:
 #   update           — Plan / Actual / Next                              (status, retros)
 narrative_template: pyramid
 
-# Output: designer-mode generates each slide as an image via gpt-image-2, using
-# the narrative and design tokens below. A slide can opt out with `mode: ppt-shapes`
-# when it needs precise editability, data-accurate charts, tables, or editable PPT structure.
+# Output: designer-mode generates each slide through Codex image generation first,
+# using the narrative and design tokens below. Direct OpenAI Image API generation
+# is a fallback only after Codex image generation fails and the human approves it.
+# A slide can opt out with `mode: ppt-shapes` when it needs precise editability,
+# data-accurate charts, tables, or editable PPT structure.
 production_defaults:
   default_slide_mode: designer-mode       # designer-mode | ppt-shapes
   ppt_shapes_engine: artifact-tool        # artifact-tool | python-pptx; used only for ppt-shapes
@@ -45,7 +47,9 @@ production_defaults:
 # image_generation is only used for slides with mode: designer-mode.
 # Remove this block if your deck has no designer-mode slides.
 image_generation:
-  primary_creator: gpt-image-2
+  primary_creator: codex-imagegen
+  fallback_creator: openai-api:gpt-image-2
+  fallback_requires_user_approval: true
   size:            "2560x1440"
   quality:         high
   output_format:   png
@@ -267,7 +271,7 @@ creative_direction:
   metaphor: "<the visual idea — e.g. three parallel tracks, a rising curve, a cross-section>"
   composition_intent: "<how the visual should be composed on the slide>"
   prompt_notes:
-    - "<specific guidance for gpt-image-2>"
+    - "<specific guidance for Codex image generation>"
   avoid:
     - "<anti-patterns, e.g. photographic imagery, cinematic lighting>"
 
@@ -313,7 +317,7 @@ required_text:
 - [`./standards/narrative-templates.md`](./standards/narrative-templates.md) — narrative template reference
 - [`./standards/slide-archetypes.md`](./standards/slide-archetypes.md) — slide type catalog
 - [`./standards/deck-validation.md`](./standards/deck-validation.md) — hard rules the agent self-checks
-- [`./standards/image-prompts.md`](./standards/image-prompts.md) — gpt-image-2 prompt templates
+- [`./standards/image-prompts.md`](./standards/image-prompts.md) — Codex image generation prompt templates
 - [`./standards/artifact-structure.md`](./standards/artifact-structure.md) — standard production instance folders and artifact naming
 - [`./examples/scr.deck.md`](./examples/scr.deck.md) — minimal filled SCR example
 - [`./examples/pyramid.deck.md`](./examples/pyramid.deck.md) — full pyramid example

@@ -20,6 +20,14 @@ production_defaults:
     cr_text: "CR"
     placement: bottom-left-cr-bottom-right-page
 
+image_generation:
+  primary_creator: codex-imagegen
+  fallback_creator: openai-api:gpt-image-2
+  fallback_requires_user_approval: true
+  size: "2560x1440"
+  quality: high
+  output_format: png
+
 # Optional: declare every asset the visual model should receive.
 # Delete unused examples before approval.
 designer_assets:
