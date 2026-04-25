@@ -14,9 +14,11 @@ Clarify:
 
 Do not start from PowerPoint decoration.
 Do not produce slides until the human has validated and approved the current `deck.md`.
+When the human supplies logos, existing slides, templates, brand guides, screenshots, icons, or other visual inputs, declare every asset the model should receive in `designer_assets` before approval. Do not pass undeclared assets to the visual model.
+For existing-slide redesigns, treat old decks/slides as content-and-style references by default: preserve message and key evidence, borrow useful visual rhythm, and redesign composition freely.
 For pure designer-mode decks, produce PDF output only and add OCR/searchable text when tooling is available.
 Every generated slide should include the standard small footer unless the approved deck.md disables it: `CR` lower-left and simple page numbers (`1`, `2`, `3`, ...) lower-right. Do not use total-count formats such as `1/3`.
-Save generated work in production instances: raw model/render outputs in `images/raw/`, manipulated/composed slide images in `images/composed/`, inspected accepted slide images in `images/reviewed/`, and prompts/metadata/review notes in `method/`.
+Save generated work in production instances: source assets in `assets/source/`, model-readable prepared inputs in `assets/prepared/`, raw model/render outputs in `images/raw/`, manipulated/composed slide images in `images/composed/`, inspected accepted slide images in `images/reviewed/`, and prompts/metadata/review notes plus `model-inputs.yaml` in `method/`.
 After production, render and inspect the output against the approved `deck.md` and briefing; repair and rerender before delivery.
 
 ## Material types and density

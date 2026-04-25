@@ -4,19 +4,42 @@ Use this note when the user wants an editable `.pptx` deck.
 
 ## Core build path
 
-1. choose either the coded render path or the template-driven path
+1. choose either the component-native artifact-tool path, the legacy coded python-pptx path, or the explicit template-driven path
 2. work from the approved deck.md
-3. for template-driven slides, read `skill/references/template-catalog.md` and suggest the best template for each slide
-4. for coded slides, run `python skill/scripts/build_pptx.py OUTPUT_PPTX DECK_MD [TEMPLATE_PPTX]`
-5. for template-driven slides, copy the selected one-slide template into the deck workspace and populate it with editable text, shapes, charts, icons, or tables
-6. render the populated slide or deck to PNG
-7. inspect the rendered PNG and adjust the PPTX until the slide reads cleanly
-8. deliver only after the visual review loop passes
-9. save the production round as an instance with raw renders, composed/edited renders, reviewed renders, method notes, manifest, and outputs
+3. for fresh editable slides, default to the component-native artifact-tool path
+4. for artifact-tool slides, run `python3 skill/scripts/build_pptx_artifact_tool.py OUTPUT_PPTX DECK_MD`
+5. for legacy coded slides, run `python skill/scripts/build_pptx.py OUTPUT_PPTX DECK_MD [TEMPLATE_PPTX]`
+6. for explicit template-driven slides, read `skill/references/template-catalog.md`, suggest the best template, then copy the selected one-slide template into the deck workspace and populate it with editable text, shapes, charts, icons, or tables
+7. render the populated slide or deck to PNG
+8. inspect the rendered PNG and adjust the PPTX until the slide reads cleanly
+9. deliver only after the visual review loop passes
+10. save the production round as an instance with raw renders, composed/edited renders, reviewed renders, method notes, manifest, and outputs
 
 deck.md is the planning artifact. Do not invent a second planning schema.
 
-Use `assets/RLF_PPT_Template_v1.pptx` as the default base for coded slides unless the user asks for another base.
+Use the artifact-tool path as the default for new `ppt-shapes` decks. Use `assets/RLF_PPT_Template_v1.pptx` as the default base for legacy `python-pptx` coded slides unless the user asks for another base.
+
+## Component-native artifact-tool loop
+
+Use this path for fresh editable PowerPoint output.
+
+Workflow:
+1. Confirm the approved deck.md uses `mode: ppt-shapes` or `production_defaults.default_slide_mode: ppt-shapes`.
+2. Prefer `production_defaults.ppt_shapes_engine: artifact-tool`; absence of the field also means artifact-tool for new builds.
+3. Run `python3 skill/scripts/build_pptx_artifact_tool.py OUTPUT_PPTX DECK_MD`.
+4. The builder creates an artifact-tool workspace under the active instance's `method/artifact-tool-workspace/`.
+5. The builder maps deck.md slides into editable native components: title stacks, proof lists, process rows, matrices, section dividers, quotes, and chart layouts.
+6. The builder exports a final PPTX, full-size slide PNG previews, layout exports, a build report, and a headless package quality report.
+7. Inspect the PNG previews in `scratch/previews/` and repair the deck.md or component renderer if the slide does not prove the action title cleanly.
+
+Rules:
+- start from the slide job and evidence, not from a pre-existing template
+- use native editable text, shapes, charts, and layout primitives
+- use native charts when the relationship is chartable
+- for tabular slides, add a table component, use the template-driven path, or make a targeted renderer extension before treating the slide as covered
+- keep templates as optional structural references only
+- do not use designer-mode assets, generated full-slide images, or PDF-only assembly on this path
+- do not treat a successful PPTX export as sufficient; the rendered PNGs and package quality report must pass
 
 For template-driven slides, the model must suggest a template before production.
 The suggestion should include:
@@ -67,9 +90,9 @@ Fix order:
 The PPTX file existing is not enough.
 The rendered PNG must look correct.
 
-## Coded render layer
+## Legacy coded render layer
 
-When using the coded render layer:
+When using the legacy python-pptx coded render layer:
 1. start from `assets/RLF_PPT_Template_v1.pptx` unless the user asks for another base
 2. run `python skill/scripts/build_pptx.py OUTPUT_PPTX DECK_MD [TEMPLATE_PPTX]`
 3. let the script map supported `ppt-shapes` slides into the coded render layer
@@ -94,9 +117,22 @@ Avoid leaving behind:
 - `prepared-*` resized variants as if they were source assets
 - ad hoc output folders that encode versioning only in folder names
 
-## Current coded archetypes
+## Current artifact-tool archetypes
 
-The current `ppt-shapes` render layer supports:
+The component-native artifact-tool renderer currently supports:
+- takeaway
+- agenda
+- process
+- matrix
+- chart
+- section-divider
+- quote
+
+This path is intended to grow by adding reusable native components, not by adding more required template files.
+
+## Current legacy coded archetypes
+
+The legacy `python-pptx` render layer supports:
 - takeaway
 - agenda
 - process

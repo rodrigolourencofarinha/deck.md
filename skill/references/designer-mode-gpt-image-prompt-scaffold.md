@@ -68,7 +68,7 @@ Ask:
 Use:
 - deck-level `designer_assets`
 - slide-level `asset_refs`
-- prepared image inputs, such as rendered `.pptx` template previews or logo files
+- prepared image inputs, such as rendered old-slide previews, rendered `.pptx` template previews, or logo files
 - asset `usage`, `placement`, and `required` flags
 
 Ask:
@@ -279,21 +279,32 @@ When a generated slide establishes the right deck style:
 
 ## Designer assets in prompts
 
-Use `designer_assets` when the approved deck includes external visual inputs such as logos, brand guides, PowerPoint templates, screenshots, or prior decks.
+Use `designer_assets` when the approved deck includes external visual inputs such as logos, brand guides, PowerPoint templates, screenshots, existing decks, rendered slide previews, icons, or reference images.
 
 Before writing the prompt:
 - resolve each slide `asset_refs` id against deck-level `designer_assets`
-- prepare non-image assets as model-readable images, e.g. render `.pptx` templates or prior decks to PNG previews
+- prepare non-image assets as model-readable images, e.g. render `.pptx` templates and existing `.pptx`/`.pdf` decks to PNG previews
 - stop if an asset has `required: true` and cannot be found or prepared
-- assign clear input labels such as `Image 1: brand_logo` and `Image 2: board_template`
+- assign clear input labels such as `Image 1: brand_logo`, `Image 2: existing_slide_previews`, and `Image 3: visual_template`
+- record the same mapping in `method/model-inputs.yaml`
 
 Prompt each asset narrowly:
 - logos: whether to place the exact logo, where to place it, and how large it should feel
 - PowerPoint templates: what to borrow, such as layout, density, typography, margins, or visual rhythm
+- existing decks and slide previews: preserve message and key evidence, borrow useful visual rhythm, and redesign composition freely unless the approved brief says close redesign
 - brand guides: what to follow, such as palette, type mood, icon style, or spacing
 - screenshots/reference images: whether to reproduce, abstract, crop, or merely use as context
 
-Do not let an asset override the slide message or text lock. If a template has placeholder text, explicitly tell the model not to copy it.
+Do not let an asset override the slide message or text lock. If a template or old slide has placeholder text or outdated wording, explicitly tell the model not to copy it.
+
+Default existing-slide redesign block:
+
+```text
+Image {n} is asset existing_slide_previews, a prepared preview of the original slide for this page.
+Use it as a content-and-style reference: preserve the message, key evidence, and any essential relationship shown on the original slide.
+Borrow useful density, visual rhythm, and brand cues, but redesign the composition freely so the new slide is more visual and presentation-ready.
+Do not copy outdated wording, placeholder text, low-quality spacing, or cramped layout from the reference.
+```
 
 ## Default visual template prompt block
 

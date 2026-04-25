@@ -46,8 +46,10 @@ Examples:
 - The generated image MUST preserve the deck's `design_tokens` (palette, shape language, iconography).
 - The generated image MUST NOT contain photographic or cinematic imagery unless explicitly enabled in `creative_direction`.
 - Any slide `asset_refs` MUST point to ids declared in frontmatter `designer_assets`.
+- Every file, preview, logo, template, slide image, or reference image passed to the visual model MUST be declared in `designer_assets`; undeclared model inputs are not allowed.
 - Any `designer_assets` entry with `required: true` MUST resolve to an available asset before production.
-- Non-image designer assets, such as `.pptx` templates, MUST be prepared as model-readable references before generation.
+- Non-image designer assets, such as `.pptx` templates and existing `.pptx` or `.pdf` decks, MUST be prepared as model-readable references before generation.
+- Prepared model inputs MUST be saved under `assets/prepared/` and recorded in `method/model-inputs.yaml` with asset id, prepared path, image input label, slide scope, and usage.
 
 ## Source rules
 
@@ -67,6 +69,8 @@ Examples:
 
 - If a slide is set to `mode: ppt-shapes`, the `creative_direction` block SHOULD be omitted (it applies to designer-mode only).
 - If a slide is set to `mode: designer-mode` and includes a `chart:` block, the agent SHOULD warn — charts are typically more legible as ppt-shapes.
+- For new `ppt-shapes` decks, `production_defaults.ppt_shapes_engine` SHOULD be `artifact-tool` or omitted. Use `python-pptx` only as an explicit fallback.
+- Template-driven `ppt-shapes` slides SHOULD declare the chosen template and rationale in deck.md. Fresh `ppt-shapes` slides SHOULD NOT require a template selection.
 
 ## Speaker notes
 
@@ -81,6 +85,7 @@ Examples:
 - Required logos and assets MUST appear in the approved placement and MUST NOT overlap text or important visuals.
 - Text, labels, charts, logos, and visual blocks MUST NOT overlap or be clipped.
 - Production artifacts SHOULD follow `artifact-structure.md`: raw outputs in `images/raw/`, manipulated/composed images in `images/composed/`, inspected final slide images in `images/reviewed/`, and prompts/metadata/review notes in `method/`.
+- Designer-mode production SHOULD include `method/model-inputs.yaml` listing the prepared assets sent to the image model.
 - Every production instance SHOULD include `manifest.yaml` with source spec, previous instance when relevant, changed slides, reused slides, status, reviewed images, and final output paths.
 - If rendered output fails review, the agent MUST revise the spec or regenerate/rebuild the affected slide, then render and inspect again.
 
@@ -109,12 +114,15 @@ Before emitting a deck, the agent validates:
 9. [ ] No slide exceeds 5 bullets
 10. [ ] No bullet exceeds 12 words
 11. [ ] All `asset_refs` resolve to declared `designer_assets`
-12. [ ] Required designer assets exist or production is blocked
-13. [ ] Rendered output has been inspected against the approved deck.md and briefing
-14. [ ] Logos/assets are correctly placed with no overlap or clipping
-15. [ ] Standard footer mark and simple numeric page number appear on every rendered slide
-16. [ ] Raw, composed, reviewed, method, and output artifacts are stored under the standard instance structure
-17. [ ] Instance `manifest.yaml` records source spec, changed/reused slides, status, and output paths
-18. [ ] Review changes use a new review deck.md version, new production instance, and regenerate only changed slides
+12. [ ] All model inputs are declared in `designer_assets`; no undeclared files are sent to the model
+13. [ ] Required designer assets exist or production is blocked
+14. [ ] Non-image designer assets are prepared under `assets/prepared/`
+15. [ ] `method/model-inputs.yaml` records prepared model inputs and image labels
+16. [ ] Rendered output has been inspected against the approved deck.md and briefing
+17. [ ] Logos/assets are correctly placed with no overlap or clipping
+18. [ ] Standard footer mark and simple numeric page number appear on every rendered slide
+19. [ ] Raw, composed, reviewed, method, and output artifacts are stored under the standard instance structure
+20. [ ] Instance `manifest.yaml` records source spec, changed/reused slides, status, and output paths
+21. [ ] Review changes use a new review deck.md version, new production instance, and regenerate only changed slides
 
 If any check fails, the agent MUST fix before finalizing.

@@ -10,7 +10,8 @@ Start from the approved deck.md.
 Default behavior for Rodrigo's designer-mode requests:
 - use GPT Image 2 as the primary and default end-to-end slide generator
 - do not invent a hybrid background-plus-manual-assembly workflow unless the user explicitly asks for it
-- record PowerPoint templates, logos, brand guides, screenshots, and other visual inputs in `designer_assets`
+- record every asset the visual model should receive in `designer_assets`: logos, existing decks, rendered slide previews, templates, brand guides, screenshots, icons, and reference images
+- do not pass undeclared assets to the visual model
 - use per-slide `asset_refs` when an asset applies only to specific slides
 - deliver pure designer-mode decks as final PDFs only; do not make PPTX wrappers because the slides are not editable
 - add OCR/searchable text to the final PDF when tooling is available, and say clearly if OCR could not be applied
@@ -83,6 +84,7 @@ Keep:
 - original title logic
 - key explanatory blocks
 - main conceptual structure
+- message and key evidence from the existing slide
 
 Change:
 - composition
@@ -90,6 +92,12 @@ Change:
 - hierarchy
 - image use
 - framing devices
+
+Default use of old slides/decks:
+- treat them as content-and-style references, not as layout locks
+- preserve the message and key evidence
+- borrow useful density, typography mood, visual rhythm, and brand cues
+- redesign the composition freely unless the approved brief asks for close redesign
 
 Prefer composition over ornament.
 
@@ -150,6 +158,7 @@ If a slide is in `designer-mode` and the image decision is not `none`, derive th
 - the deck design system
 - declared `designer_assets` with `scope: deck`
 - slide-specific `asset_refs`
+- prepared model inputs listed in `method/model-inputs.yaml`
 - the slide title
 - the slide layout
 - the slide reading path
@@ -164,7 +173,7 @@ The prompt should explicitly state:
 - whether a key-message/support line sits below the title
 - the exact quoted text to render, including title, support line, and required labels
 - that no extra text, watermarks, logos, or invented captions should appear
-- how each referenced asset should be used, including whether a logo must appear and where
+- how each referenced asset should be used, including its image input label and whether a logo must appear and where
 - the computed footer text and placement for this slide
 - how the eye should move horizontally or in a Z pattern across the slide
 
@@ -189,20 +198,41 @@ designer_assets:
     usage: "Use as layout and typography reference; do not copy text"
     scope: deck
     required: false
+  - id: existing_deck
+    type: existing-deck
+    path: assets/source/original-deck.pptx
+    usage: "Use as source content and style context; preserve message and key evidence, but redesign composition freely"
+    scope: deck
+    required: false
+  - id: existing_slide_previews
+    type: slide-preview
+    path: assets/prepared/original-slides/
+    usage: "Use corresponding old-slide previews as content-and-style references for visual redesign"
+    scope: deck
+    required: false
+  - id: visual_template
+    type: reference-image
+    path: assets/source/default-slide-template.png
+    usage: "Use as title, margin, typography, and footer-safe-area reference; do not copy placeholder text"
+    scope: deck
+    required: false
 ```
 
 Use slide-level `asset_refs` when only some slides use an asset:
 
 ```yaml
-asset_refs: [brand_logo, board_template]
+asset_refs: [brand_logo, existing_slide_previews, visual_template]
 ```
 
 Asset handling rules:
 - resolve every `asset_refs` id against `designer_assets`
 - stop before production if a required asset cannot be found
 - render `.pptx`, `.pdf`, or prior-deck references to PNG previews before using them with the image model
+- save prepared previews and normalized images under `assets/prepared/`
+- write `method/model-inputs.yaml` with source asset id, prepared path, image input label, slide scope, and usage
 - pass logos as image inputs when exact placement is required; state the desired `placement`
 - use template assets as layout, typography, density, or visual-rhythm references, not as permission to copy placeholder text
+- use existing slide/deck assets as content-and-style references by default: preserve message and key evidence, borrow useful visual rhythm, and redesign composition freely
 - keep the asset role narrow in the prompt so a reference deck or logo does not overpower the slide message
 
 ## Generation parameter defaults
@@ -224,6 +254,7 @@ Final deck assembly for pure designer-mode:
 - save manipulated/composited images in `images/composed/`
 - save inspected accepted slide images in `images/reviewed/`
 - save prompts, request/response metadata, manipulation logs, render-review notes, and OCR notes in `method/`
+- save the exact prepared model input map in `method/model-inputs.yaml`
 
 Final render review:
 - inspect the PDF or rendered slide PNGs before delivery
@@ -299,6 +330,7 @@ Rules:
 - keep manipulated/composited images in `images/composed/`
 - keep only inspected accepted images in `images/reviewed/`
 - record prompts, generation parameters, request/response metadata, manipulation logs, render-review notes, and OCR notes in `method/`
+- record every image/deck/template/logo input passed to the model in `method/model-inputs.yaml`
 - add `manifest.yaml` with source spec, previous instance, changed slides, reused slides, reviewed images, status, and final output paths
 - keep review renders separate from final deliverables
 - do not keep `prepared-*` crops or resized rescue files as durable deck artifacts

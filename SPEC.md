@@ -92,6 +92,7 @@ narrative_template: "<scr|pyramid|problem-solution|update>"   # required
 
 production_defaults:
   default_slide_mode: "<designer-mode|ppt-shapes>"            # default: designer-mode
+  ppt_shapes_engine: "<artifact-tool|python-pptx>"             # default for ppt-shapes: artifact-tool
   aspect_ratio: "16:9"
   default_visual_template: "<path, optional>"
   default_visual_template_scope: "<string, optional>"
@@ -111,7 +112,7 @@ image_generation:                                             # only used when m
 
 designer_assets:                                             # optional; used by designer-mode generation
   - id: "<stable-id>"
-    type: "<ppt-template|logo|brand-guide|reference-image|screenshot|icon|other>"
+    type: "<ppt-template|existing-deck|slide-preview|logo|brand-guide|reference-image|screenshot|icon|other>"
     path: "<relative path, absolute path, or URL>"
     usage: "<how the model should use the asset>"
     scope: "<deck|section|slide>"
@@ -142,10 +143,20 @@ Premium, consulting-style. Message-first, not decoration-first. Polished but con
 
 Hard limits (word counts, case, bullet counts) live in [`./standards/deck-validation.md`](./standards/deck-validation.md) and MUST be self-checked before emitting.
 
+### Editable PPT policy
+
+- `ppt-shapes` output is for editable PowerPoint-native decks. The preferred engine is `artifact-tool`, which authors editable slides with native text, shapes, chart objects, and layout primitives from the approved `deck.md`.
+- Table-heavy slides should still use `ppt-shapes`, but this repo's current artifact-tool renderer needs a table component, a template-driven path, or a targeted renderer extension before table output should be treated as covered.
+- `python-pptx` remains a compatibility fallback for the older coded render layer.
+- Pre-existing PowerPoint templates are optional structural references, not the default production path. Use them only when a user asks to match a template or when a specific slide skeleton is genuinely useful.
+- Do not make template selection the primary design step for fresh `ppt-shapes` slides. Start from slide job, action title, evidence, and native editable component choice.
+
 ### Image policy
-- Default to `designer-mode`. A slide opts out to `ppt-shapes` when it needs precise editability, data-accurate charts, tables, or template-driven PowerPoint structure. Charts, tables, and text-heavy analytical slides should usually declare `mode: ppt-shapes` explicitly because they render more legibly as shapes. Each archetype in [`./standards/slide-archetypes.md`](./standards/slide-archetypes.md) declares a `preferred_mode` as a starting point.
+- Default to `designer-mode`. A slide opts out to `ppt-shapes` when it needs precise editability, data-accurate charts, tables, editable PowerPoint structure, or an explicitly template-driven build. Charts, tables, and text-heavy analytical slides should usually declare `mode: ppt-shapes` explicitly because they render more legibly as shapes. Each archetype in [`./standards/slide-archetypes.md`](./standards/slide-archetypes.md) declares a `preferred_mode` as a starting point.
 - One strong visual idea per slide.
-- Designer-mode assets must be declared in `designer_assets` before production. Use this for PowerPoint templates the model should consider, logos that must appear in a specific place, brand guides, screenshots, visual references, and other source assets.
+- Designer-mode assets must be declared in `designer_assets` before production. Use this for every asset the visual model should receive: logos, existing decks, rendered slide previews, PowerPoint templates, brand guides, screenshots, icons, reference images, and other source assets.
+- Existing decks and slides are treated as content-and-style references by default: preserve the message and key evidence, borrow useful layout density and visual rhythm, and redesign the composition freely unless the approved brief asks for a close redesign.
+- Assets that are not declared in `designer_assets` must not be passed to the visual model, even if they were supplied in chat or live in the workspace.
 - When `image_decision: full-generated-visual`, the slide MUST declare `required_text`. The model MUST NOT render any text in the image that is not listed there.
 - Reject: poster-like output, background plates, cropped salvage jobs, decorative stock-photo energy.
 
@@ -202,20 +213,21 @@ asset_refs: ["<designer_assets.id>"]                      # optional; slide-spec
 - `cutout` — a subject (product screenshot, person, object) isolated from its background and composited over the slide. The agent must be told what the cutout subject is via `creative_direction`.
 - `full-generated-visual` — the entire slide canvas is a generated image. MUST declare `required_text`.
 
-**`asset_refs` values.** References to `designer_assets.id`. Use slide-level `asset_refs` when only some slides should use an asset, such as `logo_client` on a title page or `template_board` for a section. If omitted, assets with `scope: deck` apply across the deck.
+**`asset_refs` values.** References to `designer_assets.id`. Use slide-level `asset_refs` when only some slides should use an asset, such as `brand_logo` on a title page, `existing_slide_previews` for a visual redesign, or `visual_template` for a section. If omitted, assets with `scope: deck` apply across the deck.
 
 ## Designer assets
 
-The optional `designer_assets` frontmatter block records any external assets the designer-mode model should consider. It is part of the approved brief, so assets are reviewable before generation.
+The optional `designer_assets` frontmatter block records every external asset the designer-mode model should receive or consider. It is part of the approved brief, so assets are reviewable before generation. If a file should not be sent to the visual model, do not put it in `designer_assets`; mention it in `## Notes to the agent` instead.
 
 Use `designer_assets` for:
-- PowerPoint templates or prior decks that should guide layout, density, typography, or visual rhythm.
+- Existing PowerPoint/PDF decks, rendered slide previews, or screenshots that should guide content, density, typography, layout, or visual rhythm.
+- PowerPoint templates or visual templates that should guide margins, title placement, typography, or structure.
 - Logos that should appear on the slide, including placement and whether placement is required.
 - Brand guides, screenshots, reference images, icons, or source visuals.
 
 Fields:
 - `id` — stable reference key used by `asset_refs`.
-- `type` — one of `ppt-template`, `logo`, `brand-guide`, `reference-image`, `screenshot`, `icon`, or `other`.
+- `type` — one of `ppt-template`, `existing-deck`, `slide-preview`, `logo`, `brand-guide`, `reference-image`, `screenshot`, `icon`, or `other`.
 - `path` — relative path, absolute path, or URL.
 - `usage` — how the asset should influence generation, e.g. "match layout only", "place exact logo", "use as brand palette reference".
 - `scope` — `deck`, `section`, or `slide`.
@@ -223,7 +235,39 @@ Fields:
 - `required` — if `true`, production must stop if the asset cannot be found or prepared.
 - `notes` — optional constraints, such as which slide of a `.pptx` template to render first.
 
-Agents MUST prepare non-image designer assets before passing them to the image model. For example, a `.pptx` template should be rendered to PNG preview(s), and a logo should be converted to a model-readable image if needed. The prompt should name each asset by its `id` and usage. Required assets must not be ignored silently.
+Agents MUST prepare non-image designer assets before passing them to the image model. For example, a `.pptx` template, existing `.pptx` deck, or PDF deck should be rendered to PNG preview(s), and a logo should be converted to a model-readable image if needed. Prepared inputs should be saved under the deck's `assets/prepared/` folder and recorded in the active instance's `method/model-inputs.yaml` with the source asset id, prepared path, image input label, slide scope, and usage. The prompt should name each asset by its `id`, prepared image label, and usage. Required assets must not be ignored silently.
+
+When the user asks to make existing slides more visual, the first draft `deck.md` should include both the original deck or files and the rendered slide previews:
+
+```yaml
+designer_assets:
+  - id: existing_deck
+    type: existing-deck
+    path: assets/source/original-deck.pptx
+    usage: "Use as source content and style context; preserve message and key evidence, but redesign composition freely"
+    scope: deck
+    required: true
+    notes: "Render all slides to PNG previews before generation"
+  - id: existing_slide_previews
+    type: slide-preview
+    path: assets/prepared/original-slides/
+    usage: "Use corresponding slide previews as content-and-style references for visual redesign"
+    scope: deck
+    required: true
+  - id: brand_logo
+    type: logo
+    path: assets/source/logo.png
+    usage: "Place exact logo only where referenced"
+    scope: deck
+    placement: top-right
+    required: false
+  - id: visual_template
+    type: reference-image
+    path: assets/source/default-slide-template.png
+    usage: "Use as title, margin, typography, and footer-safe-area reference; do not copy placeholder text"
+    scope: deck
+    required: false
+```
 
 ## Revision Brief
 
@@ -279,12 +323,13 @@ An optional `## Brief` section appears in agent-generated `deck.md` files. It is
 
 The agent MUST populate `## Brief` when generating a `deck.md` from raw input (idea, content, or partial brief). It MUST NOT add it when refining a human-written `deck.md`.
 
-Contents are a fenced `yaml` block with four fields:
+Contents are a fenced `yaml` block with five fields:
 
 ```yaml
 input_type: "<idea|content|partial_brief>"
 input_summary: "<one or two sentences on what was provided>"
 interpretation: "<what the agent inferred: audience, objective, template choice, narrative structure>"
+model_inputs: ["<designer_assets ids the model should receive, if any>"]
 open_questions:
   - "<anything that couldn't be determined and was left as a placeholder>"
 ```
@@ -295,6 +340,7 @@ open_questions:
 input_type: idea
 input_summary: "Founder asked for a Series A pitch deck for a B2B SaaS onboarding product targeting mid-market."
 interpretation: "Chose problem-solution template. Audience: VC investors. Objective: secure a first meeting. Tone: confident and evidence-backed."
+model_inputs: []
 open_questions:
   - "Traction data — placeholder on Slide 4; replace with real numbers before approving"
   - "Preferred typeface — defaulted to Inter; override typography in design_tokens if needed"
@@ -343,7 +389,7 @@ decks/<deck-slug>/
     review/
 ```
 
-Every production round gets an instance folder. `images/raw/` stores untouched model or render outputs. `images/composed/` stores manipulated images, such as logo placement, footer fixes, crop/padding, or OCR preparation. `images/reviewed/` stores the exact images that passed inspection and were assembled. `method/` stores prompts, request/response metadata, generation settings, manipulation logs, render-review notes, and OCR notes. `manifest.yaml` records changed slides, reused slides, source spec, previous instance, and final outputs.
+Every production round gets an instance folder. `assets/source/` stores the human-provided files declared in `designer_assets`. `assets/prepared/` stores model-readable inputs produced from those files, such as rendered deck previews, rendered template previews, normalized logos, or cropped screenshots. `images/raw/` stores untouched model or render outputs. `images/composed/` stores manipulated images, such as logo placement, footer fixes, crop/padding, or OCR preparation. `images/reviewed/` stores the exact images that passed inspection and were assembled. `method/` stores prompts, request/response metadata, generation settings, manipulation logs, render-review notes, OCR notes, and `model-inputs.yaml` documenting which prepared assets were sent to the model. `manifest.yaml` records changed slides, reused slides, source spec, previous instance, and final outputs.
 
 ### Slide files
 
@@ -383,6 +429,7 @@ Render review checklist:
 - every slide has the required small footer mark and simple numeric page number
 - title, required text, labels, and body text match the approved spec
 - logo and required asset placement matches `designer_assets`, `asset_refs`, and `placement`
+- every model input used in prompts is declared in `designer_assets` and recorded in `method/model-inputs.yaml`
 - raw, composed, and reviewed images are stored in the standard instance folders where relevant
 - method artifacts and manifest explain how the instance was produced
 - no text, logos, charts, labels, or visual blocks overlap

@@ -29,6 +29,7 @@ decks/<deck-slug>/
       manifest.yaml
       method/
         generation-plan.md
+        model-inputs.yaml
         slide-01.prompt.md
         slide-01.request.json
         slide-01.response.json
@@ -65,13 +66,13 @@ decks/<deck-slug>/
 ## Folder meanings
 
 - `specs/` stores approved and review deck.md versions. These are the logical source of truth.
-- `assets/source/` stores human-provided source assets such as logos, templates, screenshots, and brand guides.
-- `assets/prepared/` stores prepared reference assets such as rendered template PNGs or normalized logos.
+- `assets/source/` stores human-provided source assets declared in `designer_assets`, such as logos, existing decks, templates, screenshots, icons, and brand guides.
+- `assets/prepared/` stores model-readable inputs prepared from source assets, such as rendered existing-deck slide previews, rendered template PNGs, normalized logos, cropped screenshots, or converted icons.
 - `instances/` stores production attempts and review rounds.
 - `images/raw/` stores direct model outputs or direct render outputs before manipulation.
 - `images/composed/` stores manipulated/composited slide images, such as logo placement, footer fixes, padding, OCR prep, or other post-processing.
 - `images/reviewed/` stores the exact slide images that passed render inspection and were assembled into the instance output.
-- `method/` stores how the instance was produced: prompts, model parameters, request/response metadata, manipulation logs, render-review notes, OCR notes, and blockers.
+- `method/` stores how the instance was produced: prompts, model parameters, request/response metadata, `model-inputs.yaml`, manipulation logs, render-review notes, OCR notes, and blockers.
 - `outputs/` inside an instance stores artifacts assembled from that instance.
 - root `outputs/final/` stores only the clean human-facing final deliverables copied from the accepted instance.
 - root `outputs/review/` stores contact sheets, review PDFs, or other review-facing artifacts.
@@ -96,6 +97,12 @@ reviewed_images:
   - images/reviewed/slide-02.review.png
   - images/reviewed/slide-03.review.png
 final_pdf: outputs/deck.pdf
+model_inputs:
+  - asset_id: existing_slide_previews
+    prepared_path: ../../assets/prepared/original-slides/slide-03.png
+    image_label: Image 2
+    used_on_slides: [3]
+    usage: "Content-and-style reference for visual redesign"
 notes: "Regenerated slide 3 only; reused reviewed images for other slides."
 ```
 

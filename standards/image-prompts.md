@@ -148,6 +148,7 @@ For every generated slide, store the prompt and generation metadata in the activ
 - `slide-01.prompt.md` — final prompt sent to the image model
 - `slide-01.request.json` — model, size, quality, seed or variant count if available, asset input labels, and other request parameters
 - `slide-01.response.json` — response metadata, output filenames, model identifiers, warnings, and provider ids when available
+- `model-inputs.yaml` — source asset ids, prepared paths, image input labels, slide scope, and usage for every asset passed to the image model
 
 Do not rely on chat history as the only record of how a slide was generated.
 
@@ -182,8 +183,10 @@ Asset prompt rules:
 - Identify each prepared image input by id, e.g. `Image 1 is asset brand_logo`.
 - State the asset `type`, `usage`, and `placement` if present.
 - For logos, state whether the logo must appear exactly and where.
-- For `.pptx` templates or prior decks, render representative slide(s) to PNG first, then state whether to match layout, density, typography, visual rhythm, or palette.
+- For `.pptx` templates and existing `.pptx` or `.pdf` decks, render representative slide(s) to PNG first, then state whether to match layout, density, typography, visual rhythm, or palette.
+- For existing slides/decks, default to content-and-style reference behavior: preserve message and key evidence, borrow useful visual rhythm, and redesign composition freely.
 - Do not allow template or brand assets to override required text, slide logic, or the deck's approved narrative.
+- Do not pass any visual input to the model unless it is declared in `designer_assets` and listed in `method/model-inputs.yaml`.
 - If `required: true` and the asset cannot be prepared, block generation rather than silently proceeding.
 
 Example prompt block:
@@ -191,7 +194,8 @@ Example prompt block:
 ```text
 ASSET REFERENCES:
 - Image 1 is asset brand_logo, type logo. Place the exact logo in the top-right corner on slides where referenced.
-- Image 2 is asset board_template, type ppt-template. Use it only as a layout, density, and typography reference; do not copy placeholder text.
+- Image 2 is asset existing_slide_previews, type slide-preview. Use the matching old slide as a content-and-style reference; preserve message and key evidence, but redesign the composition freely.
+- Image 3 is asset visual_template, type reference-image. Use it only for title placement, margins, typography, and footer safe area; do not copy placeholder text.
 ```
 
 ---
@@ -207,5 +211,5 @@ ASSET REFERENCES:
 | Icons look wrong style | Name the icon family explicitly ("tabler-outline icons"); provide example icon names |
 | Slide feels generic | Add a specific metaphor in `creative_direction.metaphor`; increase specificity of `composition_intent` |
 | Designer-mode chart is unreadable | Switch that slide to `mode: ppt-shapes` — charts render better as shapes |
-| Logo or template is ignored | Add an `ASSET REFERENCES` block with the asset id, input image label, usage, and placement |
+| Logo, old slide, or template is ignored | Add an `ASSET REFERENCES` block with the asset id, input image label, usage, and placement |
 | Review change alters too much | Use the prior rendered slide plus old/new slide specs and ask for only the exact delta |

@@ -8,7 +8,7 @@ You write the logic — narrative structure, action titles, data, sources. The a
 
 ## How it works
 
-1. The human sends a briefing, source material, or an existing partial `deck.md`.
+1. The human sends a briefing, source material, existing slides, logos, templates, screenshots, or an existing partial `deck.md`.
 2. The agent produces a first `deck.md` with `status: draft` and sends it back for human validation.
 3. The human approves it or asks for changes; the agent revises and resends `deck.md` until the human says it is approved.
 4. Only after approval does the agent produce slides.
@@ -16,7 +16,9 @@ You write the logic — narrative structure, action titles, data, sources. The a
 
 If the human requests changes after seeing a rendered deck, the agent creates a new review version of `deck.md` such as `review-01` or `review-02`, using the previous approved deck plus the new change request. Only the changed slides should be regenerated; unchanged slide logic and visuals should be preserved.
 
-Default production is `designer-mode`. Use `ppt-shapes` only when a slide needs precise editability, data-accurate charts, tables, or template-driven PowerPoint structure. Designer-mode decks can declare `designer_assets` such as PowerPoint templates, logos, brand guides, screenshots, or visual references for the model to consider or place. Designer-mode decks produce final PDFs, not PPTX wrappers; add an OCR text layer to the PDF when tooling is available. Generated slides include a small standard footer by default: `CR` at lower-left and simple page numbers (`1`, `2`, `3`, ...) at lower-right, never total-count formats like `1/3`.
+Default production is `designer-mode`. Use `ppt-shapes` only when a slide needs precise editability, data-accurate charts, tables, or editable PowerPoint structure. The preferred `ppt-shapes` engine is component-first: build native editable slides from `deck.md` with the bundled OpenAI `@oai/artifact-tool` runtime. The current artifact-tool renderer has native chart support; table-heavy slides should use an added table component, a template-driven path, or a targeted renderer extension. Pre-existing templates may be used as references or fallbacks, but they are not the default production grammar.
+
+Designer-mode decks MUST declare every asset the visual model should receive in `designer_assets`: logos, existing decks, rendered slide previews, PowerPoint templates, brand guides, screenshots, icons, and reference images. Existing decks/slides are content-and-style references by default: preserve the message and key evidence, borrow useful visual rhythm, and redesign the composition freely. Non-image inputs such as `.pptx` and `.pdf` files are rendered into model-readable PNG previews under the deck's prepared assets before generation, and the active instance records exactly which prepared inputs were passed to the model. Designer-mode decks produce final PDFs, not PPTX wrappers; add an OCR text layer to the PDF when tooling is available. Generated slides include a small standard footer by default: `CR` at lower-left and simple page numbers (`1`, `2`, `3`, ...) at lower-right, never total-count formats like `1/3`.
 
 Generated artifacts are organized by production **instances**: `001-initial`, `002-review-01`, `003-review-02`, and so on. Each instance separates raw model/render outputs, composed/manipulated images, reviewed final slide images, method metadata, and assembled outputs so the deck is easier to inspect and revise.
 
@@ -44,6 +46,7 @@ Each level is a superset of the previous. Scaling up never requires reformatting
 - Every slide title must be an **action title**: a full sentence with a verb, sentence case, no trailing period, ≤14 words.
 - Body must prove the title. Nothing more, nothing less.
 - Reading only the slide titles should reproduce the deck's argument.
+- Every asset the model should receive must be declared in `designer_assets` before approval.
 - Every generated slide should carry the small standard `CR` mark and simple numeric page number unless the approved `deck.md` explicitly disables them.
 - Every production round should create a new instance folder; do not overwrite raw images, method metadata, or reviewed slides from earlier rounds.
 
@@ -70,13 +73,13 @@ Each level is a superset of the previous. Scaling up never requires reformatting
 
 ## The skill
 
-`skill/` is a reference implementation of the deck-architect agent skill. It shows how to wire deck.md into a working agent: narrative-to-brief generation, approval gate, designer-mode PDF production with OCR when available, editable `ppt-shapes` production via python-pptx, standardized production instances, and PDF assembly.
+`skill/` is a reference implementation of the deck-architect agent skill. It shows how to wire deck.md into a working agent: narrative-to-brief generation, approval gate, designer-mode PDF production with OCR when available, editable `ppt-shapes` production via artifact-tool or python-pptx fallback, standardized production instances, and PDF assembly.
 
 | Path | Purpose |
 |---|---|
 | [`skill/SKILL.md`](./skill/SKILL.md) | Skill entry point — the agent reads this first |
 | [`skill/references/`](./skill/references/) | Production and workflow guides |
-| [`skill/scripts/`](./skill/scripts/) | `build_pptx.py`, `tabler_icons.py`, `split_template_deck.py` |
+| [`skill/scripts/`](./skill/scripts/) | `build_pptx_artifact_tool.py`, `build_pptx.py`, `tabler_icons.py`, `split_template_deck.py` |
 
 ## Deploying to your own agent
 
@@ -102,6 +105,7 @@ your-project/
     │   ├── designer-mode-direct-api-pattern.md
     │   └── tabler-icon-selection.md
     └── scripts/
+        ├── build_pptx_artifact_tool.py
         ├── build_pptx.py
         ├── split_template_deck.py
         └── tabler_icons.py

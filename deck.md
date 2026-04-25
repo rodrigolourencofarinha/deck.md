@@ -29,9 +29,10 @@ narrative_template: pyramid
 
 # Output: designer-mode generates each slide as an image via gpt-image-2, using
 # the narrative and design tokens below. A slide can opt out with `mode: ppt-shapes`
-# when it needs precise editability, data-accurate charts, tables, or PPT templates.
+# when it needs precise editability, data-accurate charts, tables, or editable PPT structure.
 production_defaults:
   default_slide_mode: designer-mode       # designer-mode | ppt-shapes
+  ppt_shapes_engine: artifact-tool        # artifact-tool | python-pptx; used only for ppt-shapes
   aspect_ratio: "16:9"
   footer:
     page_numbers: true                    # simple 1, 2, 3, ... in the lower-right
@@ -49,25 +50,40 @@ image_generation:
   quality:         high
   output_format:   png
 
-# Designer-mode assets are optional inputs the model should consider or place.
-# Non-image assets such as .pptx templates should be rendered/prepared before generation.
-# Reference them on individual slides with `asset_refs`, or set `scope: deck`.
-designer_assets: []
-# Example entries:
-# - id: brand_logo
-#   type: logo                         # ppt-template | logo | brand-guide | reference-image | screenshot | icon | other
-#   path: assets/source/logo.png
-#   usage: "Place exact logo on slides where referenced"
-#   scope: deck                        # deck | section | slide
-#   placement: top-right
-#   required: true
-# - id: board_template
-#   type: ppt-template
-#   path: assets/source/board-template.pptx
-#   usage: "Use as layout, density, and typography reference; do not copy text"
-#   scope: deck
-#   required: false
-#   notes: "Render representative slides to PNG before image generation"
+# Designer-mode assets are the exact inputs the visual model should receive.
+# Delete unused examples. Add logos, existing slides/decks, templates, screenshots,
+# brand guides, icons, and reference images here before setting status: approved.
+# Non-image assets such as .pptx/.pdf decks or templates must be rendered into
+# assets/prepared/ previews before image generation and recorded in method/model-inputs.yaml.
+designer_assets:
+  - id: brand_logo
+    type: logo                         # ppt-template | existing-deck | slide-preview | logo | brand-guide | reference-image | screenshot | icon | other
+    path: assets/source/logo.png
+    usage: "Place exact logo on slides where referenced"
+    scope: deck                        # deck | section | slide
+    placement: top-right
+    required: false
+    notes: "Replace with the real logo path or delete before approval"
+  - id: existing_deck
+    type: existing-deck
+    path: assets/source/original-deck.pptx
+    usage: "Use as source content and style context; preserve message and key evidence, but redesign composition freely"
+    scope: deck
+    required: false
+    notes: "Render all relevant slides to PNG previews before image generation"
+  - id: existing_slide_previews
+    type: slide-preview
+    path: assets/prepared/original-slides/
+    usage: "Use corresponding old-slide previews as content-and-style references for visual redesign"
+    scope: deck
+    required: false
+    notes: "Prepared from existing_deck; use slide-level asset_refs when only some slides apply"
+  - id: visual_template
+    type: reference-image
+    path: assets/source/default-slide-template.png
+    usage: "Use as title, margin, typography, and footer-safe-area reference; do not copy placeholder text"
+    scope: deck
+    required: false
 
 # Design tokens drive the look and feel. Edit these to change the deck's aesthetic.
 design_tokens:
@@ -100,6 +116,8 @@ design_tokens:
 input_type: "<idea|content|partial_brief>"
 input_summary: "<what was provided to the agent>"
 interpretation: "<what the agent inferred: audience, objective, template, narrative>"
+model_inputs:
+  - "<designer_assets.id the model should receive, e.g. brand_logo or existing_slide_previews>"
 open_questions:
   - "<placeholder or gap the human needs to fill before approving>"
 ```
@@ -182,7 +200,7 @@ Each slide is one `### Slide N — "action title"` heading, followed by a small 
 
 **Horizontal logic.** Reading only the action titles of all your slides should reproduce the deck's argument. If it doesn't, either the titles or the argument structure above needs work.
 
-**Output mode.** Default is `designer-mode` -- the agent produces slides as generated visual compositions from the narrative and design tokens. Opt out with `mode: ppt-shapes` when a slide needs precise editability, data-accurate charts, tables, or template-driven PowerPoint structure. For finer control on a designer-mode slide, add a `creative_direction` and `required_text` block (see Slide 4).
+**Output mode.** Default is `designer-mode` -- the agent produces slides as generated visual compositions from the narrative and design tokens. Opt out with `mode: ppt-shapes` when a slide needs precise editability, data-accurate charts, tables, editable PowerPoint structure, or an explicitly template-driven build. For finer control on a designer-mode slide, add a `creative_direction` and `required_text` block (see Slide 4).
 
 **Designer-mode deliverable.** If the approved deck is pure designer-mode, produce a final PDF only, not a PPTX wrapper. Add OCR/searchable text to the PDF when tooling is available.
 
@@ -238,7 +256,7 @@ type: analysis
 id: 4
 type: recommendation
 image_decision: full-generated-visual     # none | icon-only | cutout | full-generated-visual
-asset_refs: [brand_logo, board_template]  # optional; ids from designer_assets
+asset_refs: [brand_logo, existing_slide_previews, visual_template]  # optional; ids from designer_assets
 ```
 
 <Body — what the slide communicates in words.>
@@ -270,7 +288,8 @@ required_text:
 
 <!-- Generated work should follow standards/artifact-structure.md:
      specs/ for approved deck.md versions, assets/source/ for supplied assets,
-     assets/prepared/ for rendered or normalized references, and one instance folder
+     assets/prepared/ for model-readable inputs such as rendered decks/templates,
+     method/model-inputs.yaml for the exact inputs sent to the model, and one instance folder
      per production round (001-initial, 002-review-01, ...). Each instance separates
      images/raw, images/composed, images/reviewed, method files, manifest.yaml, and outputs. -->
 
@@ -281,6 +300,7 @@ required_text:
 
 - <Slide/page count and order match this deck.md>
 - <Text, labels, logo placement, and assets match the approved spec>
+- <Every model input used in prompts is declared in designer_assets and recorded in method/model-inputs.yaml>
 - <Raw, composed, reviewed, method, manifest, and output artifacts are stored in the current instance folder>
 - <No overlap, clipping, unsafe margins, or unreadable text>
 - <Rendered output still matches the original briefing and any Revision Brief>

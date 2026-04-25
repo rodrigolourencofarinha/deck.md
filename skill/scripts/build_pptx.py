@@ -916,6 +916,8 @@ def normalize_mode(deck_mode: str | None, slide: dict) -> str:
         if slide_mode not in {'ppt-shapes', 'designer-mode'}:
             raise SystemExit(f"mixed decks require slide_mode per slide; missing on slide id={slide.get('id')}")
         return slide_mode
+    if slide_mode in {'ppt-shapes', 'designer-mode'}:
+        return slide_mode
     if deck_mode in {'ppt-shapes', 'designer-mode'}:
         return deck_mode
     return slide_mode or 'ppt-shapes'

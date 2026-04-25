@@ -19,6 +19,35 @@ production_defaults:
     cr_mark: true
     cr_text: "CR"
     placement: bottom-left-cr-bottom-right-page
+
+# Optional: declare every asset the visual model should receive.
+# Delete unused examples before approval.
+designer_assets:
+  - id: brand_logo
+    type: logo
+    path: assets/source/logo.png
+    usage: "Place exact logo on slides where referenced"
+    scope: deck
+    placement: top-right
+    required: false
+  - id: existing_deck
+    type: existing-deck
+    path: assets/source/original-deck.pptx
+    usage: "Use as source content and style context; preserve message and key evidence, but redesign composition freely"
+    scope: deck
+    required: false
+  - id: existing_slide_previews
+    type: slide-preview
+    path: assets/prepared/original-slides/
+    usage: "Use corresponding old-slide previews as content-and-style references for visual redesign"
+    scope: deck
+    required: false
+  - id: visual_template
+    type: reference-image
+    path: assets/source/default-slide-template.png
+    usage: "Use as title, margin, typography, and footer-safe-area reference; do not copy placeholder text"
+    scope: deck
+    required: false
 ---
 
 # <Your deck title>
