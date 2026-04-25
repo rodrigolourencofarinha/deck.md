@@ -7,9 +7,9 @@ Use this note when the user wants an editable `.pptx` deck.
 1. choose either the component-native artifact-tool path, the legacy coded python-pptx path, or the explicit template-driven path
 2. work from the approved deck.md
 3. for fresh editable slides, default to the component-native artifact-tool path
-4. for artifact-tool slides, run `python3 skill/scripts/build_pptx_artifact_tool.py OUTPUT_PPTX DECK_MD`
-5. for legacy coded slides, run `python skill/scripts/build_pptx.py OUTPUT_PPTX DECK_MD [TEMPLATE_PPTX]`
-6. for explicit template-driven slides, read `skill/references/template-catalog.md`, suggest the best template, then copy the selected one-slide template into the deck workspace and populate it with editable text, shapes, charts, icons, or tables
+4. for artifact-tool slides, run `python3 scripts/build_pptx_artifact_tool.py OUTPUT_PPTX DECK_MD`
+5. for legacy coded slides, run `python scripts/build_pptx.py OUTPUT_PPTX DECK_MD [TEMPLATE_PPTX]`
+6. for explicit template-driven slides, read `references/template-catalog.md`, suggest the best template, then copy the selected one-slide template into the deck workspace and populate it with editable text, shapes, charts, icons, or tables
 7. render the populated slide or deck to PNG
 8. inspect the rendered PNG and adjust the PPTX until the slide reads cleanly
 9. deliver only after the visual review loop passes
@@ -26,7 +26,7 @@ Use this path for fresh editable PowerPoint output.
 Workflow:
 1. Confirm the approved deck.md uses `mode: ppt-shapes` or `production_defaults.default_slide_mode: ppt-shapes`.
 2. Prefer `production_defaults.ppt_shapes_engine: artifact-tool`; absence of the field also means artifact-tool for new builds.
-3. Run `python3 skill/scripts/build_pptx_artifact_tool.py OUTPUT_PPTX DECK_MD`.
+3. Run `python3 scripts/build_pptx_artifact_tool.py OUTPUT_PPTX DECK_MD`.
 4. The builder creates an artifact-tool workspace under the active instance's `method/artifact-tool-workspace/`.
 5. The builder maps deck.md slides into editable native components: title stacks, proof lists, process rows, matrices, section dividers, quotes, and chart layouts.
 6. The builder exports a final PPTX, full-size slide PNG previews, layout exports, a build report, and a headless package quality report.
@@ -94,7 +94,7 @@ The rendered PNG must look correct.
 
 When using the legacy python-pptx coded render layer:
 1. start from `assets/RLF_PPT_Template_v1.pptx` unless the user asks for another base
-2. run `python skill/scripts/build_pptx.py OUTPUT_PPTX DECK_MD [TEMPLATE_PPTX]`
+2. run `python scripts/build_pptx.py OUTPUT_PPTX DECK_MD [TEMPLATE_PPTX]`
 3. let the script map supported `ppt-shapes` slides into the coded render layer
 4. inspect the rendered output
 5. make targeted follow-up edits only after visual review

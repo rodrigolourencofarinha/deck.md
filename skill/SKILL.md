@@ -1,612 +1,102 @@
 ---
 name: deck-architect
-description: "Design and build slide decks including consulting-style decks, executive reports, MBA/class presentations, workshops, and talk decks. Use when the agent needs to create, revise, structure, critique, or translate a slide-based narrative; choose the material type and audience; draft the storyline before production; generate editable decks with the artifact-tool ppt-shapes renderer or legacy python-pptx fallback; decide between clean analytical slides and more elaborate image-driven framework slides; use designer-mode visual template references; or use bundled Tabler icons for process flows, roadmaps, comparison cards, callouts, and other slide-native visual framing."
+description: "Plan, critique, redesign, and produce slide decks from deck.md briefs. Use for consulting-style decks, executive reports, MBA/class decks, workshops, talk decks, designer-mode PDF output with gpt-image-2, editable ppt-shapes PPTX output with artifact-tool, visual redesigns from existing decks, and Tabler/template-assisted slide construction when those assets are installed."
 ---
 
 # Deck Architect
 
-## Overview
+Use this skill to turn messy material into a reviewable `deck.md`, get the human to approve it, and then produce slides from that approved brief.
 
-Use this skill to think clearly before building decks.
-Prioritize audience, decision, storyline, evidence, and reading flow before visual polish.
+## Core Contract
 
-Use this skill for:
-- deck structuring and storyline design
-- slide critique and redesign
-- converting rough ideas into presentation logic
-- building editable `.pptx` decks
-- producing premium designer-mode slides with `gpt-image-2` via Codex OAuth/Codex image tooling
-- using bundled Tabler icons for clean analytical slides
-
-For new editable `ppt-shapes` deck output, prefer the artifact-tool renderer. Use `assets/RLF_PPT_Template_v1.pptx` as the default base only for legacy `python-pptx` output.
-For visual QA, prefer Microsoft PowerPoint renders when available.
-
-## Core rule
-
-**`deck.md` is the canonical planning artifact.**
+`deck.md` is the planning artifact and source of truth. Do not invent a parallel schema.
 
 Hard rules:
-- use the `deck.md` format defined in `SPEC.md` for all deck planning
-- do not invent a parallel planning schema
-- do not begin production until the user has approved the current deck.md (set `status: approved`)
-- default `production_defaults.default_slide_mode` to `designer-mode` unless the user explicitly asks for another mode
-- record every asset the visual model should receive in `designer_assets`, including logos, existing decks, rendered slide previews, templates, brand guides, screenshots, icons, and reference images
-- do not pass undeclared assets to the visual model; the approved deck.md asset list is the model-input contract
-- after producing any output, render and inspect it against the approved deck.md, original briefing, and any Revision Brief; repair and rerender until it passes
-- when the user requests post-render changes, create a new review deck.md version and regenerate only changed slides
-- for pure designer-mode decks, produce final PDF only; do not create a PPTX wrapper
-- add OCR/searchable text to designer-mode PDFs when tooling is available, and report clearly if OCR could not be applied
-- include the standard small footer on every generated slide unless the approved deck.md disables it: `CR` lower-left and simple page numbers (`1`, `2`, `3`, ...) lower-right, never `1/3` or `1 of 3`
-- organize production artifacts into instance folders, separating raw outputs, composed/manipulated images, reviewed images, method metadata, and final outputs
-- save meaningful deck.md versions under `decks/<deck-slug>/specs/`
-
-## Assets and tools
-
-### Core assets
-- `assets/RLF_PPT_Template_v1.pptx` — default editable deck base for legacy `python-pptx` output
-- `assets/templates_full.pptx` — source deck for the editable template library
-- `assets/templates/` — one-slide editable PPTX templates extracted from `templates_full.pptx`
-- `assets/visual-templates/` — designer-mode PNG references; use `default-slide.png` when the user says "use my default template" and `title-page.png` for designer-mode covers
-- `assets/tabler-icons/outline/`
-- `assets/tabler-icons/filled/`
-- `assets/tabler-icons/aliases.json`
-
-### Icon workflow
-Use Tabler as the default icon set for clean analytical slides, process flows, roadmaps, comparison cards, status markers, and callouts.
-
-Useful commands (from repo root):
-- `python skill/scripts/tabler_icons.py topics`
-- `python skill/scripts/tabler_icons.py suggest roadmap`
-- `python skill/scripts/tabler_icons.py search "chart arrow"`
-- `python skill/scripts/tabler_icons.py export-png chart-bar tmp/chart-bar.png --size 512`
-
-Rules:
-- prefer `outline` by default
-- use `filled` only for stronger emphasis or tiny badges
-- export PNG before placing icons in PPT; `python-pptx` is not reliable with these SVGs
-
-## Which reference to read
-
-Read only what the task needs.
-
-### Format (always available at repo root)
-- `SPEC.md` — authoritative deck.md format specification
-- `standards/narrative-templates.md` — SCR, pyramid, problem-solution, update template reference
-- `standards/slide-archetypes.md` — valid slide `type` values and preferred modes
-- `standards/deck-validation.md` — hard rules the agent self-checks before emitting
-- `standards/image-prompts.md` — `gpt-image-2` prompt templates, Codex OAuth path, and token injection
-- `standards/artifact-structure.md` — standard instance folders for raw/composed/reviewed images, method files, manifests, and outputs
-
-### Deck logic
-- `skill/references/deck-workflow.md` — deck-level workflow, density, archetypes, and consulting-style storyline rules
-- `skill/references/consulting-slide-standards.md` — consulting-grade action-title, body-as-proof, source/footer, and pre-flight standards
-
-### Slide building and critique
-- `skill/references/single-slide-workflow.md` — build order, chart cleanup, and visual standards for one slide
-- `skill/references/consulting-slide-standards.md` — use when the slide needs McKinsey/BCG/Bain-style discipline
-
-### PPT shapes / editable deck output
-- `skill/references/pptx-production.md` — artifact-tool renderer, legacy coded render layer, template-driven `ppt-shapes` workflow, and render standard
-- `skill/references/template-catalog.md` — catalog of one-slide editable PPTX templates by title, category, and best use
-- `skill/scripts/build_pptx_artifact_tool.py` — preferred component-native `ppt-shapes` renderer using OpenAI `@oai/artifact-tool`
-- `skill/scripts/build_pptx.py` — renders supported `ppt-shapes` slides from a deck.md
-- `skill/scripts/split_template_deck.py` — regenerates `assets/templates/` and `skill/references/template-catalog.md` from `assets/templates_full.pptx`
-
-### Designer mode
-- `skill/references/designer-mode-workflow.md` — designer-mode workflow, visual branches, image decisions, and iteration loop
-- `skill/references/designer-mode-gpt-image-prompt-scaffold.md` — convert one deck.md slide into a `gpt-image-2` prompt
-- `skill/references/designer-mode-direct-api-pattern.md` — permissioned direct OpenAI Image API-key fallback pattern for native 16:9 full-slide generation
-
-### Rendering and icons
-- `skill/references/tabler-icon-selection.md` — shortlist/safe icon choice guidance
-
-## Production branches
-
-Choose one branch before producing slides.
-
-### 1. Clean analytical
-Use for most teaching, consulting, and executive slides.
-
-Characteristics:
-- white or very light background
-- strong typography and whitespace
-- restrained frameworks and emphasis
-- charts, matrices, agendas, process flows, text-led synthesis
-- images only when they materially help
-- simple composition with one clear message, not a dashboard collage
-- minimal on-slide text; prefer short labels, crisp titles, and a few support points
-
-### 2. Elaborated framework
-Use when the slide benefits from a more crafted visual framework.
-
-Characteristics:
-- premium consulting style
-- stronger central structure or hero visual
-- labels/callouts around the visual
-- useful for opening concepts, frameworks, strategic synthesis
-
-### 3. Visual redesign
-Use when transforming an existing slide without losing its core logic.
-
-Characteristics:
-- preserve original message and key content blocks
-- use existing slides/decks as content-and-style references by default
-- redesign composition, not just spacing
-- increase occupancy and visual presence
-- integrate visuals only when they improve explanation
-
-### 4. Designer mode
-Use when the user wants a more art-directed workflow with explicit separation between content design, slide architecture, and generated visual.
-
-Characteristics:
-- spec first, image second
-- visuals remain subordinate to slide logic
-- design language must stay consistent across the deck
-
-## Canonical workflow
-
-### 1. Build the deck.md
-
-The user may arrive with:
-1. raw source material
-2. a broad deck idea
-3. a mostly formatted structure or partial deck.md
-4. existing slides, templates, logos, brand guides, screenshots, or other assets to make more visual
-
-In all cases:
-- normalize into a `deck.md` following the format in `SPEC.md`
-- set `production_defaults.default_slide_mode: designer-mode` unless the user explicitly asks for `ppt-shapes` or a mixed/editable build
-- for cases 1 and 2, generate the deck.md with `status: draft` and populate `## Brief` with what was provided and what was inferred — see `SPEC.md` for the `## Brief` schema
-- when the user supplies visual inputs, declare every asset the model should receive in frontmatter `designer_assets` before sending the draft for approval
-- for existing-slide redesigns, default asset usage is content-and-style reference: preserve message and key evidence, borrow useful visual rhythm, and redesign composition freely
-- send the complete draft deck.md to the user before producing any slides
-- do not jump into production while structure is still unclear
-- make the action-title sequence readable as the deck's argument before producing slide bodies
-- choose the right `narrative_template`: `scr`, `pyramid`, `problem-solution`, or `update`
-
-### 2. Use deck.md as the source of truth
-
-The deck.md should carry:
-- deck metadata and design tokens (frontmatter)
-- footer defaults for the standard `CR` mark and simple numeric page numbers
-- designer-mode asset references (`designer_assets`) for every model input: existing decks, slide previews, templates, logos, brand guides, screenshots, icons, and reference images
-- narrative spine (`## Narrative` block)
-- revision intent (`## Revision Brief`) when changing a previously approved/rendered deck
-- per-slide intent (`## Slides` — action titles, `type`, `layout`, `mode`)
-- image decisions and creative direction where relevant
-- production notes (`## Notes to the agent`)
-
-Mode nuance:
-- `ppt-shapes`: tighter, more structural, editable, and routed into a component-native artifact-tool renderer by default
-- `designer-mode`: clearer art direction, but still anchored in the same spec
-
-### 3. Mandatory approval gate
-
-The human approval loop is required:
-1. human sends briefing, source material, or partial deck.md
-2. agent drafts a complete deck.md with `status: draft`
-3. agent sends that deck.md to the human for validation
-4. human approves or requests changes
-5. agent revises and resends deck.md until the human approves
-6. only then does production begin
-
-Do not:
-- build slides
-- generate slide visuals
-- assemble the deck
-- export PPTX/PDF
-
-until `status: approved` is set in the deck.md frontmatter.
-
-When the deck.md is agent-generated (from a broad idea or raw content), the user MUST review `## Brief` and all slide titles before approving. Draft renders do not replace this approval gate.
-
-### 4. Choose production mode
-
-Modes: `ppt-shapes` | `designer-mode` | `mixed`
-
-The `production_defaults.default_slide_mode` in the deck.md frontmatter sets the deck default. Individual slides override with `mode:` in their YAML block. Each archetype in `standards/slide-archetypes.md` declares a `preferred_mode` as a starting point.
-
-If the user has not chosen, use `designer-mode` as the default. Override individual chart, table, and heavily editable analytical slides to `mode: ppt-shapes` when that will produce clearer or more maintainable output.
-
-### 5. Produce in the chosen mode
-
-#### `ppt-shapes`
-Use editable PPTX structures.
-
-Rules:
-- build through the component-native artifact-tool renderer driven by the deck.md by default
-- use `python-pptx` only as a compatibility fallback or when explicitly requested
-- treat pre-existing templates as optional references, not the default production grammar
-- when a user explicitly asks for template-driven output, read `skill/references/template-catalog.md` first and choose a one-slide template from `assets/templates/` by slide job
-- treat template files as editable structural references; adapt the message, title, chart/table content, and visual hierarchy
-- for template-driven output, suggest the selected template for each `ppt-shapes` slide and give a short reason before building
-- after creating a populated PPTX slide, render it to PNG and inspect the image for wrapping, clipped text, tiny fonts, overlaps, alignment, and density before delivery
-- if the render has problems, revise the slide and re-render until it reads cleanly
-- prefer editable shapes, text, icons, and charts
-- use Tabler icons when a small pictogram, connector, or status cue helps
-- after rendering, inspect the slide/deck image for match to briefing, overlaps, clipping, logo placement, text readability, and visual hierarchy; fix and rerender until clean
-
-#### `designer-mode`
-Use `gpt-image-2` through Codex OAuth/Codex image tooling as the default production path for slide visual output. Use the direct OpenAI Image API key path only as a fallback after the Codex-authenticated path fails and the human approves continuing with the fallback.
-
-Rules:
-- do not generate before the deck.md is approved
-- generate slide by slide, not all at once
-- use `gpt-image-2` through Codex OAuth/Codex image tooling first for designer-mode images
-- if Codex OAuth/Codex image tooling is unavailable or fails, tell the human what failed and ask whether to continue with the direct OpenAI Image API key path before making any non-Codex-authenticated API call
-- use only designer assets declared in `designer_assets`
-- when a slide references `asset_refs`, load and prepare those assets before prompt construction
-- render non-image assets such as `.pptx` templates and existing `.pptx`/`.pdf` decks into image previews before using them as model references
-- save prepared model inputs under `assets/prepared/` and record them in `method/model-inputs.yaml` with asset id, prepared path, image input label, slide scope, and usage
-- if a required logo/template/brand asset cannot be found or prepared, stop and report the missing asset
-- assemble pure designer-mode decks as PDF only, plus optional review PNGs; do not generate a PPTX version
-- add an OCR/searchable text layer to the final PDF when tooling is available
-- add the standard footer to every slide image: `CR` lower-left and the simple slide-order page number lower-right, unless disabled in the approved deck.md; do not include total-count numbering such as `1/3`
-- allow creative freedom only after the slide logic is locked
-- default to `gpt-image-2` through Codex OAuth/Codex image tooling for designer mode unless the user explicitly asks for a hybrid workflow
-- enforce `aspect_ratio: 16:9` in both the deck.md and the image-generation call
-- prefer native 16:9 generation with `size="2560x1440"` as the default full-slide resolution
-- use `quality="high"` for final designer-mode slides
-- use `quality="medium"` only for layout or mood previews, and `quality="low"` only for fast exploration
-- use `output_format="png"` and `n=1` for final slides
-- treat the slide as a real presentation slide, not a loose poster or background image
-- require a visible slide structure: title zone, key-message zone, and main visual body in a fast left-to-right / Z-reading flow
-- put literal slide text in `required_text` — see `SPEC.md` for the required_text schema
-- append computed footer text to the designer-mode prompt's allowed text list so page numbers and `CR` do not violate the text lock
-- explicitly prohibit extra invented text, watermarks, logos, decorative captions, and unrequested labels
-- use `skill/references/designer-mode-gpt-image-prompt-scaffold.md` to convert the deck.md slide block into the image prompt
-- after generation, render/inspect the slide or PDF against the approved deck.md and briefing; check logo placement, asset usage, text accuracy, overlaps, clipping, safe areas, and whether the slide still lands the intended message
-- if a generated slide fails inspection, regenerate only that slide with the prior image/prompt plus the specific defect to fix
-- save untouched model outputs in the current instance's `images/raw/`; save logo/footer/crop/OCR-prep or other manipulated images in `images/composed/`; save only accepted inspected slide images in `images/reviewed/`
-- save prompts, request/response metadata, manipulation logs, render-review notes, and OCR notes under the current instance's `method/`
-
-#### `mixed`
-Use when some slides should stay editable and others benefit from designer-mode visuals.
-
-Rules:
-- use `mode:` explicitly per slide in the deck.md YAML block
-- do not invent mode decisions late in the process
-- produce PPTX only when the editable `ppt-shapes` portion matters or the user explicitly asks for a mixed editable file; designer-mode slides remain raster content inside any mixed artifact
-- render and inspect the whole assembled artifact so editable and raster slides work together visually
-
-### 6. Save history and outputs
-
-Save deck work under the standard instance structure in `standards/artifact-structure.md`:
-- `decks/<deck-slug>/specs/` — approved and review deck.md versions
-- `decks/<deck-slug>/assets/source/` — human-provided assets declared in `designer_assets`, such as logos, existing decks, templates, screenshots, brand guides, and source files
-- `decks/<deck-slug>/assets/prepared/` — prepared model inputs such as rendered old-slide previews, rendered template PNGs, normalized logos, cropped screenshots, and converted icons
-- `decks/<deck-slug>/instances/001-initial/` — first production round
-- `decks/<deck-slug>/instances/002-review-01/` — first post-render review round
-- `decks/<deck-slug>/instances/<###-round>/images/raw/` — untouched model/render outputs
-- `decks/<deck-slug>/instances/<###-round>/images/composed/` — manipulated or composited images, such as logo placement, footer fixes, padding, crop, or OCR prep
-- `decks/<deck-slug>/instances/<###-round>/images/reviewed/` — inspected slide images used for assembly
-- `decks/<deck-slug>/instances/<###-round>/method/` — prompts, model parameters, request/response metadata, manipulation logs, render-review notes, OCR notes, and blockers
-- `decks/<deck-slug>/instances/<###-round>/outputs/` — artifacts assembled from that instance
-- `decks/<deck-slug>/outputs/final/` — clean human-facing deliverables copied from the accepted instance
-- `decks/<deck-slug>/outputs/review/` — contact sheets, review PDFs, or other review-facing artifacts
-
-Preferred filenames:
-- `decks/<deck-slug>/specs/YYYY-MM-DD-v01-deck.md`
-- `decks/<deck-slug>/specs/YYYY-MM-DD-v02-deck.md`
-- `decks/<deck-slug>/specs/YYYY-MM-DD-review-01-deck.md`
-- `decks/<deck-slug>/specs/YYYY-MM-DD-review-02-deck.md`
-- `decks/<deck-slug>/instances/001-initial/deck.md`
-- `decks/<deck-slug>/instances/001-initial/manifest.yaml`
-- `decks/<deck-slug>/instances/001-initial/images/raw/slide-01.raw.png`
-- `decks/<deck-slug>/instances/001-initial/images/composed/slide-01.composed.png`
-- `decks/<deck-slug>/instances/001-initial/images/reviewed/slide-01.review.png`
-- `decks/<deck-slug>/instances/001-initial/method/slide-01.prompt.md`
-- `decks/<deck-slug>/instances/001-initial/method/slide-01.request.json`
-- `decks/<deck-slug>/instances/001-initial/method/slide-01.response.json`
-- `decks/<deck-slug>/instances/001-initial/method/render-review.md`
-- `decks/<deck-slug>/instances/001-initial/outputs/deck.pdf`
-- `decks/<deck-slug>/outputs/final/YYYY-MM-DD-v02-deck.pdf` — required final deliverable for designer-mode decks
-- `decks/<deck-slug>/outputs/final/YYYY-MM-DD-v02-deck.pptx` — only for `ppt-shapes` or explicitly requested mixed/editable decks
-
-Rules:
-- save meaningful revisions, not every trivial wording tweak
-- use review filenames for post-render human change requests
-- keep the latest approved deck.md easy to find
-- keep earlier major versions when structure changes materially
-- every production round must have an instance folder with `manifest.yaml`
-- never overwrite an earlier instance
-- record changed slides and reused slides in the instance manifest
-- copy or reference unchanged reviewed slides rather than regenerating them
-- keep raw generated images separate from manipulated/composed images and reviewed images
-- do not scatter duplicate export trees unless there is a clear operational reason
-- do not persist scratch crops, temporary resized variants, or throwaway assembly files
-
-### 7. Render review and repair
-
-After producing slides, always render the artifact before delivery.
-
-Inspect:
-- slide/page count and order
-- match to the approved deck.md and original briefing
-- title, required text, labels, and body text accuracy
-- logo and designer asset placement, especially overlap and safe margins
-- clipping, unreadable text, poor contrast, broken reading path, and visual clutter
-- whether each slide still proves its action title
-
-If anything fails:
-- if the spec is wrong, patch deck.md first
-- if the generated/built output is wrong, regenerate or rebuild only the affected slide
-- render and inspect again before delivery
-
-### 8. Post-render human changes
-
-When the human says the rendered deck is basically okay but asks for a change:
-- start from the previous approved deck.md and the human's new change request
-- create a new review version such as `YYYY-MM-DD-review-01-deck.md`
-- create a new instance such as `002-review-01`; do not overwrite `001-initial`
-- add `## Revision Brief` with the previous deck path, review round, change request, changed slides, unchanged slides, and regeneration scope
-- patch only the affected slide specs and any deck-level fields required by the change
-- pass the old slide spec, old rendered slide image or prompt when available, updated slide spec, and exact human change request to the image model
-- ask the model to change only the requested elements and preserve everything else that still matches the approved spec
-- regenerate only changed slides, then assemble, render, and inspect the full artifact
-- record changed and reused slides in the instance `manifest.yaml`
-
-### 9. Keep the user informed
-
-Especially in designer mode, use concise progress updates such as:
-- "Slide 1 generated. Going to the next."
-- "Slide 3 failed logo overlap review; regenerating only that slide."
-
-## Fast operating sequence
-
-1. Classify the request.
-2. Draft the storyline.
-3. Create the deck.md (or refine the existing one) with `status: draft` and designer-mode as the default production mode.
-4. Declare all model inputs in `designer_assets`, including old decks, slide previews, logos, templates, brand guides, screenshots, icons, and reference images.
-5. Save the current version under `decks/<deck-slug>/specs/`.
-6. Send the deck.md to the user for validation.
-7. Revise and resend until the user approves it (`status: approved`).
-8. Prepare model inputs into `assets/prepared/` and record `method/model-inputs.yaml`.
-9. Produce slides in the approved mode; for pure designer-mode, assemble the final OCRed PDF only.
-10. Render and inspect the output against the deck.md, briefing, and asset rules.
-11. Repair and rerender any failed slides.
-12. Save outputs under the active `decks/<deck-slug>/instances/<###-round>/` and copy accepted deliverables to `outputs/final/`.
-13. Review against visual standards.
-
-If the build is simple, keep the workflow simple.
-Do not create extra planning files unless they materially help.
-
-## deck.md per-slide schema
-
-Each slide in a deck.md is a `### Slide N — "Action title"` heading followed by a YAML block and markdown body. The full field reference is in `SPEC.md`. Key fields:
-
-```yaml
-id: <integer or stable string>
-type: <archetype — see standards/slide-archetypes.md>
-layout: "<layout hint>"
-mode: "<ppt-shapes|designer-mode>"      # overrides deck default
-image_decision: "<none|icon-only|cutout|full-generated-visual>"
-asset_refs: ["<designer_assets.id>"]      # optional; slide-specific designer-mode assets
+- Draft or normalize a complete `deck.md` first.
+- Keep `status: draft` until the human approves production.
+- Do not build slides, generate images, assemble PDFs, or export PPTX files before approval.
+- Default `production_defaults.default_slide_mode` to `designer-mode` unless the user asks for `ppt-shapes` or mixed/editable output.
+- Declare every model input in `designer_assets` before approval; do not send undeclared files to the visual model.
+- For pure `designer-mode`, deliver PDF output only; add OCR/searchable text when available and report if OCR was not applied.
+- Use the standard footer unless the approved brief disables it: small `CR` lower-left and simple page numbers (`1`, `2`, `3`) lower-right.
+- Render and inspect the produced artifact before delivery; repair and rerender failed slides.
+- For post-render changes, create a review `deck.md` version and regenerate only changed slides.
+- Save meaningful specs and production rounds under the standard instance structure.
+
+## Fast Workflow
+
+1. Classify the request: outline, content plan, critique, designer-mode PDF, editable PPTX, or mixed deck.
+2. Draft or update `deck.md` with the narrative, action titles, slide types, production defaults, and declared assets.
+3. Send the full draft `deck.md` to the human for approval.
+4. After approval, validate the brief, prepare declared assets, and produce only in the approved mode.
+5. Render, inspect, repair, and save the output in a production instance.
+6. For review changes, fork from the previous approved brief, add `## Revision Brief`, and reuse unchanged slides.
+
+If the build is simple, keep the workflow simple. Do not create extra planning files unless they materially help review or production.
+
+## Reference Router
+
+Read only the files needed for the task:
+
+- `references/SPEC.md` - authoritative `deck.md` schema, defaults, precedence, and output rules.
+- `references/deck.md` - quick-start starter brief.
+- `references/deck.full.md` - rich starter with assets, revision brief, design tokens, and advanced designer-mode controls.
+- `references/standards/deck-validation.md` - hard validation rules and self-check checklist.
+- `references/standards/slide-archetypes.md` - valid slide `type` values and preferred production modes.
+- `references/standards/narrative-templates.md` - SCR, pyramid, problem-solution, and update templates.
+- `references/standards/artifact-structure.md` - specs, assets, instances, image folders, method files, manifests, and outputs.
+- `references/standards/image-prompts.md` - designer-mode prompt rules and image-generation defaults.
+- `references/deck-workflow.md` - deck-level storyline and consulting narrative rules.
+- `references/consulting-slide-standards.md` - action-title, proof, source, and pre-flight standards.
+- `references/single-slide-workflow.md` - one-slide build or critique sequence.
+- `references/designer-mode-workflow.md` - designer-mode production and review loop.
+- `references/designer-mode-gpt-image-prompt-scaffold.md` - convert an approved slide block into a `gpt-image-2` prompt.
+- `references/designer-mode-direct-api-pattern.md` - direct OpenAI Image API fallback, only after Codex path failure and human approval.
+- `references/pptx-production.md` - editable PPTX production with artifact-tool and legacy `python-pptx`.
+- `references/template-catalog.md` - optional template library, only if `assets/templates/` is installed.
+- `references/tabler-icon-selection.md` - optional Tabler icon selection, only if `assets/tabler-icons/` is installed.
+
+## Production Modes
+
+Use `designer-mode` for premium visual slides and image-backed explanatory pages. Generate slide by slide with `gpt-image-2` through Codex OAuth/Codex image tooling first. Use direct API-key generation only after that path fails and the human approves the fallback.
+
+Use `ppt-shapes` for editable analytical slides, precise charts, tables, process flows, matrices, and decks where the user needs a PowerPoint-native file. Prefer:
+
+```bash
+python scripts/build_pptx_artifact_tool.py OUTPUT.pptx APPROVED_DECK.md
 ```
 
-Optional per-slide fenced blocks:
+Use the legacy compatibility renderer only when needed:
 
-```yaml
-chart:
-  type: <chart type>
-  emphasis: "<echoes the action title>"
-  data_ref: <path>
-  annotation: "<key insight>"
+```bash
+python scripts/build_pptx.py OUTPUT.pptx APPROVED_DECK.md
 ```
 
-```yaml
-creative_direction:
-  mood: "<one or two words>"
-  metaphor: "<the visual idea>"
-  composition_intent: "<how to compose the slide>"
-  prompt_notes:
-    - "<specific guidance for gpt-image-2>"
-  avoid:
-    - "<anti-patterns>"
-```
+Use `mixed` only when specific slides need different modes. Set `mode:` explicitly per slide.
 
-```yaml
-required_text:
-  title: "<exact title as it should appear in the image>"
-  labels:
-    - "<label 1>"
-    - "<label 2>"
-```
+## Optional Assets
 
-Deck-level designer assets live in frontmatter:
+The skill works for planning and basic editable rendering without large visual assets. If an installed skill has `assets/`, use it as follows:
 
-```yaml
-designer_assets:
-  - id: brand_logo
-    type: logo
-    path: assets/source/logo.png
-    usage: "Place exact logo in the top-right corner"
-    scope: deck
-    placement: top-right
-    required: true
-  - id: board_template
-    type: ppt-template
-    path: assets/source/board-template.pptx
-    usage: "Use as layout and typography reference; do not copy text"
-    scope: deck
-    required: false
-  - id: existing_deck
-    type: existing-deck
-    path: assets/source/original-deck.pptx
-    usage: "Use as source content and style context; preserve message and key evidence, but redesign composition freely"
-    scope: deck
-    required: false
-  - id: existing_slide_previews
-    type: slide-preview
-    path: assets/prepared/original-slides/
-    usage: "Use corresponding old-slide previews as content-and-style references for visual redesign"
-    scope: deck
-    required: false
-  - id: visual_template
-    type: reference-image
-    path: assets/source/default-slide-template.png
-    usage: "Use as title, margin, typography, and footer-safe-area reference; do not copy placeholder text"
-    scope: deck
-    required: false
-```
+- `assets/visual-templates/default-slide.png` for normal designer-mode template references.
+- `assets/visual-templates/title-page.png` for covers or title pages.
+- `assets/templates/` for explicit template-driven PPTX builds.
+- `assets/RLF_PPT_Template_v1.pptx` only as the legacy `python-pptx` base.
+- `assets/tabler-icons/` for optional icon export.
 
-Deck-level footer defaults also live in frontmatter:
+If an approved deck marks an asset as `required: true` and it cannot be found or prepared, stop and report the missing asset. Optional missing assets should not block storyline planning or validation.
 
-```yaml
-production_defaults:
-  footer:
-    page_numbers: true
-    page_number_format: "{page}"
-    cr_mark: true
-    cr_text: "CR"
-    placement: bottom-left-cr-bottom-right-page
-```
+## Validation Before Delivery
 
-Slide content (body, sources, speaker notes) is markdown, not YAML.
-Titles MUST be action titles: full sentence with verb, sentence case, no trailing period, ≤14 words.
-See `standards/deck-validation.md` for the full checklist.
+Before delivering, check:
+- the current `deck.md` is approved
+- narrative template and slide types are valid
+- slide titles are action titles and the title sequence tells the argument
+- quantitative claims have sources
+- all `asset_refs` resolve to declared `designer_assets`
+- prepared model inputs are recorded in `method/model-inputs.yaml` when designer assets are used
+- output has been rendered and inspected for text accuracy, overlap, clipping, logo placement, safe margins, and footer
+- production artifacts are stored in the instance structure
+- review changes use a new review spec and regenerate only changed slides
 
-## Designer-mode sequence
-
-When the request implies designer mode:
-
-1. **Content design** — define the slide objective and audience takeaway; write the action title and body before choosing imagery
-2. **Slide structure proposal** — propose the composition before generating visuals; decide the layout and image role; keep the slide aligned to the deck design system
-3. **Asset preparation** — resolve `designer_assets` and slide `asset_refs`; render `.pptx` templates and existing `.pptx`/`.pdf` decks to PNG previews; prepare logos and reference images for the model; record every prepared input in `method/model-inputs.yaml`
-4. **Spec lock** — make sure the slide block in deck.md is clear enough to produce without guessing; confirm the image role and asset usage
-5. **Image generation** — derive the prompt from the approved deck.md slide using `skill/references/designer-mode-gpt-image-prompt-scaffold.md`; include prepared asset references by id and usage; use `gpt-image-2` through Codex OAuth/Codex image tooling first with `size="2560x1440"`, `quality="high"`, `output_format="png"`, `n=1` for final full-slide generation; if that path fails, ask the human before using the direct OpenAI Image API key fallback
-6. **PDF assembly** — assemble the generated slides into a final PDF only; add OCR/searchable text when tooling is available; do not create a PPTX wrapper for pure designer-mode output
-7. **Render review** — inspect the slide/PDF for briefing match, text accuracy, footer/page numbers, logo placement, overlaps, clipping, safe margins, and reading flow; regenerate affected slides only until it passes
-
-The image is a downstream artifact of the slide concept, not the first step.
-
-## Editable deck production
-
-Use when the user wants a `.pptx` and the deck is `ppt-shapes` or explicitly mixed/editable. Do not use this path for pure designer-mode decks.
-
-Preferred build path:
-- use `python3 skill/scripts/build_pptx_artifact_tool.py OUTPUT_PPTX DECK_MD`
-- pass the approved deck.md directly into the builder
-- let the artifact-tool renderer author editable native text, shapes, charts, and layout primitives
-- add a table component, use a template-driven path, or make a targeted renderer extension before treating table-heavy slides as covered
-- use `python skill/scripts/build_pptx.py OUTPUT_PPTX DECK_MD [TEMPLATE_PPTX]` only for older compatibility cases
-- use PowerPoint templates only when the user asks to match one or when a specific skeleton is genuinely useful
-- export icon PNGs before placement when icons are needed
-
-## Output modes
-
-### Deck outline
-Use when the user needs storyline and deck structure only.
-
-### Slide content plan
-Use when the user wants exact per-slide thinking without producing files yet.
-
-### Slide critique
-Use when reviewing or improving an existing slide/deck.
-
-### Designer-mode PDF
-Use when the approved deck is pure `designer-mode`. Deliver a final PDF, add OCR/searchable text when available, and keep review PNGs only as supporting artifacts.
-
-### Editable deck production
-Use when the user wants a `.pptx` and the deck has editable `ppt-shapes` content.
-
-## Reuse rule
-
-When the user wants a reviewable planning artifact, keep one canonical deck.md.
-Do not split deck logic across multiple files unless the extra structure is operationally useful.
-
-## Guardrails
-
-- do not let visuals drive the message
-- do not force images across the whole deck
-- do not use decorative stock imagery where icons or clean structure would work better
-- do not treat one deck-level image as enough for a designer-mode deck; decide imagery per slide
-- do not wrap pure designer-mode slide images in a PPTX just to create a PowerPoint file
-- do not use logos, old slides, templates, or reference assets without recording them in `designer_assets`
-- do not pass any undeclared file or preview to the visual model
-- do not silently ignore a required designer asset that cannot be loaded or prepared
-- do not deliver without rendering and inspecting the output
-- do not regenerate the whole deck for a localized post-render change unless the change affects the whole deck
-- do not let templates, icons, or photos overpower the message
-- do not accept title-only opening slides with too much empty space
-- do not compress overcrowded content when the right answer is to split the slide
-- do not invent unstable layout names from one deck to the next
-- do not build slides that read like dashboards or crowded BI screens unless explicitly asked
-- do not cram many equal-weight boxes, metrics, legends, and callouts onto one slide
-- do not use long paragraphs, tiny text, or sprawling bullet stacks
-- do not confuse completeness with clarity; cut, group, or split content until the message is obvious at a glance
-- make every slide defend one main takeaway with a small number of supporting elements
-
-## Production mode guidance
-
-### `ppt-shapes`
-Best for:
-- analytical slides
-- editable structures
-- process, matrix, agenda, chart, and text-led pages
-
-### `designer-mode`
-Best for:
-- premium visual slides
-- image-backed explanatory pages
-- art-directed slides where one visual materially improves communication
-
-### `mixed`
-Best for:
-- decks that need both clean editable analytical pages and selected premium visual pages
-
-## Style system rules
-
-Always define or infer:
-- aspect ratio
-- background behavior
-- typography mood
-- accent palette
-- image behavior
-- footer behavior
-- framing devices
-
-Consistency rules:
-- do not let each slide invent a different art direction
-- keep repeated elements structurally similar
-- keep prompts aligned to one visual language per section or deck
-- align to requested brand styling without turning the deck into an ad mockup
-- preserve a stable slide grammar: short top title, optional two-line max, compact supporting key-message line, and a main visual area that reads cleanly in a horizontal/Z pattern
-
-## Validation checklist
-
-Before delivering, verify:
-- is there a clear, approved deck.md as source of truth
-- is the production mode right per slide (check `standards/slide-archetypes.md` preferred modes)
-- if imagery is used, was that decision made per slide
-- do all slide `asset_refs` resolve to declared `designer_assets`
-- were required designer assets found and prepared before generation
-- does `method/model-inputs.yaml` list every prepared input sent to the image model
-- did the rendered output pass inspection against the approved deck.md and briefing
-- are logo placement, safe margins, and overlaps correct in the rendered output
-- does every rendered slide include the standard `CR` mark and simple numeric page number
-- is the active production round stored as an instance with raw, composed, reviewed, method, and output folders
-- does `manifest.yaml` record source spec, previous instance if any, changed slides, reused slides, status, and output paths
-- if this is a review change, is there a new `review-##` deck.md with `## Revision Brief`
-- did review generation preserve unchanged slides and regenerate only changed slides
-- can a busy reader get the point quickly
-- does each slide have one main job
-- does the body prove the title
-- do all titles pass the action-title rules in `standards/deck-validation.md`
-- is the density right for the material type
-- are alignment and framing consistent
-- does the slide feel occupied enough to look finished
-- for consulting-style slides, does the title state one insight and does the body prove it directly
-- do source, units, notes, and footer/status markings meet the consulting-slide standard where relevant
-- if designer mode was requested, did the workflow stay `gpt-image-2` with Codex OAuth first rather than drifting into an unapproved hybrid or direct API-key call
-- if the deck is pure designer-mode, is the final deliverable PDF-only rather than PPTX
-- was OCR/searchable text added to the designer-mode PDF, or clearly reported as unavailable
-- does the result clearly read as a native 16:9 slide rather than a rescued crop
-- was the aspect ratio obtained from generation rather than forced later through cropping or squeezing
-- is the title area controlled, with no oversized paragraph-like heading
-- is there a clear horizontal / Z-reading flow from title to message to visual proof
-- are the saved deck artifacts clean and standardized rather than spread across ad hoc temp/output folders
-- would this still feel respectable as a standalone example of the skill's quality
-- does the slide avoid a dashboard feel and instead present a simple visual argument
-- is the text load low enough that the message is understandable in a few seconds
-- if the slide still feels crowded, should it be split into two slides instead of squeezed tighter
+Full validation lives in `references/standards/deck-validation.md`.

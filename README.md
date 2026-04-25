@@ -1,119 +1,89 @@
 # deck.md
 
-Currently in alpha
+Currently in alpha.
 
-An open Markdown format for writing presentation briefs that AI agents turn into slide decks.
+`deck.md` is a Markdown format for writing presentation briefs that AI agents turn into slide decks. The human owns the logic: narrative structure, action titles, data, sources, and approval. The agent owns composition, visual treatment, slide production, and render review.
 
-You write the logic — narrative structure, action titles, data, sources. The agent handles composition, visual treatment, and image generation. One `deck.md` file per deck; designed to be read by humans and parsed deterministically by agents.
+## How It Works
 
-## How it works
-
-1. The human sends a briefing, source material, existing slides, logos, templates, screenshots, or an existing partial `deck.md`.
-2. The agent produces a first `deck.md` with `status: draft` and sends it back for human validation.
-3. The human approves it or asks for changes; the agent revises and resends `deck.md` until the human says it is approved.
+1. The human sends a briefing, source material, existing slides, assets, or a partial `deck.md`.
+2. The agent drafts a complete `deck.md` with `status: draft`.
+3. The human approves the brief or asks for changes.
 4. Only after approval does the agent produce slides.
-5. The agent renders the output, inspects it against the approved brief, and regenerates anything that fails before delivery.
+5. The agent renders the output, inspects it against the approved brief, and repairs anything that fails.
 
-If the human requests changes after seeing a rendered deck, the agent creates a new review version of `deck.md` such as `review-01` or `review-02`, using the previous approved deck plus the new change request. Only the changed slides should be regenerated; unchanged slide logic and visuals should be preserved.
+Post-render changes create a new review version, such as `review-01`, and regenerate only changed slides.
 
-Default production is `designer-mode`. Use `ppt-shapes` only when a slide needs precise editability, data-accurate charts, tables, or editable PowerPoint structure. The preferred `ppt-shapes` engine is component-first: build native editable slides from `deck.md` with the bundled OpenAI `@oai/artifact-tool` runtime. The current artifact-tool renderer has native chart support; table-heavy slides should use an added table component, a template-driven path, or a targeted renderer extension. Pre-existing templates may be used as references or fallbacks, but they are not the default production grammar.
+Default production is `designer-mode`. Use `ppt-shapes` when a slide needs precise editability, data-accurate charts, tables, or native PowerPoint structure. Pure `designer-mode` decks produce final PDFs, not PPTX wrappers, with OCR/searchable text added when tooling is available.
 
-Designer-mode decks MUST declare every asset the visual model should receive in `designer_assets`: logos, existing decks, rendered slide previews, PowerPoint templates, brand guides, screenshots, icons, and reference images. Existing decks/slides are content-and-style references by default: preserve the message and key evidence, borrow useful visual rhythm, and redesign the composition freely. Non-image inputs such as `.pptx` and `.pdf` files are rendered into model-readable PNG previews under the deck's prepared assets before generation, and the active instance records exactly which prepared inputs were passed to the model. Designer-mode generation uses `gpt-image-2` through the Codex OAuth/Codex image path first. If that auth/transport path is unavailable or fails, the agent must tell the human what failed and ask permission before falling back to the direct OpenAI Image API key path. Designer-mode decks produce final PDFs, not PPTX wrappers; add an OCR text layer to the PDF when tooling is available. Generated slides include a small standard footer by default: `CR` at lower-left and simple page numbers (`1`, `2`, `3`, ...) at lower-right, never total-count formats like `1/3`.
+## Quick Start
 
-Generated artifacts are organized by production **instances**: `001-initial`, `002-review-01`, `003-review-02`, and so on. Each instance separates raw model/render outputs, composed/manipulated images, reviewed final slide images, method metadata, and assembled outputs so the deck is easier to inspect and revise.
+Use [`deck.md`](./deck.md) or [`deck.minimal.md`](./deck.minimal.md) as the first file to copy. They contain the minimum useful surface:
 
-## Levels of use
+- frontmatter with `status: draft`
+- one narrative block
+- a few slide headings with action titles
+- the default footer and `designer-mode` production default
 
-| Level | Use case | What you write |
-|---|---|---|
-| **Minimal** | 3–10 slide SCR, update, pitch | Narrative template + slide titles |
-| **Standard** | Most working decks | Slide bodies, sources, speaker notes |
-| **Full** | Client-facing, image-led | `designer_assets`, `creative_direction`, `required_text`, `chart`, full `key_line` |
+Use [`deck.full.md`](./deck.full.md) when you need designer assets, design tokens, revision briefs, advanced image controls, or richer production notes.
 
-Each level is a superset of the previous. Scaling up never requires reformatting.
+## Key Rules
 
-## Narrative templates
-
-| Template | Best for | Required fields |
-|---|---|---|
-| `scr` | Short consulting decks (3–10 slides) | `situation`, `complication`, `resolution` |
-| `pyramid` | Long or branching decks (10+ slides) | `governing_thought`, `key_line` |
-| `problem-solution` | Pitches and proposals | `problem`, `solution`, `why_now` |
-| `update` | Status updates and retrospectives | `plan`, `actual`, `next` |
-
-## Key rules
-
-- Every slide title must be an **action title**: a full sentence with a verb, sentence case, no trailing period, ≤14 words.
-- Body must prove the title. Nothing more, nothing less.
-- Reading only the slide titles should reproduce the deck's argument.
-- Every asset the model should receive must be declared in `designer_assets` before approval.
-- Every generated slide should carry the small standard `CR` mark and simple numeric page number unless the approved `deck.md` explicitly disables them.
-- Every production round should create a new instance folder; do not overwrite raw images, method metadata, or reviewed slides from earlier rounds.
+- Every slide title must be an action title: a full sentence with a verb, sentence case, no trailing period.
+- Body content must prove the title.
+- Reading only the slide titles should reproduce the deck argument.
+- Every visual-model input must be declared in `designer_assets` before approval.
+- Every generated slide should carry the small `CR` mark and simple page number unless disabled in the approved brief.
+- Every production round should use a new instance folder; do not overwrite raw images, method metadata, or reviewed slides.
 
 ## Files
 
 | File | Purpose |
 |---|---|
-| [`deck.md`](./deck.md) | Starter template — copy and fill in |
+| [`deck.md`](./deck.md) | Quick-start starter brief |
+| [`deck.minimal.md`](./deck.minimal.md) | Same minimal starter, kept explicit for packaging |
+| [`deck.full.md`](./deck.full.md) | Rich starter with assets, revision brief, design tokens, and advanced controls |
 | [`SPEC.md`](./SPEC.md) | Authoritative format specification |
-| [`standards/slide-archetypes.md`](./standards/slide-archetypes.md) | Valid `type` values for slides |
-| [`standards/deck-validation.md`](./standards/deck-validation.md) | Hard rules the agent self-checks before emitting |
-| [`standards/narrative-templates.md`](./standards/narrative-templates.md) | Required fields and pitfalls per template |
-| [`standards/image-prompts.md`](./standards/image-prompts.md) | Prompt templates for `gpt-image-2` via Codex OAuth and API-key fallback |
-| [`standards/artifact-structure.md`](./standards/artifact-structure.md) | Standard folder structure for specs, instances, images, method files, and outputs |
+| [`standards/`](./standards/) | Archetypes, validation, prompts, narrative templates, and artifact structure |
+| [`examples/`](./examples/) | Worked SCR, pyramid, problem-solution, and update examples |
+| [`skill/`](./skill/) | Installable `deck-architect` skill source |
+| [`scripts/`](./scripts/) | Packaging and validation scripts |
 
-## Examples
+## Skill Installation
 
-| File | Template | Description |
-|---|---|---|
-| [`examples/scr.deck.md`](./examples/scr.deck.md) | `scr` | Minimal 5-slide Q3 results review |
-| [`examples/pyramid.deck.md`](./examples/pyramid.deck.md) | `pyramid` | Full deck with analysis and recommendation |
-| [`examples/problem-solution.deck.md`](./examples/problem-solution.deck.md) | `problem-solution` | Startup pitch deck |
-| [`examples/update.deck.md`](./examples/update.deck.md) | `update` | Quarterly engineering status report |
+The repo skill is self-contained under `skill/`: it uses `references/` and `scripts/` paths exactly as installed skills do. To install or refresh the Codex skill:
 
-## The skill
-
-`skill/` is a reference implementation of the deck-architect agent skill. It shows how to wire deck.md into a working agent: narrative-to-brief generation, approval gate, designer-mode PDF production with OCR when available, editable `ppt-shapes` production via artifact-tool or python-pptx fallback, standardized production instances, and PDF assembly.
-
-| Path | Purpose |
-|---|---|
-| [`skill/SKILL.md`](./skill/SKILL.md) | Skill entry point — the agent reads this first |
-| [`skill/references/`](./skill/references/) | Production and workflow guides |
-| [`skill/scripts/`](./skill/scripts/) | `build_pptx_artifact_tool.py`, `build_pptx.py`, `tabler_icons.py`, `split_template_deck.py` |
-
-## Deploying to your own agent
-
-When you copy this skill into your own project, the format files (spec, standards, examples) need to be accessible to the agent alongside the skill. The recommended layout is to bring them into `skill/references/` so the whole skill is self-contained:
-
-```
-your-project/
-└── skill/
-    ├── SKILL.md
-    ├── references/
-    │   ├── SPEC.md                     ← from repo root
-    │   ├── deck.md                     ← from repo root
-    │   ├── deck.minimal.md             ← from repo root
-    │   ├── standards/                  ← from repo root
-    │   ├── examples/                   ← from repo root
-    │   ├── deck-workflow.md
-    │   ├── consulting-slide-standards.md
-    │   ├── single-slide-workflow.md
-    │   ├── pptx-production.md
-    │   ├── template-catalog.md
-    │   ├── designer-mode-workflow.md
-    │   ├── designer-mode-gpt-image-prompt-scaffold.md
-    │   ├── designer-mode-direct-api-pattern.md
-    │   └── tabler-icon-selection.md
-    └── scripts/
-        ├── build_pptx_artifact_tool.py
-        ├── build_pptx.py
-        ├── split_template_deck.py
-        └── tabler_icons.py
+```bash
+python3 scripts/package_skill.py --target ~/.codex/skills/deck-architect --force
 ```
 
-Then update the paths in `SKILL.md` to reflect the new locations — for example, `SPEC.md` becomes `references/SPEC.md`, `standards/slide-archetypes.md` becomes `references/standards/slide-archetypes.md`, and so on.
+To install or refresh the OpenClaw copy:
 
-If you just want the simplest path: clone this repo and point your agent at the root. `skill/SKILL.md` references `SPEC.md`, `standards/`, and `examples/` as root-relative paths — no reorganization needed as long as your agent runs from the repo root.
+```bash
+python3 scripts/package_skill.py --target ~/.openclaw/skills/deck-architect --force
+```
+
+The packager copies `skill/`, overlays the current root spec/templates/standards/examples into `skill/references/`, validates the result, and preserves an existing target `assets/` folder by default when this repo does not include large optional assets.
+
+For a first install with a separate asset bundle, add `--with-assets /path/to/assets`.
+
+Validate a skill tree without installing:
+
+```bash
+python3 scripts/validate_skill_install.py skill
+```
+
+Optional large assets live under `assets/` in installed skill copies when available. The skill can still plan decks and run basic editable rendering without them; template, icon, and visual-template workflows require those optional assets.
+
+## Build Smoke Tests
+
+From the repo root:
+
+```bash
+python3 scripts/smoke_builders.py
+```
+
+The smoke script reads `deck.minimal.md`, creates a temporary `ppt-shapes` copy, and runs both editable PPTX builders.
 
 ## License
 

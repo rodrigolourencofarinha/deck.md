@@ -178,7 +178,7 @@ The prompt should explicitly state:
 - the computed footer text and placement for this slide
 - how the eye should move horizontally or in a Z pattern across the slide
 
-Use `skill/references/designer-mode-gpt-image-prompt-scaffold.md` to turn that brief into the actual image generation prompt.
+Use `references/designer-mode-gpt-image-prompt-scaffold.md` to turn that brief into the actual image generation prompt.
 
 ## Designer assets
 

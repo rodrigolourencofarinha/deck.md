@@ -32,13 +32,13 @@ That means search works well for direct nouns and simple concepts, but the libra
 ## Fast workflow
 
 1. Start with a curated topic:
-   - `python skill/scripts/tabler_icons.py topics`
-   - `python skill/scripts/tabler_icons.py suggest roadmap`
+   - `python scripts/tabler_icons.py topics`
+   - `python scripts/tabler_icons.py suggest roadmap`
 2. If the shortlist is close but not perfect, run a keyword search:
-   - `python skill/scripts/tabler_icons.py search "chart arrow"`
-   - `python skill/scripts/tabler_icons.py search "team"`
+   - `python scripts/tabler_icons.py search "chart arrow"`
+   - `python scripts/tabler_icons.py search "team"`
 3. Export the chosen icon:
-   - `python skill/scripts/tabler_icons.py export-png chart-bar tmp/chart-bar.png --size 512`
+   - `python scripts/tabler_icons.py export-png chart-bar tmp/chart-bar.png --size 512`
 4. Place the PNG and keep icon size visually subordinate to the actual message.
 
 ## Curated presentation topics
