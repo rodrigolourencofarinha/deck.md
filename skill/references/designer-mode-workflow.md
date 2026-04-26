@@ -379,11 +379,13 @@ Workflow:
 3. Create a new instance folder such as `002-review-01`.
 4. Add `## Revision Brief` with the previous deck path, review round, human change request, changed slides, unchanged slides, regeneration scope, and preserve list.
 5. Patch only the deck.md fields needed for the requested change.
-6. For each changed designer-mode slide, pass the old rendered slide image when available, the old slide spec, the updated slide spec, and the exact human change request.
-7. Prompt the image model to make only the requested change and preserve the approved composition, style, text, logo placement, and asset behavior unless those are the requested change.
-8. Reuse unchanged slide images by copying or referencing prior `images/reviewed/` files.
-9. Update `manifest.yaml` with changed slides, reused slides, source spec, previous instance, status, and output paths.
-10. Reassemble the PDF, render/inspect the full artifact, and repeat only for failed changed slides.
+6. For each changed designer-mode slide, always pass to the model: the previous rendered slide image, the previous slide spec, the updated slide spec, and the human's exact change request verbatim. Do not paraphrase the review or omit any part of it.
+7. State in the prompt exactly and only what must change. List each requested change as a concrete, specific instruction. If something is not listed as a change, the model must treat it as approved and preserve it exactly.
+8. Do not use overlay or compositing to apply the change on top of the previous render. Regenerate the slide from the prompt with the change integrated.
+9. Explicitly instruct the model to keep everything that is not being changed: composition, palette, typography, spacing, logo placement, footer, reading flow, and any other approved element. The goal is the minimum necessary change, not a fresh interpretation of the slide.
+10. Reuse unchanged slide images by copying or referencing prior `images/reviewed/` files.
+11. Update `manifest.yaml` with changed slides, reused slides, source spec, previous instance, status, and output paths.
+12. Reassemble the PDF, render/inspect the full artifact, and repeat only for failed changed slides.
 
 Do not treat a small review change as a fresh deck generation. The point of review versions is to make the delta explicit and keep approved work stable.
 
@@ -395,3 +397,6 @@ Do not treat a small review change as a fresh deck generation. The point of revi
 - do not turn every slide into a cinematic poster
 - do not add visuals just because they look cool
 - do not regenerate unchanged slides during a review change unless the new brief truly changes them
+- do not use overlay or compositing to apply review changes; regenerate with the change integrated into the prompt
+- always pass the human's review verbatim when prompting for a changed slide; do not paraphrase or summarize
+- always tell the model explicitly what must NOT change so it does not drift the approved parts of the slide
