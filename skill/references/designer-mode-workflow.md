@@ -19,6 +19,8 @@ Default behavior for designer-mode requests:
 - include the standard small footer on every slide unless disabled in the approved deck.md: `CR` lower-left and simple page numbers (`1`, `2`, `3`, ...) lower-right, never total-count formats such as `1/3`
 - after generation, render and inspect the slide/PDF against the approved deck.md and briefing before delivery
 - if the human asks for post-render changes, create a new review deck.md and regenerate only changed slides
+- for targeted text/content edits to an already rendered designer-mode slide, pass the prior rendered slide image back to `gpt-image-2` as an image edit/reference and ask it to preserve the visual while changing only the requested text or concept
+- do not patch generated slides by covering text with manual rectangles/banners or downstream overlays unless the user explicitly asks for a hybrid/manual fix; those quick patches create visible artifacts and should not be the default
 - treat the generated output as a real 16:9 presentation slide, not just a background image or poster
 - request native 16:9 output from the model itself rather than generating first and rescuing it later through crop/resize hacks
 - use `size="2560x1440"` and `quality="high"` for final full-slide outputs
@@ -35,7 +37,8 @@ Sequence:
 7. if hybrid mode was explicitly chosen, place the visual into the intended composition; otherwise expect the generated slide to already respect the slide composition
 8. assemble the approved designer-mode slides into a final PDF, adding OCR/searchable text when available
 9. inspect the rendered result against the approved deck.md, assets, footer/page numbers, and briefing
-10. regenerate affected slides only until the render review passes
+10. for targeted review edits, use the prior rendered slide as the first image input and prompt the model to preserve composition, palette, typography feel, spacing, title zone, and all unchanged text
+11. regenerate affected slides only until the render review passes
 
 If the output fails the slide contract, regenerate.
 Do not default to center-cropping or force-fitting the image just to make it fill the slide.

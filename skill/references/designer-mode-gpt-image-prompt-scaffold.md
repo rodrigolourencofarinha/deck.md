@@ -359,10 +359,12 @@ Inputs:
 
 The prompt should say:
 - this is a targeted revision, not a new slide
+- to use the prior rendered slide as the primary reference image
 - what changed in the approved spec
 - what must be preserved from the prior rendered slide
 - whether logo placement, template reference, text lock, palette, title zone, or composition should stay fixed
 - that only the requested elements should change
+- not to add banners, rectangles, stickers, watermarks, page numbers, logos, or other visible patch artifacts unless those are part of the approved design
 
 Reusable review-change block:
 
@@ -390,8 +392,28 @@ Preserve:
 - approved logo/template/reference asset behavior unless listed in the change request
 - all required text not listed in the change request
 
+Do not add:
+- banners, rectangles, stickers, watermarks, page numbers, logos, or visible patch artifacts
+- extra headings, labels, captions, or explanatory text
+
 Return a revised 16:9 presentation slide that implements only the requested delta.
 ```
+
+### Text-only and small wording changes
+
+When the human asks to change only a rendered title, label, subtitle, or small wording:
+
+```text
+Edit this existing 16:9 presentation slide.
+Preserve the visual composition, style, background, diagram, colors, typography feel, spacing, and all unchanged content as closely as possible.
+Only change {{exact_text_or_label_delta}}.
+Replace {{old_text_description}} with exactly: "{{new_text}}".
+Do not add artifacts, banners, rectangles, stickers, watermarks, page numbers, logos, extra labels, or unrelated visual changes.
+Keep all other text unchanged.
+Portuguese accents, capitalization, and punctuation must be correct.
+```
+
+If the requested change removes a concept that appears too early in the narrative, state the conceptual delta explicitly. Example: “This slide should not mention or show ‘Modelo’ yet; it should simply communicate that reviews reveal customer pains.”
 
 ## Freedom dial
 
