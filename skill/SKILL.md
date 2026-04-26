@@ -1,9 +1,9 @@
 ---
-name: deck-architect
+name: deck-builder
 description: "Plan, critique, redesign, and produce slide decks from deck.md briefs. Use for consulting-style decks, executive reports, MBA/class decks, workshops, talk decks, designer-mode PDF output with gpt-image-2, editable ppt-shapes PPTX output with artifact-tool, and visual redesigns from user-supplied decks, templates, screenshots, logos, brand guides, icon packs, or reference assets."
 ---
 
-# Deck Architect
+# Deck Builder
 
 Use this skill to turn messy material into a reviewable `deck.md`, get the human to approve it, and then produce slides from that approved brief.
 
