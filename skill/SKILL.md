@@ -1,9 +1,9 @@
 ---
-name: deck-architect
+name: deck-builder
 description: "Plan, critique, redesign, and produce slide decks from deck.md briefs. Use for consulting-style decks, executive reports, MBA/class decks, workshops, talk decks, designer-mode PDF output with gpt-image-2, editable ppt-shapes PPTX output with artifact-tool, and visual redesigns from user-supplied decks, templates, screenshots, logos, brand guides, icon packs, or reference assets."
 ---
 
-# Deck Architect
+# Deck Builder
 
 Use this skill to turn messy material into a reviewable `deck.md`, get the human to approve it, and then produce slides from that approved brief.
 
@@ -52,7 +52,8 @@ Read only the files needed for the task:
 - `references/standards/artifact-structure.md` - specs, assets, instances, image folders, method files, manifests, and outputs.
 - `references/standards/image-prompts.md` - designer-mode prompt rules and image-generation defaults.
 - `references/deck-workflow.md` - deck-level storyline and consulting narrative rules.
-- `references/consulting-slide-standards.md` - action-title, proof, source, and pre-flight standards.
+- `references/consulting-slide-standards.md` - action-title, proof, source, and pre-flight standards
+- `references/standards/slide-design-principles.md` - visual execution: canvas, margins, layout zones, typography hierarchy, whitespace, chart design, color discipline, alignment, and pre-design checklist.
 - `references/single-slide-workflow.md` - one-slide build or critique sequence.
 - `references/designer-mode-workflow.md` - designer-mode production and review loop.
 - `references/designer-mode-gpt-image-prompt-scaffold.md` - convert an approved slide block into a `gpt-image-2` prompt.
