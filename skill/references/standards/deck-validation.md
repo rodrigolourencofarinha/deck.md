@@ -6,11 +6,12 @@ Hard rules an agent MUST self-check before emitting a deck from a `deck.md`. The
 
 ## Title rules
 
-- Every slide title MUST be a full sentence with a verb.
-- Every slide title MUST state the "so what" — a takeaway or claim, not a topic label.
+- Every non-cover slide title MUST be a full sentence with a verb.
+- Every non-cover slide title MUST state the "so what" — a takeaway or claim, not a topic label.
 - Sentence case only (first word capitalized; rest lowercase unless proper nouns).
 - No trailing period.
-- Maximum 14 words.
+- Maximum 14 words for non-cover slides.
+- The first slide MUST be `type: cover`. Cover titles may use the deck title instead of an action title.
 
 Examples:
 - ✅ "Acquisition, not retention, broke in Q3"
@@ -37,7 +38,7 @@ Examples:
 
 ## Horizontal logic
 
-- Reading ONLY the slide titles of the deck should reproduce the deck's argument.
+- Reading ONLY the non-cover slide titles of the deck should reproduce the deck's argument.
 - The agent MUST self-check this: extract all titles, read them top-to-bottom, verify they tell the story. If not, flag.
 
 ## Image rules
@@ -115,30 +116,31 @@ Examples:
 
 Before emitting a deck, the agent validates:
 
-1. [ ] All titles are action titles: full sentence, verb, sentence case, no trailing period, ≤14 words
-2. [ ] All slide `type` values are valid archetypes (see [`./slide-archetypes.md`](./slide-archetypes.md))
-3. [ ] Narrative template is valid and required fields are filled
-4. [ ] Key line (if present) has MECE arguments with supporting_slides
-5. [ ] Every body slide appears in at least one `supporting_slides` list (pyramid only)
-6. [ ] Reading only the titles reproduces the deck's argument
-7. [ ] Every quantitative claim has a source
-8. [ ] Data-driven decks include traceable analysis artifacts before approval
-9. [ ] Every `chart.data_ref` exists, is non-empty, and has a numeric series
-10. [ ] Every chart has an emphasis that matches the slide takeaway
-11. [ ] The deck is not a chart dump; each chart advances a distinct argument
-12. [ ] Generated images contain only text listed in `required_text`
-13. [ ] No slide exceeds 5 bullets
-14. [ ] No bullet exceeds 12 words
-15. [ ] All `asset_refs` resolve to declared `designer_assets`
-16. [ ] All model inputs are declared in `designer_assets`; no undeclared files are sent to the model
-17. [ ] Required designer assets exist or production is blocked
-18. [ ] Non-image designer assets are prepared under `assets/prepared/`
-19. [ ] `method/model-inputs.yaml` records prepared model inputs and image labels
-20. [ ] Rendered output has been inspected against the approved deck.md and briefing
-21. [ ] Logos/assets are correctly placed with no overlap or clipping
-22. [ ] Standard footer mark and simple numeric page number appear on every rendered slide
-23. [ ] Raw, composed, reviewed, method, and output artifacts are stored under the standard instance structure
-24. [ ] Instance `manifest.yaml` records source spec, changed/reused slides, status, and output paths
-25. [ ] Review changes use a new review deck.md version, new production instance, and regenerate only changed slides
+1. [ ] The first slide is `type: cover`
+2. [ ] All non-cover titles are action titles: full sentence, verb, sentence case, no trailing period, ≤14 words
+3. [ ] All slide `type` values are valid archetypes (see [`./slide-archetypes.md`](./slide-archetypes.md))
+4. [ ] Narrative template is valid and required fields are filled
+5. [ ] Key line (if present) has MECE arguments with supporting_slides
+6. [ ] Every body slide appears in at least one `supporting_slides` list (pyramid only)
+7. [ ] Reading only the non-cover titles reproduces the deck's argument
+8. [ ] Every quantitative claim has a source
+9. [ ] Data-driven decks include traceable analysis artifacts before approval
+10. [ ] Every `chart.data_ref` exists, is non-empty, and has a numeric series
+11. [ ] Every chart has an emphasis that matches the slide takeaway
+12. [ ] The deck is not a chart dump; each chart advances a distinct argument
+13. [ ] Generated images contain only text listed in `required_text`
+14. [ ] No slide exceeds 5 bullets
+15. [ ] No bullet exceeds 12 words
+16. [ ] All `asset_refs` resolve to declared `designer_assets`
+17. [ ] All model inputs are declared in `designer_assets`; no undeclared files are sent to the model
+18. [ ] Required designer assets exist or production is blocked
+19. [ ] Non-image designer assets are prepared under `assets/prepared/`
+20. [ ] `method/model-inputs.yaml` records prepared model inputs and image labels
+21. [ ] Rendered output has been inspected against the approved deck.md and briefing
+22. [ ] Logos/assets are correctly placed with no overlap or clipping
+23. [ ] Standard footer mark and simple numeric page number appear on every rendered slide
+24. [ ] Raw, composed, reviewed, method, and output artifacts are stored under the standard instance structure
+25. [ ] Instance `manifest.yaml` records source spec, changed/reused slides, status, and output paths
+26. [ ] Review changes use a new review deck.md version, new production instance, and regenerate only changed slides
 
 If any check fails, the agent MUST fix before finalizing.

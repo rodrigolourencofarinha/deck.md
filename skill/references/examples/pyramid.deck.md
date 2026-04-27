@@ -86,7 +86,20 @@ Decisive and forward-looking. Strong accent color on recommendations, restrained
 
 ## Slides
 
-### Slide 1 — "Three levers will recover growth in two quarters at $4M"
+### Slide 1 — "2026 growth recovery plan"
+
+```yaml
+id: cover
+type: cover
+layout: title-page
+mode: designer-mode
+```
+
+Leadership team | Growth recovery decision pack
+
+---
+
+### Slide 2 — "Three levers will recover growth in two quarters at $4M"
 
 ```yaml
 id: 1

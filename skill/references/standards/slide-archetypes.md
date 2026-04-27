@@ -13,6 +13,29 @@ See [`./narrative-templates.md`](./narrative-templates.md) for how slides fit in
 
 ---
 
+## `cover`
+
+**Purpose.** Opens the deck with the deck title, audience or context, author/team, date, and optional brand treatment. It identifies the document before the argument starts.
+
+**Preferred mode.** `designer-mode` — a cover benefits from a strong, polished first impression.
+
+**Typical layout.** `title-page`, `title-with-subtitle`, or `brand-cover`.
+
+**Required fields.** Title. Body is optional and should stay minimal. Cover titles do not need to be action titles.
+
+**Example.**
+```yaml
+id: cover
+type: cover
+layout: title-page
+```
+
+**Body.** "Leadership team | April 2026"
+
+**Pitfalls.** Treating the cover as an executive summary; adding bullets or charts; using a vague decorative image that does not fit the deck.
+
+---
+
 ## `executive_summary`
 
 **Purpose.** Opens the deck by making the governing thought visible in one slide. Should stand alone — a busy reader consuming only this slide should still understand the deck's answer.

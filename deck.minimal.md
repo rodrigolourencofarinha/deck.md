@@ -32,7 +32,17 @@ resolution: "<what you recommend or want the audience to do>"
 
 ## Slides
 
-### Slide 1 - "<action title>"
+### Slide 1 - "<deck title>"
+
+```yaml
+id: cover
+type: cover
+layout: title-page
+```
+
+<Audience, date, author/team, or one-line context.>
+
+### Slide 2 - "<action title>"
 
 ```yaml
 id: 1
@@ -41,7 +51,7 @@ type: situation
 
 <Body that proves the title. Keep it short.>
 
-### Slide 2 - "<action title>"
+### Slide 3 - "<action title>"
 
 ```yaml
 id: 2
@@ -50,7 +60,7 @@ type: complication
 
 <Body that proves the title.>
 
-### Slide 3 - "<action title>"
+### Slide 4 - "<action title>"
 
 ```yaml
 id: 3

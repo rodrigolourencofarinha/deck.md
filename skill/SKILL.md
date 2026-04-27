@@ -15,6 +15,7 @@ Hard rules:
 - Draft or normalize a complete `deck.md` first.
 - Keep `status: draft` until the human approves production.
 - Do not build slides, generate images, assemble PDFs, or export PPTX files before approval.
+- Always include a first slide with `type: cover`; it introduces the deck and does not replace the executive summary.
 - Default `production_defaults.default_slide_mode` to `designer-mode` unless the user asks for `ppt-shapes` or mixed/editable output.
 - Declare every model input in `designer_assets` before approval; do not send or use undeclared files.
 - Treat all logos, templates, old decks, screenshots, brand guides, icon packs, fonts, and reference images as external assets supplied by the user or declared by URL/path. This public skill has no bundled visual asset library.
@@ -92,7 +93,8 @@ Before delivering, check:
 - the current `deck.md` is approved
 - data-driven decks have `analysis_artifacts`, local chart CSVs, notes/manifest, and clear caveats
 - narrative template and slide types are valid
-- slide titles are action titles and the title sequence tells the argument
+- the first slide is `type: cover`
+- non-cover slide titles are action titles and the title sequence tells the argument
 - each slide has one consulting takeaway and any chart directly proves it
 - quantitative claims have sources
 - all `asset_refs` resolve to declared `designer_assets`

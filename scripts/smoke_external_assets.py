@@ -76,7 +76,18 @@ resolution: "Declared external assets are prepared inside the workspace."
 
 ## Slides
 
-### Slide 1 — "Declared external assets are prepared without bundled skill files"
+### Slide 1 — "External asset smoke"
+
+```yaml
+id: cover
+type: cover
+mode: ppt-shapes
+asset_refs: [{asset_id}]
+```
+
+Smoke test for declared external asset handling.
+
+### Slide 2 — "Declared external assets are prepared without bundled skill files"
 
 ```yaml
 id: 1

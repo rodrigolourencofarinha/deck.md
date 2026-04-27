@@ -62,7 +62,17 @@ resolution: "Prioritize enterprise conversion and move secondary diagnostics to 
 
 ## Slides
 
-### Slide 1 - "Enterprise conversion is the recovery priority"
+### Slide 1 - "Pipeline recovery example"
+
+```yaml
+id: cover
+type: cover
+layout: title-page
+```
+
+Revenue leadership | Illustrative data-to-deck workflow
+
+### Slide 2 - "Enterprise conversion is the recovery priority"
 
 ```yaml
 id: 1
@@ -76,7 +86,7 @@ type: executive_summary
 
 **Sources:** Illustrative pipeline export, refreshed 2026-04-25
 
-### Slide 2 - "Enterprise accounts explain most of the revenue gap"
+### Slide 3 - "Enterprise accounts explain most of the revenue gap"
 
 ```yaml
 id: 2
@@ -100,7 +110,7 @@ chart:
 
 **Sources:** Illustrative pipeline export; see analysis/manifest.yaml
 
-### Slide 3 - "A focused sprint can recover the gap faster"
+### Slide 4 - "A focused sprint can recover the gap faster"
 
 ```yaml
 id: 3

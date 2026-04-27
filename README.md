@@ -89,7 +89,8 @@ Use [`deck.md`](./deck.md) or [`deck.minimal.md`](./deck.minimal.md) as the firs
 
 - frontmatter with `status: draft`
 - one narrative block
-- a few slide headings with action titles
+- a first `type: cover` slide
+- a few content slide headings with action titles
 - the default footer and `designer-mode` production default
 
 Use [`deck.full.md`](./deck.full.md) when you need designer assets, design tokens, revision briefs, advanced image controls, or richer production notes.
@@ -99,8 +100,10 @@ For data-backed decks, follow [`standards/data-analysis-workflow.md`](./standard
 ## Key Rules
 
 - Every slide title must be an action title: a full sentence with a verb, sentence case, no trailing period.
+- Every deck must start with a `type: cover` slide; the cover title may be the deck title.
+- Every non-cover slide title must be an action title: a full sentence with a verb, sentence case, no trailing period.
 - Body content must prove the title.
-- Reading only the slide titles should reproduce the deck argument.
+- Reading only the non-cover slide titles should reproduce the deck argument.
 - Data analysis must become a clear argument, not a pile of charts.
 - Every visual-model input must be declared in `designer_assets` before approval.
 - Every generated slide should carry the small `CR` mark and simple page number unless disabled in the approved brief.

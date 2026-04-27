@@ -77,6 +77,18 @@ def slide_ids(spec: dict) -> set[str]:
     return {str(slide.get("id")) for slide in ensure_list(spec.get("slides")) if isinstance(slide, dict)}
 
 
+def validate_cover(spec: dict, errors: list[str]) -> None:
+    slides = [slide for slide in ensure_list(spec.get("slides")) if isinstance(slide, dict)]
+    if not slides:
+        errors.append("deck must include a cover slide and at least one content slide")
+        return
+    first_type = str(slides[0].get("type") or "").strip().lower().replace("_", "-")
+    if first_type != "cover":
+        errors.append("first slide must be type: cover")
+    if len(slides) < 2:
+        errors.append("deck must include at least one non-cover content slide")
+
+
 def validate_analysis_artifacts(spec_path: Path, spec: dict, errors: list[str], summaries: list[dict]) -> None:
     artifacts = spec.get("analysis_artifacts") or {}
     if not artifacts:
@@ -189,6 +201,7 @@ def validate(path: Path) -> dict:
     warnings: list[str] = []
     summaries: list[dict] = []
 
+    validate_cover(spec, errors)
     validate_analysis_artifacts(path, spec, errors, summaries)
     validate_chart_data(path, spec, errors, warnings, summaries)
 

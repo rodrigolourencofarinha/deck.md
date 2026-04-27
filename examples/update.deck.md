@@ -74,7 +74,20 @@ Mood: matter-of-fact. Status decks fail when they feel defensive; keep titles as
 
 ---
 
-### Slide 1 — "On track overall — Insights delayed three weeks; all other Q3 commitments met or exceeded"
+### Slide 1 — "Engineering — Q3 status update"
+
+```yaml
+id: cover
+type: cover
+layout: title-page
+mode: designer-mode
+```
+
+Exec leadership team | Engineering leadership
+
+---
+
+### Slide 2 — "On track overall — Insights delayed three weeks; all other Q3 commitments met or exceeded"
 
 ```yaml
 id: 1
@@ -91,7 +104,7 @@ mode: ppt-shapes
 
 ---
 
-### Slide 2 — "Features: shipped Dashboards and Exports; Insights slipped on data-model scope"
+### Slide 3 — "Features: shipped Dashboards and Exports; Insights slipped on data-model scope"
 
 ```yaml
 id: 2
@@ -108,7 +121,7 @@ mode: ppt-shapes
 
 ---
 
-### Slide 3 — "Reliability: 99.87% uptime — three minutes over SLO from one incident"
+### Slide 4 — "Reliability: 99.87% uptime — three minutes over SLO from one incident"
 
 ```yaml
 id: 3

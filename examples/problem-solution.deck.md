@@ -74,7 +74,20 @@ Mood: confident and unflashy. Engineers distrust marketing polish, so keep it de
 
 ---
 
-### Slide 1 — "Your best engineers spend a day a week on review — and bugs still ship"
+### Slide 1 — "Reviewr — AI-assisted code review for engineering teams"
+
+```yaml
+id: cover
+type: cover
+layout: title-page
+mode: designer-mode
+```
+
+30-day pilot proposal | VP Engineering
+
+---
+
+### Slide 2 — "Your best engineers spend a day a week on review — and bugs still ship"
 
 ```yaml
 id: 1
@@ -107,7 +120,7 @@ required_text:
 
 ---
 
-### Slide 2 — "Quality varies 3× between reviewers — so you can't staff your way out"
+### Slide 3 — "Quality varies 3× between reviewers — so you can't staff your way out"
 
 ```yaml
 id: 2
@@ -118,7 +131,7 @@ type: complication
 
 ---
 
-### Slide 3 — "Reviewr pre-reviews every PR before a human opens it"
+### Slide 4 — "Reviewr pre-reviews every PR before a human opens it"
 
 ```yaml
 id: 3

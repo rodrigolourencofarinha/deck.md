@@ -218,9 +218,9 @@ mece_check: "<one line on why these arguments together prove the governing thoug
 
 ## Slides
 
-Each slide is one `### Slide N — "action title"` heading, followed by a small YAML metadata block and a body that proves the title. Titles are full sentences in sentence case, no trailing period.
+Each slide is one `### Slide N — "title"` heading, followed by a small YAML metadata block and a body that proves the title. The first slide is always a `cover`. Non-cover titles are full action-title sentences in sentence case, no trailing period.
 
-**Horizontal logic.** Reading only the action titles of all your slides should reproduce the deck's argument. If it doesn't, either the titles or the argument structure above needs work.
+**Horizontal logic.** Reading only the non-cover action titles should reproduce the deck's argument. If it doesn't, either the titles or the argument structure above needs work.
 
 **Output mode.** Default is `designer-mode` -- the agent produces slides as generated visual compositions from the narrative and design tokens. Opt out with `mode: ppt-shapes` when a slide needs precise editability, data-accurate charts, tables, editable PowerPoint structure, or an explicitly template-driven build. For finer control on a designer-mode slide, add a `creative_direction` and `required_text` block (see Slide 4).
 
@@ -232,7 +232,19 @@ Valid `type` values are listed in [`./standards/slide-archetypes.md`](./standard
 
 ---
 
-### Slide 1 — "<action title: restates the governing thought as a takeaway>"
+### Slide 1 — "<deck title>"
+
+```yaml
+id: cover
+type: cover
+layout: title-page
+```
+
+<Cover body — audience, date, author/team, client/project name, or one-line context. Keep it sparse.>
+
+---
+
+### Slide 2 — "<action title: restates the governing thought as a takeaway>"
 
 <!-- Validation rules (agent self-checks before emitting):
      Title: full sentence with verb, sentence case, no trailing period, ≤14 words
@@ -250,7 +262,7 @@ type: executive_summary
 
 ---
 
-### Slide 2 — "<action title>"
+### Slide 3 — "<action title>"
 
 ```yaml
 id: 2
@@ -261,7 +273,7 @@ type: situation
 
 ---
 
-### Slide 3 — "<action title — supports argument 1 from the key line>"
+### Slide 4 — "<action title — supports argument 1 from the key line>"
 
 ```yaml
 id: 3
@@ -272,7 +284,7 @@ type: analysis
 
 ---
 
-### Slide 4 — "<action title — a slide with fine-grained visual control>"
+### Slide 5 — "<action title — a slide with fine-grained visual control>"
 
 <This slide shows how to add explicit `creative_direction` and `required_text`. Use these when you want to dictate the metaphor, composition, or the exact text that appears in the generated image. Leave them off when the narrative and design tokens are enough for the agent to produce a good slide on its own.>
 

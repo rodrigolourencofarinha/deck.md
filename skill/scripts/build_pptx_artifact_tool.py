@@ -192,6 +192,7 @@ def parse_deck_markdown(path: Path, text: str) -> dict | None:
         slide = {
             "id": metadata.get("id") or heading.group(1).strip(),
             "title": heading.group(2).strip(),
+            "subtitle": metadata.get("subtitle"),
             "type": slide_type,
             "layout": metadata.get("layout"),
             "mode": metadata.get("mode"),
@@ -256,6 +257,8 @@ def infer_archetype(slide: dict) -> str:
     chart = slide.get("chart") or (content.get("chart") if isinstance(content, dict) else None) or {}
     chart_type = str(chart.get("type") or "").strip().lower() if isinstance(chart, dict) else ""
     for value in (template, layout, slide_type):
+        if value in {"cover", "title-page", "title slide", "title-slide", "brand-cover"}:
+            return "cover"
         if value in {"takeaway", "takeaway + support"}:
             return "takeaway"
         if value == "agenda":
@@ -272,6 +275,8 @@ def infer_archetype(slide: dict) -> str:
             return "quote"
     if slide_type == "section-divider":
         return "section-divider"
+    if slide_type == "cover":
+        return "cover"
     if slide_type == "roadmap" or "timeline" in layout or "roadmap" in layout:
         return "process"
     if slide_type == "framework" and any(token in layout for token in ("2x2", "matrix", "quadrant")):
@@ -592,6 +597,14 @@ def rendered_spec(spec_path: Path, spec: dict, allow_missing_data: bool) -> dict
     slides = spec.get("Slides") or spec.get("slides") or []
     if not isinstance(slides, list):
         die("Slides must be a list in the deck spec")
+    if not slides:
+        die("Deck spec must include a cover slide and at least one content slide")
+    first_slide = slides[0] if isinstance(slides[0], dict) else {}
+    first_type = str(first_slide.get("type") or "").strip().lower().replace("_", "-")
+    if first_type != "cover":
+        die("Deck spec must start with a cover slide: set the first slide to type: cover")
+    if len([slide for slide in slides if isinstance(slide, dict)]) < 2:
+        die("Deck spec must include at least one non-cover content slide after the cover")
 
     rendered = []
     skipped = 0
@@ -813,6 +826,25 @@ function renderTakeaway(slide) {{
   return root(slide, body, {{ subtitle: slide.subtitle }});
 }}
 
+function renderCover(slide) {{
+  const slideObj = presentation.slides.add();
+  const logo = logoNode(slide);
+  const subtitle = slide.subtitle || shortItems(slide.bullets, 1)[0] || deck.deck?.objective || deck.deck?.audience || "";
+  slideObj.compose(
+    grid({{ name: "cover-root", width: fill, height: fill, columns: [fr(1)], rows: [auto, fr(1), auto], padding: {{ x: 92, y: 78 }} }}, [
+      row({{ name: "cover-header", width: fill, height: hug, justify: "end" }}, [logo].filter(Boolean)),
+      column({{ name: "cover-title-stack", width: fill, height: fill, justify: "center", gap: 30 }}, [
+        rule({{ name: "cover-rule", width: fixed(300), stroke: palette.accent, weight: 8 }}),
+        t(slide.title || deck.deck?.title || "Untitled deck", {{ name: "cover-title", width: wrap(1380), fontFace: font.title, fontSize: 70, bold: true, color: palette.primary }}),
+        subtitle ? t(subtitle, {{ name: "cover-subtitle", width: wrap(1120), fontSize: 28, color: palette.secondary }}) : null,
+      ].filter(Boolean)),
+      footer(slide),
+    ]),
+    {{ frame: {{ left: 0, top: 0, width: W, height: H }}, baseUnit: 8 }},
+  );
+  return slideObj;
+}}
+
 function renderAgenda(slide) {{
   const sections = shortItems(slide.sections || slide.bullets, 6);
   const rows = sections.map((label, idx) =>
@@ -942,6 +974,7 @@ function renderQuote(slide) {{
 }}
 
 function renderSlide(slide) {{
+  if (slide.archetype === "cover") return renderCover(slide);
   if (slide.archetype === "agenda") return renderAgenda(slide);
   if (slide.archetype === "process") return renderProcess(slide);
   if (slide.archetype === "matrix") return renderMatrix(slide);

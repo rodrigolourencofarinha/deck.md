@@ -79,7 +79,7 @@ Density:
 ## Default deck architecture
 
 Use this unless the task clearly needs another shape:
-1. cover or session objective
+1. cover
 2. agenda or framing
 3. core body of analysis or teaching logic
 4. synthesis, recommendation, or recap
@@ -91,7 +91,7 @@ Use this unless the task clearly needs another shape:
 - lead with the answer
 - draft the storyline before production
 - draft action titles before slide bodies
-- read the action-title sequence alone; it should tell the full deck argument
+- read the non-cover action-title sequence alone; it should tell the full deck argument
 - make each slide do one job
 - keep horizontal flow coherent across slides
 - keep vertical flow coherent inside each slide

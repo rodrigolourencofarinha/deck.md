@@ -56,7 +56,8 @@ At every level of complexity, a valid `deck.md` MUST include:
 
 - `deck.title` in the frontmatter
 - A `## Narrative` section (template-based or full block)
-- A `## Slides` section with at least one `### Slide N — "Title"` heading
+- A `## Slides` section whose first slide is `type: cover`
+- At least one non-cover content slide after the cover
 
 Everything else is optional with sensible defaults.
 
@@ -72,7 +73,7 @@ Three levels. Each is a superset of the previous. Scaling up never requires refo
 
 ## Authorship
 
-- **Human controls:** narrative structure, action titles, slide types, data, sources, validation rules.
+- **Human controls:** narrative structure, cover content, action titles, slide types, data, sources, validation rules.
 - **Model controls:** composition, metaphor, visual treatment, hierarchy, layout refinement.
 - **Tie-breaker:** human wins on conflict. The model may propose alternatives in a slide's `prompt_notes` but MUST NOT silently override human-set fields.
 
@@ -152,6 +153,7 @@ Premium, consulting-style. Message-first, not decoration-first. Polished but con
 
 ### Text policy
 - Every slide title MUST be an **action title** — a full sentence with a verb that states the "so what", not a topic label.
+- The first slide MUST be a `cover`. Its title may be the deck title rather than an action title.
 - Body MUST prove the title; nothing in the title should go unproven, nothing in the body should be irrelevant to the title.
 - Sentence case. No trailing periods. No stray invented text in generated slides.
 - Data-driven slides MUST be message-first. The chart is proof, not the point. Do not create a sequence of charts unless each one advances a distinct argument.
@@ -203,7 +205,7 @@ See [`./standards/narrative-templates.md`](./standards/narrative-templates.md) f
 
 ## Slides
 
-Each slide is a `### Slide N — "Action title"` heading, followed by a fenced `yaml` metadata block, then markdown body and optional fenced blocks for `chart`, `creative_direction`, `required_text`.
+Each slide is a `### Slide N — "Title"` heading, followed by a fenced `yaml` metadata block, then markdown body and optional fenced blocks for `chart`, `creative_direction`, `required_text`. The first slide is always the cover. Subsequent slides use action titles.
 
 ### Slide field reference
 
@@ -214,6 +216,14 @@ layout: "<string, optional>"
 mode: "<ppt-shapes|designer-mode>"                       # inherits from production_defaults
 image_decision: "<none|icon-only|cutout|full-generated-visual>"
 asset_refs: ["<designer_assets.id>"]                      # optional; slide-specific asset references
+```
+
+**Cover slide.** Every deck starts with one cover slide. It identifies the deck and does not replace the executive summary or first content slide. A cover may use `id: cover` so the content slides can keep stable numeric ids used by `supporting_slides`, `used_by_slides`, and review comments.
+
+```yaml
+id: cover
+type: cover
+layout: title-page
 ```
 
 **`id` and slide ordering.** Integer IDs double as ordering keys. Inserting a slide between two existing slides requires renumbering all subsequent IDs and updating every `supporting_slides` reference. For decks that will evolve significantly, use short stable string IDs (`id: s_organic_lever`) instead — both forms are valid.
@@ -364,7 +374,7 @@ For generated slides, footer text is computed from `production_defaults.footer` 
 
 ### Slide archetypes
 
-The `type` field must be a value in [`./standards/slide-archetypes.md`](./standards/slide-archetypes.md): `executive_summary`, `section_divider`, `situation`, `complication`, `key_takeaways`, `analysis`, `chart`, `framework`, `recommendation`, `roadmap`, `risk_mitigation`, `next_steps`, `appendix`.
+The `type` field must be a value in [`./standards/slide-archetypes.md`](./standards/slide-archetypes.md): `cover`, `executive_summary`, `section_divider`, `situation`, `complication`, `key_takeaways`, `analysis`, `chart`, `framework`, `recommendation`, `roadmap`, `risk_mitigation`, `next_steps`, `appendix`.
 
 ## Brief
 
@@ -484,6 +494,7 @@ Before delivery, the agent MUST inspect the rendered artifact and compare it wit
 
 Render review checklist:
 - slide/page count and ordering match the approved deck.md
+- the first rendered slide is the approved cover
 - every slide has the required small footer mark and simple numeric page number
 - title, required text, labels, and body text match the approved spec
 - logo and required asset placement matches `designer_assets`, `asset_refs`, and `placement`

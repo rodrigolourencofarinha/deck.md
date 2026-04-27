@@ -32,35 +32,45 @@ resolution:   "Three levers will recover growth in two quarters."
 
 ## Slides
 
-### Slide 1 — "Growth is our #1 KPI for 2026"
+### Slide 1 — "Q3 results review"
+
+```yaml
+id: cover
+type: cover
+layout: title-page
+```
+
+Leadership team | Growth team
+
+### Slide 2 — "Growth is our #1 KPI for 2026"
 
 ```yaml
 id: 1
 type: situation
 ```
 
-### Slide 2 — "Q3 growth fell 34% YoY — acquisition broke, not retention"
+### Slide 3 — "Q3 growth fell 34% YoY — acquisition broke, not retention"
 
 ```yaml
 id: 2
 type: complication
 ```
 
-### Slide 3 — "Three levers will recover growth in two quarters"
+### Slide 4 — "Three levers will recover growth in two quarters"
 
 ```yaml
 id: 3
 type: recommendation
 ```
 
-### Slide 4 — "Lever 1: rebuild organic, starting with the content engine"
+### Slide 5 — "Lever 1: rebuild organic, starting with the content engine"
 
 ```yaml
 id: 4
 type: analysis
 ```
 
-### Slide 5 — "Ship by Jan 15; first recovery signals by end of Q1"
+### Slide 6 — "Ship by Jan 15; first recovery signals by end of Q1"
 
 ```yaml
 id: 5
