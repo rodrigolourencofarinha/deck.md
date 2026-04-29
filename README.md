@@ -97,6 +97,19 @@ Use [`deck.full.md`](./deck.full.md) when you need designer assets, design token
 
 For data-backed decks, follow [`standards/data-analysis-workflow.md`](./standards/data-analysis-workflow.md) before approving `deck.md`. The deck should link to a manifest, notes, queries, and chart-ready CSVs through `analysis_artifacts`.
 
+## Examples
+
+Agent-facing examples live in [`examples/`](./examples/): [`scr.deck.md`](./examples/scr.deck.md), [`pyramid.deck.md`](./examples/pyramid.deck.md), [`problem-solution.deck.md`](./examples/problem-solution.deck.md), [`update.deck.md`](./examples/update.deck.md), and [`data-driven.deck.md`](./examples/data-driven.deck.md).
+
+GitHub showcase decks live in [`showcase/`](./showcase/). These are repo-only finished examples for humans browsing the project, not packaged skill fixtures.
+
+| Example | PDF | Spec | Notes |
+|---|---|---|---|
+| Codex feature pitch | [`codex-feature-pitch.pdf`](./showcase/codex-feature-pitch/codex-feature-pitch.pdf) | [`codex-feature-pitch.deck.md`](./showcase/codex-feature-pitch/codex-feature-pitch.deck.md) | 7-page polished output from a post-review image-generation workflow |
+| Customer value chain | [`customer-value-chain.pdf`](./showcase/customer-value-chain/customer-value-chain.pdf) | [`customer-value-chain.deck.md`](./showcase/customer-value-chain/customer-value-chain.deck.md) | 5-page designer-mode vision deck |
+| Decomposer customer experience | [`decomposer-customer-experience.pdf`](./showcase/decomposer-customer-experience/decomposer-customer-experience.pdf) | [`decomposer-customer-experience.deck.md`](./showcase/decomposer-customer-experience/decomposer-customer-experience.deck.md) | 9-page OCR/searchable designer-mode PDF |
+| Thales Teixeira decoupling | [`thales-teixeira-decoupling.pdf`](./showcase/thales-teixeira-decoupling/thales-teixeira-decoupling.pdf) | - | 6-page designer-mode PDF |
+
 ## Key Rules
 
 - Every slide title must be an action title: a full sentence with a verb, sentence case, no trailing period.
@@ -118,7 +131,8 @@ For data-backed decks, follow [`standards/data-analysis-workflow.md`](./standard
 | [`deck.full.md`](./deck.full.md) | Rich starter with assets, revision brief, design tokens, and advanced controls |
 | [`SPEC.md`](./SPEC.md) | Authoritative format specification |
 | [`standards/`](./standards/) | Archetypes, validation, prompts, narrative templates, and artifact structure |
-| [`examples/`](./examples/) | Worked SCR, pyramid, problem-solution, update, and data-driven examples |
+| [`examples/`](./examples/) | Lightweight agent-facing source examples and data-backed fixtures |
+| [`showcase/`](./showcase/) | Repo-only rendered deck examples for GitHub visitors |
 | [`skill/`](./skill/) | Installable `deck-architect` skill source |
 | [`scripts/`](./scripts/) | Packaging and validation scripts |
 
@@ -136,7 +150,8 @@ Optional: to install or refresh an OpenClaw copy that follows the same skill-fol
 python3 scripts/package_skill.py --target ~/.openclaw/skills/deck-architect --force
 ```
 
-The packager copies `skill/`, overlays the current root spec/templates/standards/examples into `skill/references/`, validates the result, and writes a clean asset-neutral skill tree.
+The packager copies `skill/`, overlays the current root spec/templates/standards/source examples into `skill/references/`, validates the result, and writes a clean asset-neutral skill tree.
+The `showcase/` folder stays repo-only and is not bundled into the installed skill.
 The public skill package intentionally contains no bundled visual assets. Logos, templates, old decks, screenshots, icon packs, brand guides, fonts, and reference images are supplied at deck-production time through external paths or URLs declared in `designer_assets`.
 
 Validate a skill tree without installing:
