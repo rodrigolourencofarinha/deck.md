@@ -96,6 +96,7 @@ Examples:
 - Every rendered slide MUST show the required footer mark and page number in the approved placement.
 - Required logos and assets MUST appear in the approved placement and MUST NOT overlap text or important visuals.
 - Text, labels, charts, logos, and visual blocks MUST NOT overlap or be clipped.
+- Image-generated slides MUST be judged by visual legibility first: inspect the rendered pixels at the intended viewing size for readable text, labels, and hierarchy. OCR MAY be used as a warning signal for possible extra, missing, or garbled text, but OCR output is not the final judge; visually inspect any OCR warning before accepting or rejecting a slide.
 - Data-driven charts MUST match the approved `chart.data_ref`, emphasis, units, and source line.
 - Production artifacts SHOULD follow `artifact-structure.md`: raw outputs in `images/raw/`, manipulated/composed images in `images/composed/`, inspected final slide images in `images/reviewed/`, and prompts/metadata/review notes in `method/`.
 - Designer-mode production SHOULD include `method/model-inputs.yaml` listing the prepared assets sent to the image model.

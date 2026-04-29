@@ -266,6 +266,7 @@ Final render review:
 - inspect the PDF or rendered slide PNGs before delivery
 - compare against the approved deck.md, original briefing, and any `## Revision Brief`
 - verify text accuracy, title hierarchy, slide count/order, and required labels
+- use visual legibility as the pass/fail judge for image-generated text; treat OCR results as warnings that require visual confirmation, not as final proof
 - verify the `CR` footer mark and simple numeric page numbers are present, small, consistent, and not overlapping other content
 - verify logos and designer assets are in the intended placement and do not overlap text or visuals
 - reject clipped content, unsafe margins, unreadable text, accidental extra labels, and weak reading flow

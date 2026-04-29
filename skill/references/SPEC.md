@@ -35,7 +35,7 @@ Use `deck.md` when you want:
 
 **Phase 2 — Slide generation.** The agent reads an `approved` deck.md, validates it against `standards/deck-validation.md`, and produces the approved output mode. `designer-mode` slides are generated with `gpt-image-2` through the Codex OAuth/Codex image path first and pure `designer-mode` decks produce PDF output only, with no PPTX wrapper. `ppt-shapes` slides are authored as editable PowerPoint-native content with the artifact-tool renderer and exported with PNG previews, layout JSON, and a quality report.
 
-**Phase 3 — Render review and repair.** The agent renders the final artifact, inspects the rendered pages/slides against the approved deck.md and original briefing, and repairs any mismatch before delivery. This includes title and body text, asset use, logo placement, overlaps, clipping, safe margins, aspect ratio, reading order, and whether the output still answers the briefing.
+**Phase 3 — Render review and repair.** The agent renders the final artifact, inspects the rendered pages/slides against the approved deck.md and original briefing, and repairs any mismatch before delivery. This includes title and body text, visual legibility, asset use, logo placement, overlaps, clipping, safe margins, aspect ratio, reading order, and whether the output still answers the briefing. For image-generated slides, visual inspection is the pass/fail judgment; OCR is only a warning signal for possible text issues that need visual confirmation.
 
 **Phase 4 — Human review changes.** If the human asks for changes after seeing a rendered output, the agent creates a new review version of `deck.md` from the previous approved version plus the human's change request. It records the change in `## Revision Brief`, saves the new spec as a review version, creates a new production instance, and regenerates only the slides whose approved spec changed.
 
@@ -497,6 +497,7 @@ Render review checklist:
 - the first rendered slide is the approved cover
 - every slide has the required small footer mark and simple numeric page number
 - title, required text, labels, and body text match the approved spec
+- image-generated text and labels are visually legible at the intended viewing size; OCR warnings are checked visually and are not treated as the final judge
 - logo and required asset placement matches `designer_assets`, `asset_refs`, and `placement`
 - every model input used in prompts is declared in `designer_assets` and recorded in `method/model-inputs.yaml`
 - raw, composed, and reviewed images are stored in the standard instance folders where relevant

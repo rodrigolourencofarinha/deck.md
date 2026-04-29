@@ -95,8 +95,9 @@ Enforcement:
 1. The prompt explicitly lists the allowed text under `TEXT LOCK`.
 2. The prompt explicitly instructs "Do NOT render any other text".
 3. Footer text computed from `production_defaults.footer` is appended to the allowed text list.
-4. After generation, a vision check (OCR or visual inspection) verifies no extra text appears.
-5. If extra text is detected, regenerate with a stronger TEXT LOCK ("Render ONLY the following labels and footer tokens; reject all other text").
+4. After generation, inspect visual legibility directly: every approved text item must be readable in the rendered image, and no extra text should be visibly present.
+5. Use OCR only as a warning signal for possible extra, missing, or garbled text. Visually verify the warning before accepting or rejecting the slide.
+6. If extra or illegible text is visually confirmed, regenerate with a stronger TEXT LOCK ("Render ONLY the following labels and footer tokens; reject all other text").
 
 If `image_decision: full-generated-visual` and `required_text` is absent, generation MUST be blocked — this is a validation error.
 
