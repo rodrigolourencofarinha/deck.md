@@ -19,12 +19,14 @@ Candidate integration paths:
 Reference links:
 - think-cell manual: [Automatically create presentations using JSON data](https://www.think-cell.com/en/resources/manual/jsondataautomation)
   - Notes: uses `.ppttc` JSON files plus PowerPoint templates with named elements; supports filling templates with slide titles/charts, reusing/reordering templates, local or remote JSON/template sources, and web-service-driven presentation creation.
-- TBD — Python library docs/repos
+- ThinkcellBuilder: [Philistino/ThinkcellBuilder](https://github.com/Philistino/ThinkcellBuilder)
+  - Notes: unofficial Python library on PyPI for generating `.ppttc` files from Python; supports named think-cell charts, text fields, and tables on PowerPoint templates, except Gantt charts. It does not require a think-cell license to write `.ppttc`, but think-cell is required to build/open the final presentation. It cannot programmatically discover think-cell object names/types in templates, and mis-typed names may be silently ignored by think-cell.
 
 Questions to resolve:
 - Should `deck.md` support a chart-level option such as `chart.engine: think-cell`, or should think-cell be a deck/output-level renderer?
-- Should the first implementation generate `.ppttc` JSON plus a required PowerPoint template, target the outdated Python libraries, or support both behind one abstraction?
+- Should the first implementation generate `.ppttc` JSON plus a required PowerPoint template directly, use ThinkcellBuilder as a Python convenience layer, or support both behind one abstraction?
 - Can the workflow generate think-cell-compatible editable charts directly, or should it generate structured chart/data specs for a human/PowerPoint automation step to convert?
+- How should `deck.md` declare and validate required think-cell template object names so typo-driven silent failures are caught before handoff?
 - Which chart types matter first: waterfall, Mekko, stacked bars, Gantt/timeline, scatter/bubble, and CAGR/bridge visuals?
 - What should happen when think-cell is unavailable or unlicensed on the local machine?
 - How should the skill validate that rendered think-cell charts remain editable and visually correct?
